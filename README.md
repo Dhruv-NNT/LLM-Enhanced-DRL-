@@ -1,4 +1,4 @@
-# LLM-Enhanced DRL for Air-Traffic Control ✈️
+# LLM-Enhanced DRL for Air-Traffic Control ✈
 
 ## Overview
 Integrate a Large Language Model (LLM) as a “teacher” to boost a PPO-based agent’s decision-making on standard conflict scenarios. The LLM provides high-level advice that the RL policy learns to interpret and execute.
