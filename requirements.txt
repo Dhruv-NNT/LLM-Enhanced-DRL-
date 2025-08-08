@@ -1,0 +1,14 @@
+numpy 
+pandas 
+geopandas 
+shapely 
+haversine 
+gymnasium 
+stable-baselines3 
+torch 
+matplotlib 
+tensorboard 
+pillow
+ipykernel
+scipy
+tensorboardX
