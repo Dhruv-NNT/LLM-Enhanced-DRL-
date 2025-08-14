@@ -1,0 +1,14 @@
+{
+  "answer": {
+    "scenario_summary": "The ownship is currently 1.41 units off its intended path and is 22.36 units away from an intruder. The separation is decreasing, and the intruder is to the ownship's right and behind. The ownship is 11.0 degrees right of its destination heading.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 22.36
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -15,
+      "hold_steps": 5
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "answer": {
+    "scenario_summary": "The ownship is currently in the MERGE_BACK phase, with a significant cross-track deviation of 8.30. The separation is closing, and the intruder is to the ownship's left front. The ownship is also heading away from its destination.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -15,
+      "hold_steps": 4
+    }
+  }
+}

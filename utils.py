@@ -250,7 +250,6 @@ def get_cumulated_distance(line1, line2):
     return distance_sum
 
 
-
 def initial_heading(location, next_location):
     x1, y1 = location
     x0, y0 = next_location

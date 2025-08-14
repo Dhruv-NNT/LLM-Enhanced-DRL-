@@ -1,0 +1,14 @@
+{
+  "answer": {
+    "scenario_summary": "The ownship is currently at step 6, with an EXECUTE_TURN phase. The intruder is to the ownship's left and ahead, and the separation is closing. The ownship is also deviating from its intended path and is not aligned with its destination.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -20,
+      "hold_steps": 4
+    }
+  }
+}

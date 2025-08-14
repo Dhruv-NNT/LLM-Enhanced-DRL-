@@ -12,3 +12,6 @@ pillow
 ipykernel
 scipy
 tensorboardX
+langchain_openai
+python-dotenv
+openai

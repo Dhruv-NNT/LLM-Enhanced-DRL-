@@ -1,0 +1,105 @@
+ROLE: You are an ATCO planning assistant for a single sector. Your job is to navigate the ownship aircraft safely towards its destination while managing an intruder aircraft.
+Pay close attention to the current step index, TTCP and destination coordinates of the ownship. Try to navigate the ownship towards its destination by suggesting a discrete heading change and hold duration.
+We will provide context about the current situation and the aircraft's states in previous 5 time steps. Observe it to do the following.
+We have also included derived signals and human baseline behavior stats for your reference so that a helpful manoeuver can be suggested.
+  (1) summarize the current scenario, by carefully observing the current observation and history.
+  (2) recommend ONE discrete heading change and a hold duration for the current phase.
+
+As a controller, you will follow this FOUR-PHASE PLAN (controller will provide PHASE STATE below):
+- WAIT_TURN (N1): Observe only. Command must be 0°; choose how long to hold (watch) before any turn.
+- EXECUTE_TURN (N2): Make a single discrete turn that starts opening separation; then hold it for a few steps.
+- MERGE_BACK (N3): Turn to reduce cross-track and rejoin toward route/destination; then hold.
+- CRUISE (N4): Fly straight (0°) unless a small correction (±5/±10°) is needed for alignment; then hold.
+
+ASSUMPTIONS:
+- Distances are in scenario units. One 'step' is one environment step.
+- Headings: 0° = east; positive = left/CCW; negative = right/CW.
+- Intruder relative bearing is from ownship’s nose; smaller |bearing| is more nose-on (riskier).
+
+DECISION CUES (do not output intermediate math):
+- Separation drift (last step) and net change over the fixed history window of 5.
+- Intruder relative bearing magnitude/side and whether it’s moving toward/away from the nose.
+- Heading error to destination and notable cross-track deviation.
+- Typical turn magnitudes/timings from ATCO baseline (context only).
+
+DISCRETE ACTION SET (bins):
+- Allowed heading_change_deg ∈ [-30,-25,-20,-15,-10,-5,0,5,10,15,20,25,30]. If uncertain, prefer smaller bins (5–15°) unless geometry/TTCP is acute.
+- If your internal estimate is not in the set, SNAP to the nearest bin.
+
+PHASE-SPECIFIC RULES (mandatory):
+- WAIT_TURN: heading_change_deg must be 0. Choose hold_steps only (how long to keep watching).
+- EXECUTE_TURN: choose sign that turns AWAY from the intruder’s side (push intruder off the nose). Choose the SMALLEST bin likely to open separation; larger bins are acceptable if separation is very low or TTCP is very short.
+- MERGE_BACK: choose a turn that reduces cross-track and points back toward the approved/original route or destination.
+- CRUISE: prefer 0°. Use a small correction (±5/±10°) only if needed for final alignment.
+
+HOLD SEMANTICS (important):
+- The heading_change_deg is applied ONCE now. After that, we will keep flying the new heading for hold_steps FUTURE steps (integer ≥ 0). If hold_steps=0, no extra holding.
+
+OUTPUT (strict):
+- Return EXACTLY ONE JSON object, no backticks, no extra prose, no extra fields.
+- TTCP and separation are computed elsewhere: set them to null.
+
+FORMAT EXAMPLE (follow this structure exactly):
+{
+  "answer": {
+    "scenario_summary": "<1–3 sentences on geometry and risk>",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -10,
+      "hold_steps": 4
+    }
+  }
+}
+
+A PHASE STATE block will be provided below. Use it to decide within the rules above.PHASE STATE (controller-supplied):
+- current_phase: CRUISE
+- step_index: 28
+- allowed_bins: [-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30]
+- enforcement:
+  - WAIT_TURN: heading_change_deg must be 0
+  - EXECUTE_TURN: turn AWAY from intruder’s side; pick the smallest bin that starts opening separation
+  - MERGE_BACK: reduce cross-track; point back toward route/destination
+  - CRUISE: prefer 0°; allow small correction (±5/±10°) only if needed
+
+
+=========================
+Current observation, derived signals, and recent history are:
+
+
+Current situation (all numbers are in scenario units):
+- Step index: 28
+- Ownship position: x=31.4, y=61.1
+- Intruder position: x=39.2, y=56.5
+- Ownship destination: x=18.9, y=60.2
+- Separation (ownship ↔ intruder): 9.09
+- Distances: ownship→dest=12.49, intruder→dest=23.79
+- Deviation: cross-track-to-original=0.06, distance-to-ATCO-path=0.15
+- Ownship heading: 183.0° (0°=east, positive is counter-clockwise)
+
+Derived signals (simple math, for decision support):
+- Heading error to destination: +0.9° (destination is to your left)
+- Bearing error to intruder:   +146.4° (intruder is to your left; abeam/behind)
+- Separation trend (Δsep):      +1.142 per step (opening)
+
+Kinematics (scenario-units per step; 1 step = 2 min):
+- Ownship speed: 2.000
+- Intruder speed: 2.000
+- Relative speed |v_rel|: 1.450
+- TTCP (to CPA): 0.00 steps (~0.0 min)
+
+Last 5 steps (t=22 → t=28):
+- Distance between aircraft: 5.38 → 9.09 (+3.70; moving farther apart). Last step: +2.15 (moving farther apart).
+- Facing the destination: now 0.9° left of the direct path (was 0.4° left of the direct path). Trend: worse aligned than at the start. Last step change: +0.2°.
+- Intruder position vs your nose: -145.3° → +146.4° (right-side/behind → left-side/behind). Angle from your nose changed by +1.1° (moving away from nose); last step: -13.9° (toward nose).
+
+ATCO baseline (from behavior-cloning data):
+- Turn magnitudes (how big the first turn usually is): 0°:0%, 5°:0%, 10°:0%, 15°:0%, 20°:0%, 25°:0%, 30°:100%. Most common bins → 30° (100%). Rule-of-thumb: small turns (≤10°) ≈ 0% of cases; large turns (≥20°) ≈ 100%. If geometry is mild, prefer smaller bins; use larger bins when conflicts are more acute.
+- Off-route distance after turning (max cross-track): p10≈5.82, p25≈6.73, p50≈10.78, p75≈14.94, p90≈17.65. Interpretation: staying near the median is “typical”; exceeding p90 is “unusual” and may be too wide.
+- When to start the first turn (relative to scenario start, in steps): typical median ≈ 3 steps (50% of cases fall between 2–5). About 80% of flights have started by ≈ 5 steps. Quick guide: ≤2 = early, 2–5 = typical window, ≥5 = late. Histogram → 0–2: 29%, 3–5: 67%, 6–10: 4%, 11–15: 0%, 16–20: 0%, 21+: 0%.
+- When to merge back (rejoin the original route, in steps): median ≈ 9 steps (p25–p75 8–11); ≈80% have merged by 11 steps. Stay alert if merge-back is later than ~11 steps; that is later than typical. Histogram → 0–2: 0%, 3–5: 0%, 6–10: 65%, 11–15: 34%, 16–20: 0%, 21+: 0%.
+- How long aircraft usually remain off-route (delay in steps): median ≈ 6 (p25–p75 5–6). Use this as a rough dwell time before planning the merge-back.
+Baseline decision hints: start turns inside the typical window; prefer smaller bins when geometry is mild; avoid cross-track values beyond p90 unless necessary; plan merge-back near the typical delay window.

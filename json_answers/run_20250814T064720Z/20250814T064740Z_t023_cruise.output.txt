@@ -1,0 +1,14 @@
+{
+  "answer": {
+    "scenario_summary": "The ownship is currently cruising and needs to adjust its heading to avoid an intruder. The intruder is behind and to the right, and the separation is closing. The ownship is slightly off its intended track.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "phase": "CRUISE",
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  }
+}

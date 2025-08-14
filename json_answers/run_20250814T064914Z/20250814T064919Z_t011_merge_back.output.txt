@@ -1,0 +1,14 @@
+{
+  "answer": {
+    "scenario_summary": "The ownship is currently 12.55 units from the intruder, with a closing trend. The ownship is significantly off-route, with a large cross-track deviation, and is 74 degrees from its destination heading. The intruder is to the ownship's left-front and moving away from the nose.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 12.55
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -15,
+      "hold_steps": 6
+    }
+  }
+}

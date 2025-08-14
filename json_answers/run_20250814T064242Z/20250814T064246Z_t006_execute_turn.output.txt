@@ -1,0 +1,14 @@
+{
+  "answer": {
+    "scenario_summary": "The ownship is currently at step 6, with its destination to the west. An intruder aircraft is to the ownship's right and slightly behind. Separation is closing, and the ownship is deviating from its intended path.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -20,
+      "hold_steps": 4
+    }
+  }
+}

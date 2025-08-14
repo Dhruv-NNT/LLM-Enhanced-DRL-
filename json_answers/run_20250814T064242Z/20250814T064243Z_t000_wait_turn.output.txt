@@ -1,0 +1,14 @@
+{
+  "answer": {
+    "scenario_summary": "The ownship is currently at step 0, heading 208.1 degrees. The intruder is to the ownship's right and ahead. The ownship has a heading error of -21.5 degrees towards its destination, which is to its right. The current phase is WAIT_TURN.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 5
+    }
+  }
+}

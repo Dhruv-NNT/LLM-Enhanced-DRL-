@@ -1,0 +1,14 @@
+{
+  "answer": {
+    "scenario_summary": "The ownship is currently 8.30 units off its intended path and needs to merge back. The intruder is to the ownship's left and slightly behind, with separation closing. The ownship is also significantly off-heading towards its destination.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -15,
+      "hold_steps": 6
+    }
+  }
+}

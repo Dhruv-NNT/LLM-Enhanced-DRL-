@@ -1,0 +1,14 @@
+{
+  "answer": {
+    "scenario_summary": "The ownship is currently in a CRUISE phase, heading towards its destination. An intruder aircraft is to the ownship's right and slightly behind, with separation closing. The ownship is slightly misaligned with its destination.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "phase": "CRUISE",
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  }
+}

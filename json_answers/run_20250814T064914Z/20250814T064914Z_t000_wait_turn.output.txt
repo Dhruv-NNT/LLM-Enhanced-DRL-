@@ -1,0 +1,14 @@
+{
+  "answer": {
+    "scenario_summary": "The ownship is currently at step 0 and needs to navigate towards its destination. An intruder aircraft is present to the ownship's right and ahead. The current phase is WAIT_TURN, and the ownship is aligned with its destination.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 29.33
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 5
+    }
+  }
+}

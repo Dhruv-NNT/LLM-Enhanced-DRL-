@@ -1,0 +1,14 @@
+{
+  "answer": {
+    "scenario_summary": "The ownship is currently cruising and is slightly misaligned with its destination. The intruder aircraft is behind and to the left, with the separation increasing. The intruder is moving towards the ownship's nose.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "phase": "CRUISE",
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  }
+}
