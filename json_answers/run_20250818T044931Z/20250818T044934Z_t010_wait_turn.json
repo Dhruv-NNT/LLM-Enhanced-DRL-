@@ -1,0 +1,14 @@
+{
+  "answer": {
+    "scenario_summary": "The ownship is currently in a WAIT_TURN phase, with the intruder to its right and closing. Separation is 15.09, which is not critically low, but the trend is closing. The heading error to the destination is small.",
+    "metrics": {
+      "ttcp": 11.691945057652749,
+      "separation_distance": 15.086607951397436
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 1
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "answer": {
+    "scenario_summary": "The ownship is currently in the WAIT_TURN phase. The intruder is to the right and closing, with a separation of 23.61 units. The current heading requires a turn to avoid conflict.",
+    "metrics": {
+      "ttcp": 9.296192495970036,
+      "separation_distance": 23.613298420262677
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 2
+    }
+  }
+}
