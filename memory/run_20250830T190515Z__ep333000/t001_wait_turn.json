@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "run_id": "run_20250830T190515Z__ep333000",
+    "tag": "t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "010321set1_1_SQ280.csv",
+      "010321set1_1_PR281.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "memory/run_20250830T190515Z__ep333000/t001_wait_turn.prompt.txt",
+    "sha1": "f4ea385e517b8f923fb26b8e9405b2fd2b92fb0d"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 33.69581517414292,
+    "dist_o_dest": 82.09347219214496,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.9243086022061,
+    "heading_err_path_deg": -3.410605131648481e-13
+  },
+  "answer": {
+    "scenario_summary": "Ownship is positioned at x=86.1, y=68.0, heading -151.9°, and destined for x=20.6, y=18.6. An intruder is at x=70.7, y=38.1. Separation is 33.70 units. The intruder is positioned to the left and slightly ahead of ownship, requiring a left turn in the EXECUTE_TURN phase.",
+    "technical_summary": "The intruder presents a bearing error of +34.7°, indicating a position to the left and slightly ahead. The heading error to the destination is +8.9°. Separation is 33.70 units. Kinematic data is currently unavailable, preventing TTCP and separation trend calculation. The geometry suggests a left turn will be necessary in the EXECUTE_TURN phase, but the current WAIT_TURN phase mandates a holding pattern.",
+    "rationale": "The intruder's position to the left and slightly ahead suggests a left turn will be necessary in the EXECUTE_TURN phase. However, the current WAIT_TURN phase mandates a holding pattern, consistent with past cases like t001_wait_turn. Therefore, we will hold for now.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 33.69581517414292
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 1
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.010099104065808214,
+    "ppo_return": -0.010099104065808214,
+    "ppo_turn_deg": 0,
+    "return_horizon": 1
+  },
+  "hold_effect": {
+    "n_steps": 1,
+    "min_sep_during_hold": 32.0715435402507,
+    "ttcp_end": 12.853006899475494,
+    "dist_o_dest_end": 80.118302433613,
+    "deltas": {
+      "sep_oi": -1.6242716338922207,
+      "ttcp": null,
+      "dist_o_dest": -1.9751697585319619
+    }
+  },
+  "observation_after": {
+    "step": 2,
+    "sep_oi": 32.0715435402507,
+    "dist_o_dest": 80.118302433613,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 12.853006899475494,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -152.33860474568982,
+    "heading_err_path_deg": -0.4142961434840515
+  },
+  "eval": {
+    "ok": true,
+    "score": 1.0,
+    "comment": "Phase-consistent. The action maintained the WAIT_TURN phase with a heading change of 0 degrees and a modest hold.",
+    "delta_action": {
+      "heading_change_deg": 0,
+      "hold_steps": 1,
+      "reason": "Phase-consistent"
+    }
+  }
+}

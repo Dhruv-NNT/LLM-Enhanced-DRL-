@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "score": 1.0,
+  "comment": "Phase-consistent. The action was a WAIT_TURN with no heading change, as required. TTCP improved slightly.",
+  "delta_action": {
+    "heading_change_deg": 0,
+    "hold_steps": 2,
+    "reason": "phase-consistent"
+  }
+}

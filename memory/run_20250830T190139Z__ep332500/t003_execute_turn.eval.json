@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "score": 0.85,
+  "comment": "EXECUTE_TURN phase is respected. The turn direction is appropriate given the intruder's position. TTCP degraded significantly, which is a concern, but separation remained above SAFE_R. Hold steps are modest.",
+  "delta_action": {
+    "heading_change_deg": -30,
+    "hold_steps": 1,
+    "reason": "Matches LLM's action"
+  }
+}

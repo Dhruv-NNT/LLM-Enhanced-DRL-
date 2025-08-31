@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "run_id": "run_20250830T185803Z__ep332000",
+    "tag": "t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "310321set2_1_GA271.csv",
+      "310321set2_1_GA270.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "memory/run_20250830T185803Z__ep332000/t001_wait_turn.prompt.txt",
+    "sha1": "568875513ddf50afeb5b1ab58aa81b4f3ec5e492"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 29.33401191556494,
+    "dist_o_dest": 66.94253300452947,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": null,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.99564436062502,
+    "heading_err_path_deg": -8.526512829121202e-13
+  },
+  "answer": {
+    "scenario_summary": "Ownship is positioned at x=68.1, y=89.3, heading -118.0°, with an intruder at x=40.2, y=80.0. The intruder is to the right and slightly ahead, presenting a potential conflict. Current separation is 29.33 units. The current phase is WAIT_TURN.",
+    "technical_summary": "The intruder is located at a bearing error of -43.5 degrees relative to ownship. Separation is 29.33 units. The absence of kinematic data (speeds, TTCP) limits the assessment of the severity of the potential conflict. Ownship is slightly off the ATCO path, but the cross-track deviation is minimal. The current phase is WAIT_TURN, restricting actions to holding steps. The situation mirrors past scenarios (t001_wait_turn), where a holding step was selected to monitor the situation. The bearing error to the intruder and the heading error to the destination are conflicting, requiring careful monitoring.",
+    "rationale": "Given the WAIT_TURN phase and the intruder's position to the right, a holding step is selected to monitor the situation, consistent with past scenarios (t001_wait_turn). We will continue to monitor the situation and prepare for a turn in the next phase. The lack of kinematic data prevents a more decisive action at this time. The intruder is to the right, and a turn is likely needed soon.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 29.33401191556494
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 2
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.010119731748482321,
+    "ppo_return": -0.010119731748482321,
+    "ppo_turn_deg": 0,
+    "return_horizon": 1
+  },
+  "hold_effect": {
+    "n_steps": 1,
+    "min_sep_during_hold": 27.917628913977413,
+    "ttcp_end": 9.636281360494763,
+    "dist_o_dest_end": 65.00940660268942,
+    "deltas": {
+      "sep_oi": -1.4163830015875263,
+      "ttcp": null,
+      "dist_o_dest": -1.9331264018400418
+    }
+  },
+  "observation_after": {
+    "step": 2,
+    "sep_oi": 27.917628913977413,
+    "dist_o_dest": 65.00940660268942,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 9.636281360494763,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -118.66987534592208,
+    "heading_err_path_deg": -0.6742309852978963
+  },
+  "eval": {
+    "ok": true,
+    "score": 1.0,
+    "comment": "Phase-consistent. The action maintained the WAIT_TURN phase with a heading change of 0 and a modest hold, and separation/TTCP improved slightly.",
+    "delta_action": {
+      "heading_change_deg": 0,
+      "hold_steps": 2,
+      "reason": "phase-consistent"
+    }
+  }
+}

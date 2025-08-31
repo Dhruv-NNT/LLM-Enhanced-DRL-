@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "run_id": "run_20250830T185927Z__ep332200",
+    "tag": "t003_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 3,
+    "fileinfo": [
+      "100621set1_1_SQ80.csv",
+      "100621set1_1_TR81.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "memory/run_20250830T185927Z__ep332200/t003_execute_turn.prompt.txt",
+    "sha1": "898e9ab84eabcb7cb6353e51cbc9336f475ffe67"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 30.491963693051854,
+    "dist_o_dest": 71.32886869711824,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 11.853006899475492,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -152.33860474567763,
+    "heading_err_path_deg": -0.4142961434718586
+  },
+  "answer": {
+    "scenario_summary": "Ownship is tracking towards its destination while an intruder is rapidly closing from the left. Separation is decreasing, and TTCP is relatively short, necessitating a turn to increase safety.",
+    "technical_summary": "Ownship is positioned at (82.6, 66.2), heading -151.9°, tracking to (18.4, 35.1). The intruder is at (70.7, 38.1), closing with a relative speed of 2.0 units/step. The bearing error to the intruder is +39.0°, indicating a left-side closure. Separation is decreasing at -1.580 units/step, with a TTCP of 11.85 steps. The geometry and closing nature of the intruder necessitate a left turn to improve separation and TTCP. The current phase is EXECUTE_TURN.",
+    "rationale": "The intruder is rapidly closing from the left, necessitating a decisive turn to increase separation and TTCP. Past cases like t003_execute_turn strongly support a -30° turn given the geometry and the need for a decisive action. A larger turn is warranted given the closing nature of the intruder and the decreasing separation. The safety rule dictates a turn away from the intruder.",
+    "metrics": {
+      "ttcp": 11.853006899475492,
+      "separation_distance": 30.491963693051854
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -30,
+      "hold_steps": 1
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.14849613119988903,
+    "ppo_return": -0.14849613119988903,
+    "ppo_turn_deg": -30,
+    "return_horizon": 3
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 26.101488161999132,
+    "ttcp_end": 8.85300689947548,
+    "dist_o_dest_end": 65.3338031690093,
+    "deltas": {
+      "sep_oi": -4.390475531052722,
+      "ttcp": -3.0000000000000124,
+      "dist_o_dest": -5.995065528108938
+    }
+  },
+  "observation_after": {
+    "step": 6,
+    "sep_oi": 26.101488161999132,
+    "dist_o_dest": 65.3338031690093,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 8.85300689947548,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -154.2564776128809,
+    "heading_err_path_deg": -2.3321690106751305
+  },
+  "eval": {
+    "ok": true,
+    "score": 0.85,
+    "comment": "EXECUTE_TURN phase is followed. The turn direction is correct given the intruder's position. The hold is modest. Separation and TTCP degraded slightly, but the initial safety margin was good.",
+    "delta_action": {
+      "heading_change_deg": -30,
+      "hold_steps": 1,
+      "reason": "Matches LLM's action."
+    }
+  }
+}

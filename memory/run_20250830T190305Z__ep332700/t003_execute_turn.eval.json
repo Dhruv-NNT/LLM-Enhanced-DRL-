@@ -1,0 +1,10 @@
+{
+  "ok": false,
+  "score": 0.4,
+  "comment": "EXECUTE_TURN phase violated: TTCP and separation degraded significantly during the hold. Oversize turn without benefit.",
+  "delta_action": {
+    "heading_change_deg": -30,
+    "hold_steps": 1,
+    "reason": "Correct heading, but hold was too aggressive given the degraded TTCP/separation."
+  }
+}

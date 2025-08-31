@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "score": 1.0,
+  "comment": "Phase-consistent. The LLM correctly maintained WAIT_TURN with no heading change.",
+  "delta_action": {
+    "heading_change_deg": 0,
+    "hold_steps": 0,
+    "reason": "Phase-consistent"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "run_id": "run_20250830T190139Z__ep332500",
+    "tag": "t003_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 3,
+    "fileinfo": [
+      "310321set2_1_KL61.csv",
+      "310321set2_1_SQ60.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "memory/run_20250830T190139Z__ep332500/t003_execute_turn.prompt.txt",
+    "sha1": "8b226acc17d7e3b0ce4db46fae729b155b6fd5cb"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 27.318743967077932,
+    "dist_o_dest": 64.3261346869282,
+    "dist_i_dest": 67.4884894352363,
+    "ttcp": 0.9665909139835591,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -152.33860474567376,
+    "heading_err_path_deg": -0.41429614346799326
+  },
+  "answer": {
+    "scenario_summary": "Ownship is approaching an intruder with decreasing separation and a short TTCP. The intruder is positioned to the left and slightly ahead, requiring a corrective maneuver to increase separation.",
+    "technical_summary": "The separation between ownship and the intruder is decreasing at a rate of -0.214 units/step, with a TTCP of 0.97 steps. The intruder's bearing error is -85.9°, indicating its position to the left and slightly ahead. Relative speed is 2.000 units/step. The geometry is mild, but the decreasing separation and short TTCP necessitate a corrective maneuver to increase separation. The current heading error to the path is -0.4°.",
+    "rationale": "Given the decreasing separation, short TTCP, and the intruder's position to the left, a left turn is necessary to increase separation and avoid a potential conflict. A -30° turn is chosen to maximize separation while remaining within reasonable bounds, aligning with past cases like t003_execute_turn where similar geometry and decreasing separation required a significant left turn. The short TTCP warrants a larger turn. A single hold step will allow the turn to stabilize.",
+    "metrics": {
+      "ttcp": 0.9665909139835591,
+      "separation_distance": 27.318743967077932
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -30,
+      "hold_steps": 1
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.13878320175491496,
+    "ppo_return": -0.13878320175491496,
+    "ppo_turn_deg": -30,
+    "return_horizon": 3
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 27.25034026625885,
+    "ttcp_end": 0.0,
+    "dist_o_dest_end": 58.83965115381044,
+    "deltas": {
+      "sep_oi": 0.23330840662285368,
+      "ttcp": -0.9665909139835591,
+      "dist_o_dest": -5.486483533117756
+    }
+  },
+  "observation_after": {
+    "step": 6,
+    "sep_oi": 27.552052373700786,
+    "dist_o_dest": 58.83965115381044,
+    "dist_i_dest": 67.4884894352363,
+    "ttcp": 0.0,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -176.40137209065517,
+    "heading_err_path_deg": -24.477063488449403
+  },
+  "eval": {
+    "ok": true,
+    "score": 0.85,
+    "comment": "EXECUTE_TURN phase is respected. The turn direction is appropriate given the intruder's position. TTCP degraded significantly, which is a concern, but separation remained above SAFE_R. Hold steps are modest.",
+    "delta_action": {
+      "heading_change_deg": -30,
+      "hold_steps": 1,
+      "reason": "Matches LLM's action"
+    }
+  }
+}

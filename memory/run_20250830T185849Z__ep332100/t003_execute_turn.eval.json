@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "score": 1.0,
+  "comment": "Phase-consistent and beneficial turn. The LLM chose a reasonable heading and hold, which improved TTCP and separation.",
+  "delta_action": {
+    "heading_change_deg": -30,
+    "hold_steps": 1,
+    "reason": "Matches LLM's action"
+  }
+}

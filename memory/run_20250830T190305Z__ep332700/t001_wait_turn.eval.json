@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "score": 0.9,
+  "comment": "Phase-consistent. The action maintained WAIT_TURN with a hold, and TTCP improved.",
+  "delta_action": {
+    "heading_change_deg": 0,
+    "hold_steps": 2,
+    "reason": "Maintain WAIT_TURN."
+  }
+}

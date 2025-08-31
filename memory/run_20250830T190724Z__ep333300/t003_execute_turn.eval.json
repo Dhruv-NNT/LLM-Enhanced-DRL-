@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "score": 0.95,
+  "comment": "EXECUTE_TURN phase is respected. The turn direction is correct given the intruder's position. The hold is modest. TTCP and separation improved.",
+  "delta_action": {
+    "heading_change_deg": -30,
+    "hold_steps": 1,
+    "reason": "Matches LLM action."
+  }
+}

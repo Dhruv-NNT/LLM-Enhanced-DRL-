@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "score": 0.9,
+  "comment": "Phase-consistent. The action maintained the WAIT_TURN phase with a heading change of 0, which is acceptable given the slight degradation in separation and TTCP. The hold steps were reasonable.",
+  "delta_action": {
+    "heading_change_deg": 0,
+    "hold_steps": 1,
+    "reason": "phase-consistent"
+  }
+}
