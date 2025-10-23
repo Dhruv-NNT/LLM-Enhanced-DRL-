@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251023T062816Z__ep001200",
+    "tag": "t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "010321set1_1_TR60.csv",
+      "010321set1_1_QR61.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251023T062816Z__ep001200/t001_wait_turn.prompt.txt",
+    "sha1": "97387552dd827258362edd697620c530aafb3b52"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 33.69581517414292,
+    "dist_o_dest": 75.61823060777061,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.92430860220907,
+    "heading_err_path_deg": -3.296918293926865e-12
+  },
+  "answer": {
+    "scenario_summary": "The intruder's bearing error of +34.7° indicates a position to the left and slightly ahead. The current WAIT_TURN phase restricts maneuvering options.",
+    "technical_summary": "Current situation: ownship at x=86.1, y=68.0; intruder at x=70.7, y=38.1; separation 33.70 units. Heading error to destination is -2.0°. Intruder's bearing error indicates a left turn will likely be necessary in the EXECUTE_TURN phase.",
+    "rationale": "The current WAIT_TURN phase mandates a holding pattern, consistent with past cases like t001_wait_turn. Therefore, we will hold for now and wait for further developments.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 33.69581517414292
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 1
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.010495520329041066,
+    "ppo_return": -0.045294149755473176,
+    "ppo_turn_deg": 10,
+    "return_horizon": 1
+  },
+  "hold_effect": {
+    "n_steps": 1,
+    "min_sep_during_hold": 31.764742733407875,
+    "ttcp_end": 15.30113491630149,
+    "dist_o_dest_end": 73.76881803632696,
+    "deltas": {
+      "sep_oi": -1.931072440735047,
+      "ttcp": null,
+      "dist_o_dest": -1.8494125714436507
+    }
+  },
+  "observation_after": {
+    "step": 2,
+    "sep_oi": 31.764742733407875,
+    "dist_o_dest": 73.76881803632696,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 15.30113491630149,
+    "own_heading_deg": -131.87078577262696,
+    "path_heading_deg": -152.33860474568476,
+    "heading_err_path_deg": -20.467818973057803
+  }
+}

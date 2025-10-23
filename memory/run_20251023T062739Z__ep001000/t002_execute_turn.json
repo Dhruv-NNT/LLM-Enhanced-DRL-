@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251023T062739Z__ep001000",
+    "tag": "t002_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 2,
+    "fileinfo": [
+      "030321set1_1_KL130.csv",
+      "030321set1_1_GA131.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251023T062739Z__ep001000/t002_execute_turn.prompt.txt",
+    "sha1": "1f89014bcc3e4e68ce3d0bcf42b3c80672e88399"
+  },
+  "observation_before": {
+    "step": 2,
+    "sep_oi": 27.51759694901247,
+    "dist_o_dest": 67.89419831666402,
+    "dist_i_dest": 66.32935395308496,
+    "ttcp": 2.0701355892741713,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.99564436062872,
+    "heading_err_path_deg": -4.547473508864641e-12
+  },
+  "answer": {
+    "scenario_summary": "Current situation: ownship closing with intruder, decreasing separation rate, short TTCP.",
+    "technical_summary": "Ownship position (x=68.1, y=89.3), intruder position (x=84.3, y=67.1); heading error to destination -14.7°; bearing error to intruder +64.3°; separation trend -0.371 per step.",
+    "rationale": "Given the decreasing separation rate and short TTCP, a left turn is necessary to increase separation and avoid potential conflict. A -20° turn is chosen to maximize separation while remaining within reasonable bounds, aligning with past cases like t003_execute_turn where similar geometry and decreasing separation required a significant left turn.",
+    "metrics": {
+      "ttcp": 2.0701355892741713,
+      "separation_distance": 27.51759694901247
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -20,
+      "hold_steps": 1
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.03,
+    "ppo_return": -0.03,
+    "ppo_turn_deg": 5,
+    "return_horizon": 3
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 27.22070491508696,
+    "ttcp_end": 0.0,
+    "dist_o_dest_end": 67.89419831666402,
+    "deltas": {
+      "sep_oi": -0.21784429419210483,
+      "ttcp": -2.0701355892741713,
+      "dist_o_dest": 0.0
+    }
+  },
+  "observation_after": {
+    "step": 5,
+    "sep_oi": 27.299752654820367,
+    "dist_o_dest": 67.89419831666402,
+    "dist_i_dest": 60.80630675357417,
+    "ttcp": 0.0,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.99564436062872,
+    "heading_err_path_deg": -4.547473508864641e-12
+  }
+}

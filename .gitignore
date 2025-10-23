@@ -1,6 +1,12 @@
+_pycache__
 allflighttrajectories
 allresolvedtrajectories
 featurefiles
 featurefiles2
 Images
 test.geojson
+Images2
+eval_two_phase
+.env
+Evaluation\ GiFs\ RL/
+__pycache__

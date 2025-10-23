@@ -1,0 +1,46 @@
+{
+  "meta": {
+    "run_id": "run_20251023T062739Z__ep001000",
+    "tag": "t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "030321set1_1_KL130.csv",
+      "030321set1_1_GA131.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251023T062739Z__ep001000/t001_wait_turn.prompt.txt",
+    "sha1": "46181aa7fc9d946efed688e4ed7ea02b0e8b908e"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 27.88869352555788,
+    "dist_o_dest": 67.89419831666402,
+    "dist_i_dest": 68.19214969527285,
+    "ttcp": null,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.99564436062872,
+    "heading_err_path_deg": -4.547473508864641e-12
+  },
+  "answer": {
+    "scenario_summary": "",
+    "technical_summary": "",
+    "rationale": "",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 27.88869352555788
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.01,
+    "ppo_return": -0.01,
+    "ppo_turn_deg": 5,
+    "return_horizon": 1
+  }
+}

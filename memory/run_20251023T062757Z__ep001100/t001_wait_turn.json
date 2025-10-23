@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251023T062757Z__ep001100",
+    "tag": "t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "100621set1_1_KL41.csv",
+      "100621set1_1_TR40.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251023T062757Z__ep001100/t001_wait_turn.prompt.txt",
+    "sha1": "32e6c587e24be06d9825fc76944cb9a9a29f5d5c"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 29.33401191556494,
+    "dist_o_dest": 66.96987353280578,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": null,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.99564436061958,
+    "heading_err_path_deg": 4.604316927725449e-12
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is in the WAIT_TURN phase, with a bearing error to the intruder of -43.5° and a heading error to the destination of -14.6°. Separation is 29.33 units.",
+    "technical_summary": "The situation presents conflicting geometry, with both the intruder and destination located to the right of ownship's current heading. Lack of kinematic data prevents trend analysis and limits assessment of separation and TTCP trends.",
+    "rationale": "The WAIT_TURN phase dictates a holding step to monitor the situation before initiating a turn. Past cases have demonstrated that a holding step is appropriate in similar circumstances, allowing for assessment of the evolving situation before initiating a turn.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 29.33401191556494
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 2
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.010598658742411605,
+    "ppo_return": -0.028066122884915057,
+    "ppo_turn_deg": 5,
+    "return_horizon": 1
+  },
+  "hold_effect": {
+    "n_steps": 1,
+    "min_sep_during_hold": 27.917628913977413,
+    "ttcp_end": 9.636281360494763,
+    "dist_o_dest_end": 65.03676196329386,
+    "deltas": {
+      "sep_oi": -1.4163830015875263,
+      "ttcp": null,
+      "dist_o_dest": -1.9331115695119223
+    }
+  },
+  "observation_after": {
+    "step": 2,
+    "sep_oi": 27.917628913977413,
+    "dist_o_dest": 65.03676196329386,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 9.636281360494763,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -118.66987534592485,
+    "heading_err_path_deg": -0.6742309853006532
+  }
+}
