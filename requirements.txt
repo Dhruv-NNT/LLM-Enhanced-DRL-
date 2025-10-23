@@ -15,3 +15,17 @@ tensorboardX
 langchain_openai
 python-dotenv
 openai
+langchain-community
+langchain-ollama
+ollama
+groq
+python-dotenv
+langchain_groq
+huggingface_hub
+cmake
+setuptools
+wheel
+numpy
+scipy
+langchain
+transformers

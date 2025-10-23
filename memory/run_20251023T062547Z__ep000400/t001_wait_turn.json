@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251023T062547Z__ep000400",
+    "tag": "t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "170621set1_1_TR191.csv",
+      "170621set1_1_3K190.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251023T062547Z__ep000400/t001_wait_turn.prompt.txt",
+    "sha1": "c8d366b540cb57584b6299d90ddfb6e4c7a29d77"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 27.88869352555788,
+    "dist_o_dest": 67.9719135010923,
+    "dist_i_dest": 67.4884894352363,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.92430860220588,
+    "heading_err_path_deg": -1.1368683772161603e-13
+  },
+  "answer": {
+    "scenario_summary": "The current separation distance is 27.89 units with the intruder ahead and to the right.",
+    "technical_summary": "Given the bearing error to the intruder of -77.7°, a left turn in the EXECUTE_TURN phase might be necessary to maintain safe separation. The heading error to the ATCO path is 0.0°.",
+    "rationale": "Following precedent from past cases, prioritizing safety, and considering the geometry, I choose a holding step in the WAIT_TURN phase.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 27.88869352555788
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 2
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.010495520329041066,
+    "ppo_return": -0.027967208713101294,
+    "ppo_turn_deg": 5,
+    "return_horizon": 1
+  },
+  "hold_effect": {
+    "n_steps": 1,
+    "min_sep_during_hold": 27.192480821344517,
+    "ttcp_end": 4.293526667913062,
+    "dist_o_dest_end": 66.01282752682383,
+    "deltas": {
+      "sep_oi": -0.6962127042133623,
+      "ttcp": null,
+      "dist_o_dest": -1.9590859742684756
+    }
+  },
+  "observation_after": {
+    "step": 2,
+    "sep_oi": 27.192480821344517,
+    "dist_o_dest": 66.01282752682383,
+    "dist_i_dest": 67.4884894352363,
+    "ttcp": 4.293526667913062,
+    "own_heading_deg": -161.95107001699517,
+    "path_heading_deg": -152.33860474568633,
+    "heading_err_path_deg": 9.61246527130885
+  }
+}

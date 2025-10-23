@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251023T062757Z__ep001100",
+    "tag": "t003_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 3,
+    "fileinfo": [
+      "100621set1_1_KL41.csv",
+      "100621set1_1_TR40.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251023T062757Z__ep001100/t003_execute_turn.prompt.txt",
+    "sha1": "4351d3608dce7999ddfad7d94db6961480490cf2"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 26.229359093638404,
+    "dist_o_dest": 63.03676257285554,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 10.926840714439448,
+    "own_heading_deg": -133.0357864828083,
+    "path_heading_deg": -117.99113624855347,
+    "heading_err_path_deg": 15.044650234254846
+  },
+  "answer": {
+    "scenario_summary": "Ownship is executing a turn phase due to the intruder closing in from the right.",
+    "technical_summary": "Given the current situation, we are executing a turn phase. The intruder is closing at a relative speed of 2.0 units/step, and the bearing error to the intruder is -33.6°, indicating closure from the right. The heading error to the path is +15.0°.",
+    "rationale": "Following the safety rule and precedent from past cases like t003_execute_turn, a left turn is selected to open up separation and stabilize the situation. A hold of 1 step is chosen to allow for initial turn stabilization.",
+    "metrics": {
+      "ttcp": 10.926840714439448,
+      "separation_distance": 26.229359093638404
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -20,
+      "hold_steps": 1
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.828584132466326,
+    "ppo_return": -0.3193990085925523,
+    "ppo_turn_deg": 5,
+    "return_horizon": 3
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 23.855742055272476,
+    "ttcp_end": 5.765420132733071,
+    "dist_o_dest_end": 57.80227102706588,
+    "deltas": {
+      "sep_oi": -2.3736170383659285,
+      "ttcp": -5.161420581706377,
+      "dist_o_dest": -5.234491545789659
+    }
+  },
+  "observation_after": {
+    "step": 6,
+    "sep_oi": 23.855742055272476,
+    "dist_o_dest": 57.80227102706588,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 5.765420132733071,
+    "own_heading_deg": -117.9956443606242,
+    "path_heading_deg": -134.3998011172293,
+    "heading_err_path_deg": -16.40415675660506
+  }
+}

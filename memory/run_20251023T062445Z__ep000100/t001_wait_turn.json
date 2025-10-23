@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251023T062445Z__ep000100",
+    "tag": "t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "150321set2_1_QR181.csv",
+      "150321set2_1_3K180.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251023T062445Z__ep000100/t001_wait_turn.prompt.txt",
+    "sha1": "20c83a9fe23b197a515817037346dd321d9ff555"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 29.33401191556494,
+    "dist_o_dest": 67.10786436961035,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": null,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.99564436062386,
+    "heading_err_path_deg": 3.410605131648481e-13
+  },
+  "answer": {
+    "scenario_summary": "Ownship is at position (68.1, 89.3) heading -118.0°. The intruder is at (40.2, 80.0) with a bearing error of -43.5°. The destination is at (22.6, 39.9) with a heading error of -14.6°. Separation is 29.33 units.",
+    "technical_summary": "The current situation involves a conflicting geometry where both the intruder and destination lie to the right of ownship. The bearing error to the intruder is -43.5°, and the heading error to the destination is -14.6°. Separation is 29.33 units. Lack of kinematic data prevents TTCP and trend analysis.",
+    "rationale": "The conflicting geometry (intruder and destination both to the right) and the WAIT_TURN phase dictate a holding step to monitor the situation. Past cases have demonstrated that a holding step is appropriate in similar circumstances, allowing for assessment of the evolving situation before initiating a turn.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 29.33401191556494
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 2
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.010598658742411605,
+    "ppo_return": -0.028066122884915057,
+    "ppo_turn_deg": 5,
+    "return_horizon": 1
+  },
+  "hold_effect": {
+    "n_steps": 1,
+    "min_sep_during_hold": 27.592455042770887,
+    "ttcp_end": 11.8925849718966,
+    "dist_o_dest_end": 65.10791302782012,
+    "deltas": {
+      "sep_oi": -1.7415568727940531,
+      "ttcp": null,
+      "dist_o_dest": -1.9999513417902364
+    }
+  },
+  "observation_after": {
+    "step": 2,
+    "sep_oi": 27.592455042770887,
+    "dist_o_dest": 65.10791302782012,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 11.8925849718966,
+    "own_heading_deg": -133.0357864828083,
+    "path_heading_deg": -118.66987534593133,
+    "heading_err_path_deg": 14.365911136876974
+  }
+}

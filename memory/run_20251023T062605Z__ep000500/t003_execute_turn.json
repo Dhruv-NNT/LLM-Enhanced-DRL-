@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251023T062605Z__ep000500",
+    "tag": "t003_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 3,
+    "fileinfo": [
+      "140521set1_1_3K20.csv",
+      "140521set1_1_TR21.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251023T062605Z__ep000500/t003_execute_turn.prompt.txt",
+    "sha1": "515c9a00470e3aca407f244295686a04ed3f29a0"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 29.832946193073155,
+    "dist_o_dest": 73.08470366325851,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 14.374275295098695,
+    "own_heading_deg": -101.79050152825873,
+    "path_heading_deg": -151.92430860220475,
+    "heading_err_path_deg": -50.133807073946
+  },
+  "answer": {
+    "scenario_summary": "Intruder closing from right, necessitating a turn away from it to increase separation and TTCP.",
+    "technical_summary": "Given the current heading error to path (-50.1°) and bearing error to intruder (-15.5°), a left turn is necessary to open up separation and reduce TTCP (14.37 steps).",
+    "rationale": "The situation mirrors past cases like t003_execute_turn, where a larger turn was deemed appropriate due to the closing nature of the intruder and decreasing separation.",
+    "metrics": {
+      "ttcp": 14.374275295098695,
+      "separation_distance": 29.832946193073155
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": 5,
+      "hold_steps": 1
+    }
+  },
+  "branch_compare": {
+    "llm_return": -1.6860660151293718,
+    "ppo_return": -1.6860660151293718,
+    "ppo_turn_deg": 5,
+    "return_horizon": 3
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 23.99983066454924,
+    "ttcp_end": 11.806838500815655,
+    "dist_o_dest_end": 68.39563416163253,
+    "deltas": {
+      "sep_oi": -5.833115528523916,
+      "ttcp": -2.56743679428304,
+      "dist_o_dest": -4.68906950162598
+    }
+  },
+  "observation_after": {
+    "step": 6,
+    "sep_oi": 23.99983066454924,
+    "dist_o_dest": 68.39563416163253,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 11.806838500815655,
+    "own_heading_deg": -126.85740506523224,
+    "path_heading_deg": -153.27978121442735,
+    "heading_err_path_deg": -26.422376149195088
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251023T055256Z__ep000100",
+    "tag": "t003_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 3,
+    "fileinfo": [
+      "170321set1_1_SQ151.csv",
+      "170321set1_1_KL150.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251023T055256Z__ep000100/t003_execute_turn.prompt.txt",
+    "sha1": "28a9d79a80119358b9064f69d218054aba6227a8"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 25.114306457548466,
+    "dist_o_dest": 63.8066839875643,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": 9.063333845032103,
+    "own_heading_deg": -192.03135426136336,
+    "path_heading_deg": -151.92430860220423,
+    "heading_err_path_deg": 40.107045659159155
+  },
+  "answer": {
+    "scenario_summary": "Ownship is closing with the intruder, which necessitates taking evasive action to increase separation and improve TTCP.",
+    "technical_summary": "Given the current situation, where ownship is at (82.2, 68.5) heading -192.0°, tracking to (18.9, 60.2), with a decreasing separation trend of -1.480 units/step and a TTCP of 9.06 steps. The intruder is approaching the destination from the right.",
+    "rationale": "Referencing past cases like t003_execute_turn, where a left turn was effective in similar situations, I've chosen a -20° turn to maximize separation. A hold of 1 step will allow for initial separation to be assessed and the effectiveness of the turn to be evaluated.",
+    "metrics": {
+      "ttcp": 9.063333845032103,
+      "separation_distance": 25.114306457548466
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -20,
+      "hold_steps": 1
+    }
+  },
+  "branch_compare": {
+    "llm_return": -1.753142934856156,
+    "ppo_return": -1.753142934856156,
+    "ppo_turn_deg": -20,
+    "return_horizon": 3
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 22.946017653331374,
+    "ttcp_end": 4.4612147142424385,
+    "dist_o_dest_end": 57.84360402389534,
+    "deltas": {
+      "sep_oi": -2.1682888042170916,
+      "ttcp": -4.6021191307896645,
+      "dist_o_dest": -5.96307996366896
+    }
+  },
+  "observation_after": {
+    "step": 6,
+    "sep_oi": 22.946017653331374,
+    "dist_o_dest": 57.84360402389534,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": 4.4612147142424385,
+    "own_heading_deg": -182.00459284657396,
+    "path_heading_deg": -176.34440469751098,
+    "heading_err_path_deg": 5.660188149062975
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251023T062511Z__ep000200",
+    "tag": "t003_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 3,
+    "fileinfo": [
+      "310321set1_1_GA81.csv",
+      "310321set1_1_TR80.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251023T062511Z__ep000200/t003_execute_turn.prompt.txt",
+    "sha1": "55db717da611a52f33e5ccb3ef83652301232afb"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 27.942982417173365,
+    "dist_o_dest": 50.93517164555843,
+    "dist_i_dest": 58.20122262880133,
+    "ttcp": 3.9796242935029067,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.9956443606212,
+    "heading_err_path_deg": 2.9842794901924208e-12
+  },
+  "answer": {
+    "scenario_summary": "The intruder is closing from the right, necessitating a left turn to increase separation.",
+    "technical_summary": "Given the bearing error to intruder (-36.0°), heading error to path (+0.0°), and decreasing separation trend, a -30° turn is chosen to maximize separation. A hold of 3 steps will allow for initial separation to be assessed and the effectiveness of the turn to be evaluated.",
+    "rationale": "The sign rule and past case (t003_execute_turn) inform the decision to turn left (-30°).",
+    "metrics": {
+      "ttcp": 3.9796242935029067,
+      "separation_distance": 27.942982417173365
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -30,
+      "hold_steps": 3
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.6276504552597317,
+    "ppo_return": -0.1389551394457102,
+    "ppo_turn_deg": 5,
+    "return_horizon": 3
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 21.06262755945158,
+    "ttcp_end": 5.266075122015737,
+    "dist_o_dest_end": 47.35624849349449,
+    "deltas": {
+      "sep_oi": -6.880354857721784,
+      "ttcp": 1.2864508285128302,
+      "dist_o_dest": -3.578923152063936
+    }
+  },
+  "observation_after": {
+    "step": 6,
+    "sep_oi": 21.06262755945158,
+    "dist_o_dest": 47.35624849349449,
+    "dist_i_dest": 52.20129854021035,
+    "ttcp": 5.266075122015737,
+    "own_heading_deg": -143.0625478975977,
+    "path_heading_deg": -117.99564436061424,
+    "heading_err_path_deg": 25.06690353698349
+  }
+}

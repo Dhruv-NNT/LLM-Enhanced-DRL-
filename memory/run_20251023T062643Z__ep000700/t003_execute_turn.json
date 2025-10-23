@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251023T062643Z__ep000700",
+    "tag": "t003_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 3,
+    "fileinfo": [
+      "050421set2_1_SQ231.csv",
+      "050421set2_1_3K230.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251023T062643Z__ep000700/t003_execute_turn.prompt.txt",
+    "sha1": "fbc0a4ca885fac2f9649705793911b0cd386a85a"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 26.44878761660458,
+    "dist_o_dest": 64.23701696183343,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 8.640107043694497,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.99113624854951,
+    "heading_err_path_deg": 0.004508112074688597
+  },
+  "answer": {
+    "scenario_summary": "Ownship at (66.0, 85.9) heading -118.0°, tracking to (21.9, 39.2). Intruder at (40.2, 80.0), closing.",
+    "technical_summary": "Ownship speed: 2.000 units/step, intruder speed: 0.000 units/step. Relative speed |v_rel| = 2.000. Separation trend Δsep = -1.348 units/step. TTCP to CPA is 8.64 steps (~17.3 minutes).",
+    "rationale": "The intruder is closing rapidly from the right, necessitating a turn away from it to increase separation and improve TTCP. Following the safety rule and precedent from past cases like t003_execute_turn, a -15° turn is selected.",
+    "metrics": {
+      "ttcp": 8.640107043694497,
+      "separation_distance": 26.44878761660458
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": 5,
+      "hold_steps": 1
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.15299964580502354,
+    "ppo_return": -0.15299964580502354,
+    "ppo_turn_deg": 5,
+    "return_horizon": 3
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 21.407110372235532,
+    "ttcp_end": 9.588647131805581,
+    "dist_o_dest_end": 58.403733657827175,
+    "deltas": {
+      "sep_oi": -5.041677244369048,
+      "ttcp": 0.9485400881110841,
+      "dist_o_dest": -5.833283304006258
+    }
+  },
+  "observation_after": {
+    "step": 6,
+    "sep_oi": 21.407110372235532,
+    "dist_o_dest": 58.403733657827175,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 9.588647131805581,
+    "own_heading_deg": -148.0759286049924,
+    "path_heading_deg": -134.3998011172287,
+    "heading_err_path_deg": 13.676127487763694
+  }
+}
