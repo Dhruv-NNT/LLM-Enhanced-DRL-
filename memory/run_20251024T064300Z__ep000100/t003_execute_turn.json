@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251024T064300Z__ep000100",
+    "tag": "t003_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 3,
+    "fileinfo": [
+      "010321set2_1_TR20.csv",
+      "010321set2_1_KL21.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251024T064300Z__ep000100/t003_execute_turn.prompt.txt",
+    "sha1": "870f904c8f58f75f7122cce4b5556f5079bf7ba6"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 27.30436076503289,
+    "dist_o_dest": 67.08751226988902,
+    "dist_i_dest": 64.48091474641753,
+    "ttcp": 0.9612531326541325,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.99564436062998,
+    "heading_err_path_deg": -5.7980287238024175e-12
+  },
+  "answer": {
+    "scenario_summary": "Decreasing separation rate of -0.213 units/step and a short TTCP of 0.96 steps require a corrective maneuver to increase separation and avoid potential conflict.",
+    "technical_summary": "The intruder's bearing error is +60.1°, indicating its position to the left and slightly ahead. Relative speed is 2.0 units/step. The geometry is mild, but the decreasing separation and short TTCP necessitate a corrective maneuver.",
+    "rationale": "Given the decreasing separation, short TTCP, and the intruder's position to the left, a left turn is necessary to increase separation and avoid potential conflict. A -30° turn is chosen to maximize separation while remaining within reasonable bounds, aligning with past cases like t003_execute_turn where similar geometry and decreasing separation required a significant left turn.",
+    "metrics": {
+      "ttcp": 0.9612531326541325,
+      "separation_distance": 27.30436076503289
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -30,
+      "hold_steps": 1
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.03,
+    "ppo_return": -0.03,
+    "ppo_turn_deg": 5,
+    "return_horizon": 3
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 27.22070491508696,
+    "ttcp_end": 0.0,
+    "dist_o_dest_end": 67.08751226988902,
+    "deltas": {
+      "sep_oi": 0.21794523280516742,
+      "ttcp": -0.9612531326541325,
+      "dist_o_dest": 0.0
+    }
+  },
+  "observation_after": {
+    "step": 6,
+    "sep_oi": 27.522305997838057,
+    "dist_o_dest": 67.08751226988902,
+    "dist_i_dest": 58.987389665249005,
+    "ttcp": 0.0,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.99564436062998,
+    "heading_err_path_deg": -5.7980287238024175e-12
+  }
+}
