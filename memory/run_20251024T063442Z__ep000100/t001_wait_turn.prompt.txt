@@ -41,8 +41,8 @@ YOUR OUTPUT (strict JSON):
   }
 }
 A PHASE STATE block will be provided below. Use it exactly as given.PHASE STATE (controller-supplied):
-- current_phase: EXECUTE_TURN
-- step_index: 3
+- current_phase: WAIT_TURN
+- step_index: 1
 - allowed_bins: [-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30]
 - VALID_PHASES: ['WAIT_TURN','EXECUTE_TURN']
 - enforcement:
@@ -55,29 +55,29 @@ Current observation, derived signals, and recent history are:
 
 
 Current situation (all numbers are in scenario units):
-- Step index: 3
-- Ownship position: x=65.2, y=86.5
+- Step index: 1
+- Ownship position: x=68.1, y=89.3
 - Intruder position: x=40.2, y=80.0
-- Ownship destination: x=22.6, y=39.9
-- Separation (ownship ↔ intruder): 25.80
-- Distances: ownship→dest=63.12, intruder→dest=62.20
-- Deviation: cross-track-to-original=1.19, distance-to-ATCO-path=1.19
-- Ownship heading: -138.0° (0°=east, positive is counter-clockwise)
+- Ownship destination: x=70.8, y=38.4
+- Separation (ownship ↔ intruder): 29.33
+- Distances: ownship→dest=50.93, intruder→dest=62.20
+- Deviation: cross-track-to-original=0.01, distance-to-ATCO-path=0.00
+- Ownship heading: -118.0° (0°=east, positive is counter-clockwise)
 - ATCO path heading: -118.0°
-- heading_error_to_path_deg: +20.1° (path is to your left)
-- signed_cross_track_to_path: -1.19 (left of path is positive)
-- provided_heading_error_to_path: +20.1° (Δ=0.0°)
+- heading_error_to_path_deg: -0.0° (path is to your right)
+- signed_cross_track_to_path: +0.00 (left of path is positive)
+- provided_heading_error_to_path: -0.0° (Δ=0.0°)
 
 Derived signals (simple math, for decision support):
-- Heading error to destination: +5.6° (destination is to your left)
-- Bearing error to intruder:   -27.4° (intruder is to your right; ahead)
-- Separation trend (Δsep):      -1.792 per step (closing)
+- Heading error to destination: +31.1° (destination is to your left)
+- Bearing error to intruder:   -43.5° (intruder is to your right; ahead)
+- Separation trend (Δsep):      N/A (no previous observation)
 
-Kinematics (scenario-units per step; 1 step = 2 min):
-- Ownship speed: 2.000
-- Intruder speed: 0.000
-- Relative speed |v_rel|: 2.000
-- TTCP (to CPA): 11.46 steps (~22.9 min)
+Kinematics (needs a previous observation to compute):
+- Ownship speed: N/A
+- Intruder speed: N/A
+- Relative speed: N/A
+- TTCP (to CPA): N/A
 
 ATCO baseline (two-phase mode):
 - Turn magnitudes (how big the first turn usually is): 0°:0%, 5°:0%, 10°:0%, 15°:0%, 20°:0%, 25°:0%, 30°:100%. Most common bins → 30° (100%). Rule-of-thumb: small turns (≤10°) ≈ 0% of cases; large turns (≥20°) ≈ 100%.
@@ -86,12 +86,12 @@ ATCO baseline (two-phase mode):
 Baseline decision hints: start turns inside the typical window; prefer smaller bins when geometry is mild; avoid cross-track values beyond p90 unless necessary.
 
 PAST CASES (closest matches):
-- t003_execute_turn: sep≈25.7, ttcp≈10.9, dist≈63.0, head_err_path≈n/a; decision: turn -30°, hold 1
-  summary: The intruder is closing rapidly from the right, necessitating a left turn to increase separation and improve TTCP. The current phase is EXECUTE_TURN, with a heading error to path of +15.0°.
-  rationale: Following the safety rule and precedent from past cases like t003_execute_turn, a -30° turn is selected to open up separation and stabilize the situation. A hold of 1 step is chosen to allow for initial turn stabilization.
-- t003_execute_turn: sep≈26.6, ttcp≈8.6, dist≈63.1, head_err_path≈n/a; decision: turn -30°, hold 1
-  summary: Ownship is at position (66.2, 85.8) heading -118.0°, tracking to (22.7, 40.0). The intruder is at (40.2, 80.0), closing at a relative speed of 2.0 units/step. Separation is decreasing at -1.341 units/step, with a TTCP of 8.64 steps. The bearing error to the intruder is -49.5°, indicating closure from the right.  The current phase is EXECUTE_TURN.
-  rationale: The intruder is closing rapidly from the right, necessitating a left turn to increase separation and improve TTCP. Following the safety rule and precedent from past cases like t003_execute_turn, a -30° turn is selected. A hold of 1 step is chosen to allow for initial turn stabilization.
-- t003_execute_turn: sep≈26.6, ttcp≈8.6, dist≈63.1, head_err_path≈n/a; decision: turn -30°, hold 1
-  summary: Ownship is at position (66.2, 85.8) heading -118.0°, tracking to (22.7, 40.0). The intruder is at (40.2, 80.0), closing at a relative speed of 2.0 units/step. Separation is decreasing at -1.341 units/step, with a TTCP of 8.64 steps. The bearing error to the intruder is -49.5°, indicating closure from the right. A left turn is required to increase separation and improve TTCP.
-  rationale: The intruder is closing rapidly from the right, necessitating a left turn to increase separation and improve TTCP. Following the safety rule and precedent from past cases like t003_execute_turn, a -30° turn is selected. A hold of 1 step is chosen to allow for initial turn stabilization.
+- t001_wait_turn: sep≈29.3, ttcp≈n/a, dist≈50.9, head_err_path≈n/a; decision: turn 0°, hold 2
+  summary: The current phase is WAIT_TURN. The heading error to destination is +31.1°, suggesting a potential need for a left turn in the EXECUTE_TURN phase. The bearing error to the intruder is -43.5°, indicating its position to the right.
+  rationale: Following past cases (t001_wait_turn), we are holding the current heading and preparing for a potential turn in the EXECUTE_TURN phase. The intruder's position to the right (-43.5° bearing error) suggests a potential need for a left turn.
+- t001_wait_turn: sep≈29.3, ttcp≈n/a, dist≈50.9, head_err_path≈n/a; decision: turn 0°, hold 2
+  summary: The current phase is WAIT_TURN. The heading error to destination is +31.1°, suggesting a need for a potential left turn in the EXECUTE_TURN phase.
+  rationale: Following past cases (t001_wait_turn), we are holding the current heading and preparing for a potential turn in the EXECUTE_TURN phase. The intruder's position to the right (-43.5° bearing error) suggests a potential need for a left turn.
+- t001_wait_turn: sep≈29.3, ttcp≈n/a, dist≈51.0, head_err_path≈n/a; decision: turn 0°, hold 2
+  summary: The separation distance is 29.33 units. The bearing error to the intruder is -43.5°, indicating its position to the right. The heading error to ownship's destination is +31.1°. Kinematic data is unavailable due to a single observation. The current phase is WAIT_TURN, restricting maneuvers to holding. The geometry suggests a potential need for a left turn in the EXECUTE_TURN phase.
+  rationale: The current phase is WAIT_TURN, mandating a holding maneuver. Following past cases (t001_wait_turn), we are holding the current heading and preparing for a potential turn in the EXECUTE_TURN phase. The intruder's position to the right (-43.5° bearing error) suggests a potential need for a left turn. We are holding for now, as the separation is acceptable.

@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251024T063550Z__ep000100",
+    "tag": "t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "290321set2_1_TR111.csv",
+      "290321set2_1_3K110.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251024T063550Z__ep000100/t001_wait_turn.prompt.txt",
+    "sha1": "1f65b171a80bac167e52037e0beaebfa15e548c1"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 27.89993469526396,
+    "dist_o_dest": 68.31230272798598,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.92430860220887,
+    "heading_err_path_deg": -3.097966327914037e-12
+  },
+  "answer": {
+    "scenario_summary": "The current separation distance is 27.9 units. The intruder is ahead and to the right.",
+    "technical_summary": "Given the geometry and bearing error to the intruder, a potential need for a left turn in the EXECUTE_TURN phase exists to maintain safe separation. No previous observation of ownship speed or kinematics is available to inform a decision.",
+    "rationale": "Following precedent from past cases (t001_wait_turn), a holding step is necessary to ensure safety and allow for a more informed decision. Since we are in the WAIT_TURN phase, no turn is executed. The intruder's position to the right suggests a potential need for a left turn in the EXECUTE_TURN phase. Prioritizing safety, a holding step is chosen.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 27.89993469526396
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 2
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.010495520329041066,
+    "ppo_return": -0.027967208713101294,
+    "ppo_turn_deg": 5,
+    "return_horizon": 1
+  },
+  "hold_effect": {
+    "n_steps": 1,
+    "min_sep_during_hold": 28.575386507944543,
+    "ttcp_end": 0.0,
+    "dist_o_dest_end": 67.0871783061205,
+    "deltas": {
+      "sep_oi": 0.6754518126805849,
+      "ttcp": null,
+      "dist_o_dest": -1.2251244218654733
+    }
+  },
+  "observation_after": {
+    "step": 2,
+    "sep_oi": 28.575386507944543,
+    "dist_o_dest": 67.0871783061205,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": 0.0,
+    "own_heading_deg": -121.84402435783754,
+    "path_heading_deg": -152.3386047456854,
+    "heading_err_path_deg": -30.494580387847833
+  }
+}

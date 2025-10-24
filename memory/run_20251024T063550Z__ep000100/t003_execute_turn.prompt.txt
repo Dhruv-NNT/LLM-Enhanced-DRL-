@@ -56,28 +56,28 @@ Current observation, derived signals, and recent history are:
 
 Current situation (all numbers are in scenario units):
 - Step index: 3
-- Ownship position: x=82.2, y=68.5
+- Ownship position: x=83.6, y=65.0
 - Intruder position: x=68.1, y=89.3
-- Ownship destination: x=18.9, y=60.2
-- Separation (ownship ↔ intruder): 25.11
-- Distances: ownship→dest=63.81, intruder→dest=67.49
-- Deviation: cross-track-to-original=2.28, distance-to-ATCO-path=2.28
-- Ownship heading: -192.0° (0°=east, positive is counter-clockwise)
+- Ownship destination: x=18.3, y=60.2
+- Separation (ownship ↔ intruder): 28.87
+- Distances: ownship→dest=65.52, intruder→dest=67.49
+- Deviation: cross-track-to-original=1.53, distance-to-ATCO-path=1.53
+- Ownship heading: -136.9° (0°=east, positive is counter-clockwise)
 - ATCO path heading: -151.9°
-- heading_error_to_path_deg: +40.1° (path is to your left)
-- signed_cross_track_to_path: -2.28 (left of path is positive)
-- provided_heading_error_to_path: +40.1° (Δ=0.0°)
+- heading_error_to_path_deg: -15.0° (path is to your right)
+- signed_cross_track_to_path: +1.53 (left of path is positive)
+- provided_heading_error_to_path: -15.0° (Δ=0.0°)
 
 Derived signals (simple math, for decision support):
-- Heading error to destination: +19.5° (destination is to your left)
-- Bearing error to intruder:   -43.8° (intruder is to your right; ahead)
-- Separation trend (Δsep):      -1.480 per step (closing)
+- Heading error to destination: -38.9° (destination is to your right)
+- Bearing error to intruder:   -100.5° (intruder is to your right; abeam/behind)
+- Separation trend (Δsep):      +0.298 per step (opening)
 
 Kinematics (scenario-units per step; 1 step = 2 min):
 - Ownship speed: 2.000
 - Intruder speed: 0.000
 - Relative speed |v_rel|: 2.000
-- TTCP (to CPA): 9.06 steps (~18.1 min)
+- TTCP (to CPA): 0.00 steps (~0.0 min)
 
 ATCO baseline (two-phase mode):
 - Turn magnitudes (how big the first turn usually is): 0°:0%, 5°:0%, 10°:0%, 15°:0%, 20°:0%, 25°:0%, 30°:100%. Most common bins → 30° (100%). Rule-of-thumb: small turns (≤10°) ≈ 0% of cases; large turns (≥20°) ≈ 100%.
@@ -86,12 +86,12 @@ ATCO baseline (two-phase mode):
 Baseline decision hints: start turns inside the typical window; prefer smaller bins when geometry is mild; avoid cross-track values beyond p90 unless necessary.
 
 PAST CASES (closest matches):
-- t003_execute_turn: sep≈26.0, ttcp≈7.0, dist≈49.8, head_err_path≈n/a; decision: turn -20°, hold 1
-  summary: The current situation indicates a decreasing separation trend at -2.623 per step, with a TTCP of 7.05 steps. The intruder is approaching the destination from the right, making it necessary to turn away from it.
-  rationale: Referencing past cases (t003_execute_turn), where a left turn was effective in similar situations, I've chosen a -20° turn to maximize separation. A hold of 1 step will allow for initial separation to be assessed and the effectiveness of the turn to be evaluated.
-- t003_execute_turn: sep≈25.7, ttcp≈10.9, dist≈63.0, head_err_path≈n/a; decision: turn -30°, hold 1
-  summary: The intruder is closing rapidly from the right, necessitating a left turn to increase separation and improve TTCP. The current phase is EXECUTE_TURN, with a heading error to path of +15.0°.
-  rationale: Following the safety rule and precedent from past cases like t003_execute_turn, a -30° turn is selected to open up separation and stabilize the situation. A hold of 1 step is chosen to allow for initial turn stabilization.
-- t003_execute_turn: sep≈26.6, ttcp≈8.6, dist≈64.2, head_err_path≈n/a; decision: turn -30°, hold 1
-  summary: Ownship is at (66.2, 35.8), heading -118.0°, tracking to (22.0, 39.3). The intruder is at (40.2, 80.0), closing at 2.0 units/step. Separation is decreasing at -1.341 units/step, with a TTCP of 8.64 steps. The bearing error to the intruder is -49.5°, indicating closure from the right. The current phase is EXECUTE_TURN.
-  rationale: The intruder is closing rapidly from the right, necessitating a left turn to increase separation and improve TTCP. Following the safety rule and precedent from past cases like t003_execute_turn, a -30° turn is selected. A hold of 1 step is chosen to allow for initial turn stabilization.
+- t003_execute_turn: sep≈27.3, ttcp≈0.0, dist≈64.3, head_err_path≈n/a; decision: turn 5°, hold 1
+  summary: Current situation: ownship is 64.32 units away from destination, intruder is 67.49 units away, and separation is 27.32 units. Ownship heading error to path is -10.3°, and signed cross-track to path is +0.01. Recent history suggests a typical turn magnitude of 30°.
+  rationale: Given the increasing separation trend and the intruder's position ahead and slightly to the right, a small left turn is necessary to maintain safe distance. This decision aligns with past cases like t003_execute_turn where similar geometry required a corrective maneuver.
+- t003_execute_turn: sep≈27.3, ttcp≈1.0, dist≈64.6, head_err_path≈n/a; decision: turn -30°, hold 1
+  summary: The separation between ownship and the intruder is decreasing at a rate of -0.214 units/step, with a TTCP of 0.97 steps. The intruder's bearing error is -85.9°, indicating a position to the left and slightly ahead. Relative speed is 2.0 units/step. The geometry is mild, but the decreasing separation and short TTCP necessitate a corrective maneuver. The current phase is EXECUTE_TURN.
+  rationale: Given the decreasing separation, short TTCP, and the intruder's position to the left, a left turn is necessary to increase separation and avoid a potential conflict. A -30° turn is chosen to maximize separation while remaining within reasonable bounds, aligning with past cases like t003_execute_turn where similar geometry and decreasing separation required a significant left turn. The short TTCP warrants a decisive turn.
+- t003_execute_turn: sep≈27.3, ttcp≈1.0, dist≈64.5, head_err_path≈n/a; decision: turn -30°, hold 1
+  summary: The current separation is 27.33 units, decreasing at a rate of -0.213 units/step, with a TTCP of 0.96 steps. The intruder is positioned at a bearing error of -86.0°, indicating its position to the left and slightly ahead. Relative speed is 2.0 units/step. The geometry is mild, but the decreasing separation and short TTCP necessitate a corrective maneuver.
+  rationale: Given the decreasing separation, short TTCP, and the intruder's position to the left, a left turn is necessary to increase separation and avoid a potential conflict. A -30° turn is chosen to maximize separation while remaining within reasonable bounds, aligning with past cases like t003_execute_turn where similar geometry and decreasing separation required a significant left turn. The short TTCP warrants a decisive turn.

@@ -1,28 +1,49 @@
 """LLM guidance helpers derived from RL - LLM (Complete Code Pipeline).ipynb."""
 from __future__ import annotations
 
+# Copy lets us duplicate objects without sharing state.
 import copy
+# Glob helps locate files based on patterns.
 import glob
+# Hashlib lets us build stable fingerprints for caching.
 import hashlib
+# Json is used for serialising prompts and answers.
 import json
+# Math supplies trigonometry and constants.
 import math
+# Os handles directories, paths, and process info.
 import os
+# Random is used for sampling replay cases.
 import random
+# Re powers regular expression checks.
 import re
+# Shutil helps with folder operations like moving logs.
 import shutil
+# Traceback prints readable exception stacks.
 import traceback
+# Deque gives us a fast append/pop history buffer.
 from collections import deque
+# Dataclass helps define simple containers with defaults.
 from dataclasses import dataclass
+# Datetime records timestamps with timezone info.
 from datetime import datetime, timezone
+# SimpleNamespace stores flexible attribute bags.
 from types import SimpleNamespace
+# Typing gives readable type hints to guide usage.
 from typing import Any, Deque, Dict, List, Optional, Sequence, Tuple, TYPE_CHECKING
 
+# NumPy handles vector math for observations and cases.
 import numpy as np
+# Ollama is the local LLM client.
 import ollama
+# Pandas loads answer history tables.
 import pandas as pd
+# Torch handles tensors used inside PPO helper calls.
 import torch
 
+# Shared configuration paths for memory and logs.
 from configs import JSON_ANSWERS_DIR, MEMORY_DIR, EVAL_MEMORY_PATH, FEATUREFILE_PATH
+# We reuse the same torch device as the PPO module.
 from .ppo import device
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -130,23 +151,39 @@ EVALUATOR_PROMPT_TEMPLATE = (
 # --- Small typed view over your observation vector ---
 @dataclass
 class ObsSnapshot:
+    # Direct x coordinate of ownship.
     own_x: float
+    # Direct y coordinate of ownship.
     own_y: float
+    # Intruder x coordinate.
     intr_x: float
+    # Intruder y coordinate.
     intr_y: float
+    # Ownship destination x coordinate.
     dest_x: float
+    # Ownship destination y coordinate.
     dest_y: float
+    # Current separation distance between aircraft.
     sep_oi: float
+    # Distance from ownship to its destination.
     dist_o_dest: float
+    # Distance from intruder to its destination.
     dist_i_dest: float
+    # Cross-track distance to unresolved path.
     ctd_dist: float
+    # Distance to ATCO-approved path.
     dist_to_atco_path: float
+    # Current ownship heading in radians.
     own_heading_rad: float
     # --- Optional ATCO-path fields (okay to be None if not supplied) ---
+    # Optional heading of ATCO path where projected.
     path_heading_deg: Optional[float] = None
+    # Optional difference between path heading and ownship.
     heading_error_to_path_deg: Optional[float] = None
+    # Optional signed cross-track offset.
     signed_cross_track_to_path: Optional[float] = None
     
+    # Step index for logging context.
     step: Optional[int] = None
 
     @staticmethod
@@ -164,6 +201,7 @@ class ObsSnapshot:
           10:   distance to ATCO path
           11:   own heading (radians)
         """
+        # We map the observation vector entries into readable names.
         s = ObsSnapshot(
             own_x=float(vec[0]),
             own_y=float(vec[1]),
@@ -179,12 +217,14 @@ class ObsSnapshot:
             own_heading_rad=float(vec[11]),
             step=step,
         )
+        # Later elements are optional; we fill them if present.
         if len(vec) >= 13: s.path_heading_deg = float(vec[12])
         if len(vec) >= 14: s.heading_error_to_path_deg = float(vec[13])
         if len(vec) >= 15: s.signed_cross_track_to_path = float(vec[14])
         return s
 
 def _rad2deg(r: float) -> float:
+    # Convert radians into degrees.
     return float(r) * 180.0 / math.pi
 
 def _wrap_deg(a: float) -> float:
@@ -196,6 +236,7 @@ def _bearing_deg(dy: float, dx: float) -> float:
     return math.degrees(math.atan2(dy, dx))
 
 def _side_word(x: float, left="left", right="right", center="centerline") -> str:
+    # Return a friendly label for the sign of a value.
     if x > 0: return left
     if x < 0: return right
     return center
@@ -208,10 +249,13 @@ INDEX_NAME = "_index.jsonl"
 # --- Extensible builder: now includes derived signals; history/BC stats can be added later.
 class BasePromptBuilder:
     def __init__(self):
+        # We lazily load the behaviour cloning baseline text.
         self._bc_text_cache: Optional[str] = None  # Placeholder for future BC baseline text
+        # We keep the latest kinematic numbers for the controller.
         self._last_kinematics: Optional[dict] = None  # <— ADD
     
     def _instructions_text(self) -> str:
+        # We return the static instructions used in every prompt.
         return PROMPT_INSTRUCTIONS
 
 
@@ -226,7 +270,9 @@ class BasePromptBuilder:
         history_vectors: Optional[Sequence[np.ndarray]] = None,  # <-- NEW
         history_steps:   Optional[Sequence[int]] = None,         # <-- NEW
     ) -> str:
+        # We convert the latest observation array into friendly names.
         snap = ObsSnapshot.from_vector(obs_vector, step=step)
+        # We do the same for the previous snapshot if provided.
         prev = ObsSnapshot.from_vector(prev_obs_vector, step=prev_step) if prev_obs_vector is not None else None
 
         # Build history snapshots (oldest → newest). History should NOT include 'snap' itself.
@@ -236,8 +282,10 @@ class BasePromptBuilder:
                 raise ValueError("history_steps must match history_vectors length")
             for i, v in enumerate(history_vectors):
                 s_i = history_steps[i] if history_steps is not None else None
+                # We collect each historic observation as a snapshot object.
                 hist_snaps.append(ObsSnapshot.from_vector(v, step=s_i))
 
+        # We assemble all prompt sections and skip any empty ones.
         parts = [
             self._instructions_text(),
             self._current_observation_text(snap),
@@ -254,6 +302,7 @@ class BasePromptBuilder:
         Returns the last computed kinematics as a dictionary.
         This is useful for debugging or further processing.
         """
+        # We simply expose the cached numbers.
         return self._last_kinematics
     
     def _kinematics_text(self, s: ObsSnapshot, prev: Optional[ObsSnapshot]) -> str:
@@ -263,6 +312,7 @@ class BasePromptBuilder:
         TTCP: time (in steps) to closest approach assuming constant velocity & straight lines.
         """
         if prev is None:
+            # Without a previous frame we cannot compute motion numbers.
             self._last_kinematics = {
                 "ttcp_steps": None,
                 "own_speed": None,
@@ -277,6 +327,7 @@ class BasePromptBuilder:
         # Δt in steps (fallback to 1 if step indices missing or equal)
         dt_steps = 1
         if s.step is not None and prev.step is not None and s.step != prev.step:
+            # We use the actual difference in step numbers when provided.
             dt_steps = max(1, s.step - prev.step)
 
         # Position deltas
@@ -286,6 +337,7 @@ class BasePromptBuilder:
         dy_i = s.intr_y - prev.intr_y
 
         # Speeds (scenario-units per step)
+        # We compute simple straight-line speeds for each aircraft.
         v_o = math.hypot(dx_o, dy_o) / dt_steps
         v_i = math.hypot(dx_i, dy_i) / dt_steps
 
@@ -300,17 +352,20 @@ class BasePromptBuilder:
 
         # TTCP-to-CPA (in steps): t* = - (r · v_rel) / |v_rel|^2, clamped to >= 0
         if vrel_mag2 > 0:
+            # We project the relative motion to find the closest approach time.
             t_star = - (rx*vrx + ry*vry) / vrel_mag2
             ttcp_steps = max(0.0, t_star)
             ttcp_minutes = 2.0 * ttcp_steps  # 1 step = 2 minutes
             ttcp_text = f"{ttcp_steps:.2f} steps (~{ttcp_minutes:.1f} min)"
         else:
+            # With no relative motion we cannot define TTCP.
             ttcp_steps = None
             rel_speed = None
             ttcp_text = "N/A (relative speed ~ 0)"
 
         rel_speed = math.sqrt(vrel_mag2)
         # ---- cache numeric results for the controller ----
+        # We save the numbers so the controller can reuse them later.
         self._last_kinematics = {
             "ttcp_steps": ttcp_steps,
             "own_speed": float(v_o),
@@ -319,6 +374,7 @@ class BasePromptBuilder:
             "sep": float(s.sep_oi),
         }
         lines = []
+        # We describe each value in plain text for the prompt.
         lines.append("Kinematics (scenario-units per step; 1 step = 2 min):")
         lines.append(f"- Ownship speed: {v_o:.3f}")
         lines.append(f"- Intruder speed: {v_i:.3f}")
@@ -328,9 +384,12 @@ class BasePromptBuilder:
 
     def _current_observation_text(self, s: ObsSnapshot) -> str:
         lines = []
+        # We open with a short heading to orient the reader.
         lines.append("Current situation (all numbers are in scenario units):")
         if s.step is not None:
+            # We include the step index when provided.
             lines.append(f"- Step index: {s.step}")
+        # We list all positions and distances the LLM might need.
         lines.append(f"- Ownship position: x={s.own_x:.1f}, y={s.own_y:.1f}")
         lines.append(f"- Intruder position: x={s.intr_x:.1f}, y={s.intr_y:.1f}")
         lines.append(f"- Ownship destination: x={s.dest_x:.1f}, y={s.dest_y:.1f}")
@@ -340,15 +399,18 @@ class BasePromptBuilder:
         lines.append(f"- Ownship heading: {_rad2deg(s.own_heading_rad):.1f}° (0°=east, positive is counter-clockwise)")
         # --- NEW: make ATCO path signals explicit in the prompt ---
         if s.path_heading_deg is not None:
+            # We only mention the path heading if it exists.
             lines.append(f"- ATCO path heading: {s.path_heading_deg:+.1f}°")
 
         if s.heading_error_to_path_deg is not None:
+            # We add the signed heading error and a simple left/right label.
             lines.append(
                 f"- heading_error_to_path_deg: {s.heading_error_to_path_deg:+.1f}° "
                 f"(path is to your {_side_word(s.heading_error_to_path_deg)})"
             )
 
         if s.signed_cross_track_to_path is not None:
+            # We show how far we are off the path with a sign.
             lines.append(
                 f"- signed_cross_track_to_path: {s.signed_cross_track_to_path:+.2f} "
                 f"(left of path is positive)"
@@ -356,6 +418,7 @@ class BasePromptBuilder:
 
         # Adding sanity check
         if s.path_heading_deg is not None:
+            # We double-check that the error value matches the two headings.
             own_h = _rad2deg(s.own_heading_rad)
             err_path_from_heading = _wrap_deg(float(s.path_heading_deg) - own_h)
         if s.heading_error_to_path_deg is not None:
@@ -371,25 +434,30 @@ class BasePromptBuilder:
           2) bearing_error_to_intr_deg
           3) sep_trend_per_step (requires previous obs; otherwise N/A)
         """
+        # We reuse the ownship heading in degrees for easy comparisons.
         own_heading_deg = _rad2deg(s.own_heading_rad)
 
         # 1) Heading error to destination
+        # We find the direction to the destination and compare it to the nose.
         heading_to_dest_deg = _bearing_deg(s.dest_y - s.own_y, s.dest_x - s.own_x)
         heading_error_to_dest_deg = _wrap_deg(heading_to_dest_deg - own_heading_deg)
 
         # 2) Bearing error to intruder
+        # We do the same for the intruder to learn which side it sits on.
         own_to_intr_angle_deg = _bearing_deg(s.intr_y - s.own_y, s.intr_x - s.own_x)
         bearing_error_to_intr_deg = _wrap_deg(own_to_intr_angle_deg - own_heading_deg)
         intr_pos_rel = _ahead_or_behind(abs(bearing_error_to_intr_deg))
 
         # 3) Separation trend per step (Δsep)
         if prev is not None:
+            # We subtract the previous separation to know if we are closing or opening.
             sep_trend = s.sep_oi - prev.sep_oi  # negative = closing, positive = opening
             sep_trend_text = f"{sep_trend:+.3f} per step ({'closing' if sep_trend < 0 else 'opening' if sep_trend > 0 else 'steady'})"
         else:
             sep_trend_text = "N/A (no previous observation)"
 
         lines = []
+        # We bundle all three human readable sentences.
         lines.append("Derived signals (simple math, for decision support):")
         lines.append(f"- Heading error to destination: {heading_error_to_dest_deg:+.1f}° "
                      f"(destination is to your {_side_word(heading_error_to_dest_deg)})")
@@ -407,6 +475,7 @@ class BasePromptBuilder:
         """
         K = 5
         if len(hist_snaps) < K:
+            # Not enough past points to describe a trend.
             return ""
 
         window = hist_snaps[-K:]
@@ -518,6 +587,7 @@ class BasePromptBuilder:
         3) When first turn typically starts (steps) + coarse histogram
         """
         if self._bc_text_cache is not None:
+            # We reuse the cached text so we only compute once.
             return self._bc_text_cache
 
         # ---- load dataframe ----
@@ -525,11 +595,13 @@ class BasePromptBuilder:
             if csv_path is None:
                 return ""  # nothing to compute yet
             try:
+                # We load the CSV containing baseline stats.
                 df = pd.read_csv(csv_path)
             except Exception as e:
                 return f"(BC baseline unavailable: failed to load CSV: {e})"
 
         lines: List[str] = []
+        # We open the section with a simple heading.
         lines.append("ATCO baseline (two-phase mode):")
 
         # -------------------- helpers --------------------
@@ -588,9 +660,12 @@ class BasePromptBuilder:
 
         if turn_bins_series is not None and len(turn_bins_series):
             all_bins = [0, 5, 10, 15, 20, 25, 30]
+            # We build a friendly string for each possible turn size.
             dist_str = ", ".join(f"{b}°:{turn_bins_series.get(b, 0.0)*100:.0f}%" for b in all_bins)
+            # We compute the share of small and large turns for human rules of thumb.
             small_share = sum(turn_bins_series.get(b, 0.0) for b in [0, 5, 10]) * 100.0
             large_share = sum(turn_bins_series.get(b, 0.0) for b in [20, 25, 30]) * 100.0
+            # We call out the two most popular turn sizes.
             top2 = turn_bins_series.sort_values(ascending=False).head(2)
             top_str = ", ".join(f"{int(k)}° ({v*100:.0f}%)" for k, v in top2.items())
             lines.append(
@@ -623,6 +698,7 @@ class BasePromptBuilder:
         if "flightstarttime_original_res" in df.columns:
             start_time = df["flightstarttime_original_res"].copy()
             if "flightstarttime_original_unres" in df.columns:
+                # We fill missing resolved times with unresolved start times.
                 start_time = start_time.fillna(df["flightstarttime_original_unres"])
         elif "flightstarttime_original_unres" in df.columns:
             start_time = df["flightstarttime_original_unres"].copy()
@@ -837,6 +913,7 @@ def update_memory_record(path: str, hold_effect: dict, obs_after: dict, index_pa
 
     # (Plan 7) append one-line index for fast filtering
     if index_path:
+        # Ensure the index folder exists before appending.
         os.path.dirname(index_path) and os.makedirs(os.path.dirname(index_path), exist_ok=True)
         before = rec.get("observation_before") or {}
         meta   = rec.get("meta") or {}
@@ -1145,16 +1222,21 @@ def find_similar_cases(obs_before: dict, phase: str, index_path: str, k: int = 3
 def _format_past_cases_block(matches: List[dict]) -> str:
     if not matches:
         return ""
+    # Small helpers to format numbers or degrees safely.
     def _fmt_num(x, nd=1):
         return "n/a" if x is None else f"{float(x):.{nd}f}"
     def _fmt_deg(x, nd=1):
         return "n/a" if x is None else f"{float(x):.{nd}f}°"
 
     lines = []
+    # Heading line to separate this block inside the prompt.
     lines.append("PAST CASES (closest matches):")
     for m in matches:
+        # We grab the stored tag to identify the memory file.
         tag  = m.get("tag", "n/a")
+        # We show what turn the LLM suggested in that memory.
         turn = m.get("turn_deg", "n/a")
+        # We also show how long the hold lasted.
         hold = m.get("hold_steps", "n/a")
 
         # BEFORE features (the ones we match on)
@@ -1174,9 +1256,11 @@ def _format_past_cases_block(matches: List[dict]) -> str:
         # optional short text
         ts = m.get("tech_summary_snip", "")
         if ts:
+            # We include the technical summary if it was stored.
             lines.append(f"  summary: {ts}")
         ra = m.get("rationale_snip", "")
         if ra:
+            # We include the free form rationale too.
             lines.append(f"  rationale: {ra}")
 
     return "\n".join(lines)
@@ -1196,6 +1280,7 @@ def call_llm_for_maneuver(
     fileinfo: Optional[Any] = None,        # NEW
     append_after_path: Optional[str] = None # NEW (kept for API compatibility)
 ) -> dict:
+    # We make sure the memory folder exists before writing to it.
     _ensure_dir(save_dir)
 
     # File naming for memory (Plan 1): one JSON per decision
@@ -1215,8 +1300,10 @@ def call_llm_for_maneuver(
     # raw_text = groq_invoke(prompt_text)
     raw_text = ollama_invoke(prompt_text)
     try:
+        # We try to parse the answer as strict JSON.
         parsed = _extract_json(raw_text)
     except Exception:
+        # If parsing fails we fall back to a safe default answer.
         parsed = {
             "answer": {
                 "scenario_summary": "",
@@ -1224,10 +1311,12 @@ def call_llm_for_maneuver(
                 "maneuver": {"phase": expected_phase or "WAIT_TURN", "heading_change_deg": 0, "hold_steps": 0}
             }
         }
+    # We normalise everything so the shape is consistent.
     normalized = _validate_and_normalize(parsed, expected_phase=expected_phase)
 
     # override metrics (Plan 2)
     if override_metrics:
+        # We optionally overwrite TTCP and separation if caller provided numbers.
         m = normalized["answer"].setdefault("metrics", {})
         for k in ("ttcp", "separation_distance"):
             if k in override_metrics:
@@ -1253,7 +1342,9 @@ def call_llm_for_maneuver(
         # "observation_after": ... (added later)
     }
 
+    # We persist the early memory record so later steps can append extra fields.
     _save_json(mem_path, rec)
+    # We return the normalized answer plus the memory path for callers.
     return {"normalized": normalized, "mem_path": mem_path, "tag": tag}
 
 def build_eval_context(rec: dict, hold_effect: dict, obs_after: dict) -> str:
@@ -1262,6 +1353,7 @@ def build_eval_context(rec: dict, hold_effect: dict, obs_after: dict) -> str:
     """
     ans = rec.get("answer", {})
     man = ans.get("maneuver", {})
+    # We gather the most important pieces in a clean JSON bundle.
     ctx = {
         "meta": rec.get("meta"),
         "maneuver": {
@@ -1277,6 +1369,7 @@ def build_eval_context(rec: dict, hold_effect: dict, obs_after: dict) -> str:
             "sep_rule":  "larger is safer"
         }
     }
+    # We return the pretty printed JSON string to feed into the evaluator prompt.
     return json.dumps(ctx, indent=2)
 
 def call_llm_evaluator(context_text: str, save_dir: str, tag: str):
@@ -1291,12 +1384,14 @@ def call_llm_evaluator(context_text: str, save_dir: str, tag: str):
     }
     """
     if EVALUATOR_PROMPT_TEMPLATE:
+        # We wrap the given context with the fixed instructions template.
         prompt = EVALUATOR_PROMPT_TEMPLATE.format(context=context_text)
     else:
         prompt = context_text
 
     # txt = groq_invoke(prompt)
     txt = ollama_invoke(prompt)
+    # We try to capture the first JSON object in the reply.
     m = JSON_OBJECT_RE.search(txt.strip())
     obj = {"ok": False, "score": 0.0, "comment": "", "delta_action": None, "ppo": None}
     if m:
@@ -1307,6 +1402,7 @@ def call_llm_evaluator(context_text: str, save_dir: str, tag: str):
 
     outp = os.path.join(save_dir, f"{_slug(tag)}.eval.json")
     _save_json(outp, obj)
+    # We return the parsed evaluation dictionary for further handling.
     return obj
 
 
@@ -1322,6 +1418,7 @@ def apply_eval_to_record(mem_path: str, eval_obj: dict, index_path: str):
         return
 
     # Attach into the detailed record
+    # We store everything the evaluator returned so we can inspect it later.
     rec["eval"] = {
         "ok": bool(eval_obj.get("ok", False)),
         "score": float(eval_obj.get("score", 0.0)),
@@ -1394,6 +1491,7 @@ def apply_eval_to_record(mem_path: str, eval_obj: dict, index_path: str):
 def _deg_to_action_idx(delta_deg: int) -> int:
     """Map ±(0,5,...,30)° to env action index:
        0..6 produce +0,+5,...,+30°, 7..12 produce -5,...,-30°."""
+    # We round to be safe and make sure the value lives on the 5° grid.
     d = int(round(delta_deg))
     if d % 5 != 0 or abs(d) > 30:
         raise ValueError(f"delta must be multiple of 5 and |d|<=30, got {delta_deg}")
@@ -1413,6 +1511,7 @@ def _action_idx_to_deg(idx: int) -> int:
     return -5 * (i - 6)
 
 def _ensure_clean_dir(path: str):
+    # We make sure the directory exists first.
     os.makedirs(path, exist_ok=True)
     # wipe only PNGs, keep any prior GIFs/logs
     for p in glob.glob(os.path.join(path, "image_*.png")):
@@ -1473,6 +1572,7 @@ def ghost_compare_hold(env: StructuredEnv,
             print(f"[GHOST] copy.deepcopy(agent) failed: {ce}")
             traceback.print_exc()
             # last resort: manual agent fields (positions/heading only)
+            # We manually copy the critical pieces so replay keeps working.
             e.agent.o_position = list(src.agent.o_position)
             e.agent.i_position = list(src.agent.i_position)
             e.agent.o_heading  = float(src.agent.o_heading)
@@ -1484,6 +1584,7 @@ def ghost_compare_hold(env: StructuredEnv,
 
     def _copy_env(src: StructuredEnv) -> StructuredEnv:
         try:
+            # We prefer a full deepcopy so every field is duplicated.
             e = copy.deepcopy(src)
             print("[GHOST] deepcopy(env) OK")
             return e
@@ -1494,9 +1595,11 @@ def ghost_compare_hold(env: StructuredEnv,
 
     # Helper: run one branch for N steps, first-step action is 'first_deg', then hold straight (0°)
     def _run_branch(env_src: StructuredEnv, first_deg: int, N: int) -> float:
+        # We clone the environment so we do not touch the real one.
         e = _copy_env(env_src)
         total = 0.0
         for k in range(N):
+            # The very first step uses the chosen turn; later steps fly straight.
             a_idx = _deg_to_action_idx(first_deg if k == 0 else 0)
             _, r, term, trunc, _ = e.step(a_idx)
             total += r
@@ -1528,6 +1631,7 @@ NEXT_PHASE = {
 
 def _round_down_bin(x: float) -> int:
     """Largest allowed bin ≤ x (5,10,15,20,25,30). Returns 0 if x<5."""
+    # We normalise the value to a positive degree amount before bucketing.
     x = abs(float(x))
     for b in (30, 25, 20, 15, 10, 5):
         if x >= b: return b
@@ -1536,6 +1640,7 @@ def _round_down_bin(x: float) -> int:
 def _heading_error_to_dest(cur: ObsSnapshot) -> float:
     own_h = _rad2deg(cur.own_heading_rad)
     to_dest = _bearing_deg(cur.dest_y - cur.own_y, cur.dest_x - cur.own_x)
+    # Positive result means the destination sits to the left of the nose.
     return _wrap_deg(to_dest - own_h)  # positive = destination to LEFT; negative = to RIGHT
 
 @dataclass
@@ -1567,13 +1672,16 @@ class LLMGuidanceController:
     """
     def __init__(self, builder: BasePromptBuilder, k_history: int = 5, save_dir: str = JSON_ANSWERS_DIR, start_llm_at_step: int = 10, memory_path: str = EVAL_MEMORY_PATH, run_id: str = None):
         self.builder = builder
+        # We remember how many past observations to include in prompts.
         self.k_history = int(k_history)
         self.save_dir = save_dir
         self.run_id = run_id
 
         self.state = ControllerState()
+        # We cache the previous observation and step for derived signals.
         self._prev_obs: Optional[np.ndarray] = None
         self._prev_step: Optional[int] = None
+        # These deques hold older observations so we can summarise trends.
         self._hist: Deque[np.ndarray] = deque(maxlen=self.k_history)  # oldest → newest (previous snapshots only)
         self._hist_steps: Deque[int] = deque(maxlen=self.k_history)
         self.start_llm_at_step = int(start_llm_at_step)  # call LLM only once ≥ this controller step
@@ -1582,8 +1690,10 @@ class LLMGuidanceController:
         self.memory_path = memory_path
         # NEW: memory bookkeeping for Plan 5
         self._hold_log: List[np.ndarray] = []
+        # We store the latest memory file path so we can update it after the hold.
         self._current_mem_path: Optional[str] = None
         self._last_tag: Optional[str] = None
+        # We remember the observation snapshot from before the hold started.
         self._obs_before_last: Optional[dict] = None
 
     def reset(self, initial_phase: str = "WAIT_TURN"):
@@ -1605,8 +1715,11 @@ class LLMGuidanceController:
         - hold normalized to [0, 1] by /6 (your current max hold is 6)
         - flags: WAIT_TURN, EXECUTE_TURN (else both 0)
         """
+        # We scale the turn so +30° becomes +1.0 and -30° becomes -1.0.
         norm_turn = float(turn_deg) / 30.0
+        # We fit the hold count into [0,1] using the maximum allowed hold.
         norm_hold = float(min(max(hold_steps, 0), 6)) / 6.0
+        # Flags let the network know which phase we are in.
         is_wait   = 1.0 if phase == "WAIT_TURN" else 0.0
         is_exec   = 1.0 if phase == "EXECUTE_TURN" else 0.0
         return np.array([norm_turn, norm_hold, is_wait, is_exec], dtype=np.float32)
@@ -1628,12 +1741,15 @@ class LLMGuidanceController:
         )
         target_deg = int(self.last_advice["turn_deg"])
         phase_mask = 1 if self.last_advice.get("active", 0) == 1 else 0
+        # PPO expects the embedding vector, the snapped heading, and an "active" mask.
         return emb, target_deg, phase_mask
 
     def _snap(self, vec, step) -> ObsSnapshot:
+        # Convenience helper that converts a raw vector into a snapshot dataclass.
         return ObsSnapshot.from_vector(vec, step=step)
 
     def _estimate_vel(self, prev: ObsSnapshot, cur: ObsSnapshot):
+        # We estimate simple per-step velocities for both aircraft.
         dt = 1 if (prev.step is None or cur.step is None or cur.step == prev.step) else max(1, cur.step - prev.step)
         vox, voy = (cur.own_x - prev.own_x)/dt, (cur.own_y - prev.own_y)/dt
         vix, viy = (cur.intr_x - prev.intr_x)/dt, (cur.intr_y - prev.intr_y)/dt
@@ -1659,17 +1775,20 @@ class LLMGuidanceController:
 
         # intruder velocity
         if prev is None:
+            # Without a previous frame we assume the intruder is stationary.
             vix = viy = 0.0
         else:
             _, _, vix, viy, _ = self._estimate_vel(prev, cur)
 
         # positions after N
+        # We project both aircraft forward using the straight-line assumption.
         own_xN = cur.own_x + v_o * ux * N
         own_yN = cur.own_y + v_o * uy * N
         intr_xN = cur.intr_x + vix * N
         intr_yN = cur.intr_y + viy * N
 
         # separation
+        # Hypotenuse gives us the distance between the projected aircraft.
         sepN = math.hypot(intr_xN - own_xN, intr_yN - own_yN)
 
         # own→dest distance
@@ -1694,6 +1813,7 @@ class LLMGuidanceController:
 
     def _clamp_hold(self, phase: str, hold: int) -> int:
         lo = PHASE_MIN_HOLD.get(phase, 0); hi = PHASE_MAX_HOLD.get(phase, hold)
+        # We cap the requested hold between the configured minimum and maximum.
         return max(lo, min(hi, hold))
 
     def _choose_extra_hold(self, cur: ObsSnapshot, prev: Optional[ObsSnapshot], phase: str) -> int:
@@ -1706,6 +1826,7 @@ class LLMGuidanceController:
             for N in range(1, EXTRA_HOLD_MAX+1):
                 sepN, _, ttcpN = self._predict_N(cur, prev, N)
                 if sepN is None: break
+                # We keep holding only if separation or TTCP looks better in the preview.
                 good = (sepN > cur_sep) or (ttcpN is not None and self.builder.last_kinematics and
                                             self.builder.last_kinematics.get("ttcp_steps") is not None and
                                             ttcpN > self.builder.last_kinematics["ttcp_steps"])
@@ -1727,10 +1848,12 @@ class LLMGuidanceController:
     def _should_call_llm(self) -> bool:
         if self.state.hold_remaining > 0:
             return False
+        # We only dial the LLM when the phase has not already used it.
         return not self._phase_called   # NEW: one call per phase
 
     # REPLACE the whole _build_prompt method with this version
     def _build_prompt(self, obs_vec: np.ndarray, step: int) -> str:
+        # We start with the shared prompt boilerplate plus observation details.
         prompt_core = self.builder.build_base_prompt(
             obs_vector=obs_vec,
             step=step,
@@ -1807,6 +1930,7 @@ class LLMGuidanceController:
                 try:
                     with open(self._current_mem_path, "r", encoding="utf-8") as f:
                         rec_now = json.load(f)
+                    # We build a compact context for the evaluator and run it right away.
                     ctx = build_eval_context(rec_now, hold_effect, obs_after)
                     ev  = call_llm_evaluator(ctx, self.save_dir, self._last_tag or rec_now.get("meta", {}).get("tag", "phase"))
                     apply_eval_to_record(self._current_mem_path, ev, index_path)
@@ -1815,15 +1939,18 @@ class LLMGuidanceController:
                     pass
 
                 # clear window for next phase/decision
+                # We reset the temporary buffers now that this decision is finished.
                 self._hold_log.clear()
                 self._current_mem_path = None
                 self._obs_before_last = None
 
                 # phase transitions as before
                 if self.state.phase == "WAIT_TURN":
+                    # After waiting we step into the execute phase and unlock a new LLM query.
                     self._advance_phase_if_needed()  # WAIT_TURN -> EXECUTE_TURN
                     self._phase_called = False
                 elif self.state.phase == "EXECUTE_TURN":
+                    # We mark that no advice is currently being enforced.
                     self.last_advice["active"] = 0
 
             # history bookkeeping (unchanged)
@@ -1839,6 +1966,7 @@ class LLMGuidanceController:
             if self._prev_obs is not None:
                 self._hist.append(self._prev_obs)
                 self._hist_steps.append(self._prev_step if self._prev_step is not None else (step - 1))
+            # We save the current observation for the next iteration and keep heading zero.
             self._prev_obs, self._prev_step = obs_vec.copy(), step
             self.state.step = step
             return 0, self.state
@@ -1851,6 +1979,7 @@ class LLMGuidanceController:
         # build observation_before (Plan 4)
         obs_before = make_obs_snapshot(obs_vec, self._prev_obs, step)
         nums = self.builder.last_kinematics or {}
+        # We reuse the latest kinematic stats when available for logging metrics.
         sep_val  = nums.get("sep", float(cur_snap.sep_oi))
         ttcp_val = nums.get("ttcp_steps", None)
 
@@ -1872,6 +2001,7 @@ class LLMGuidanceController:
         man = result["answer"]["maneuver"]
         turn_now   = int(man.get("heading_change_deg", 0))
         hold_steps = max(0, int(man.get("hold_steps", 0)))
+        # We respect the per-phase min and max hold limits.
         hold_steps = self._clamp_hold(self.state.phase, hold_steps)
 
         # --- NEW: A/B ghost compare over the hold window using *same* fused intent ---
@@ -1891,6 +2021,7 @@ class LLMGuidanceController:
                     json.dump(rec_now, f, indent=2, ensure_ascii=False)
                 print(f"[GHOST] branch_compare persisted to {mem_path}")
             else:
+                # If we cannot run the comparison we just log it for transparency.
                 print("[GHOST] skipped: env or ppo is None")
         except Exception as e:
             print(f"[GHOST] ERROR during ghost_compare_hold: {e}")
@@ -1902,6 +2033,7 @@ class LLMGuidanceController:
             except Exception:
                 rec_now = {}
             rec_now.setdefault("branch_compare", {})
+            # We fill in a neutral comparison so downstream code still works.
             rec_now["branch_compare"].update({
                 "llm_return": None,
                 "ppo_return": None,
@@ -1923,6 +2055,7 @@ class LLMGuidanceController:
         self.state.step = step
 
         # start a fresh hold window for this decision (Plan 5)
+        # We clear previous logs and remember the new memory file path.
         self._hold_log.clear()
         self._current_mem_path = mem_path
         self._last_tag = tag
@@ -1932,6 +2065,7 @@ class LLMGuidanceController:
         if self._prev_obs is not None:
             self._hist.append(self._prev_obs)
             self._hist_steps.append(self._prev_step if self._prev_step is not None else (step - 1))
+        # The latest observation becomes the "previous" frame for next turn.
         self._prev_obs, self._prev_step = obs_vec.copy(), step
 
         # advance phase if needed when hold=0 (unchanged control flow)
@@ -1941,6 +2075,7 @@ class LLMGuidanceController:
             else:
                 extra = self._choose_extra_hold(cur_snap, prev_snap, self.state.phase)
                 extra = self._clamp_hold(self.state.phase, max(extra, 1))
+                # Force at least one straight step so we gather another observation.
                 self.state.hold_remaining = extra
 
         self.last_advice = {
@@ -1949,4 +2084,5 @@ class LLMGuidanceController:
             "hold": int(self.state.hold_remaining),
             "active": 1 if self.state.phase in ("WAIT_TURN","EXECUTE_TURN") else 0
         }
+        # We return the chosen heading change along with the updated controller state.
         return turn_now,self.state

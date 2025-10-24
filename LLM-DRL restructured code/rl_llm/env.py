@@ -1,65 +1,105 @@
 """Environment and scenario classes derived from RL - LLM (Complete Code Pipeline).ipynb."""
+# Math helps us wrap angles and perform trigonometric updates.
 import math
+# Path lets us work with filesystem paths in an easy way.
 from pathlib import Path
+# Optional is used for type hints that may be missing values.
 from typing import Optional
 
+# Gymnasium provides the RL environment interface we implement.
 import gymnasium as gym
+# Spaces helps define the observation and action spaces.
 from gymnasium import spaces
+# NumPy powers vector math for positions and headings.
 import numpy as np
+# Pandas loads the scenario feature file into a DataFrame.
 import pandas as pd
+# Matplotlib lets us plot the sector and trajectories for debugging.
 import matplotlib.pyplot as plt
+# Shapely gives us geometry helpers for path projections.
 from shapely.geometry import LineString, Point
 
+# We load the path to the feature file from the config module.
 from configs import FEATUREFILE_PATH
+# Utility helpers load scenarios, plot sectors, and project onto paths.
 from .utils import get_conflict_scenario, plot_sector, project_path
 
+# We read the full feature file once so every class can use it.
 featurefile = pd.read_csv(FEATUREFILE_PATH)
 
 class Ownship:
     def __init__(self, start_x, start_y, heading, speed, offset, original_path, destination):
+        # We remember the starting x coordinate.
         self.start_x = start_x
+        # We remember the starting y coordinate.
         self.start_y = start_y
+        # We track the current x position, starting at the origin point.
         self.x = start_x
+        # We track the current y position, starting at the origin point.
         self.y = start_y
+        # We store how many time steps to wait before moving.
         self.offset = offset
+        # We keep the current heading in radians.
         self.heading = heading
+        # We remember the movement speed per step.
         self.speed = speed
+        # We keep the same offset again for clarity.
         self.offset = offset
+        # We remember where the plane should end up.
         self.destination = destination
+        # We collect the flown path for later plotting.
         self.pathlist = []
+        # We store the original planned path for comparison.
         self.original_path = original_path
+        # We track the current position as a list for easy mutation.
         self.position = [self.x, self.y]
 
     def step(self, n_step, new_heading):
+        # If we have not reached the offset yet we stay at the start point.
         if n_step <= self.offset:
             self.x = self.start_x
             self.y = self.start_y
         else:    
+            # We update the heading once the aircraft begins moving.
             self.heading = new_heading
+            # We move forward along the new heading, clamped to the map edges.
             self.x = np.clip(self.x + self.speed *np.cos(new_heading), 0, 100)
             self.y = np.clip(self.y + self.speed *np.sin(new_heading), 0, 100)
+        # We return the new position after this step.
         return self.x, self.y
     
 class Intruder:
     def __init__(self, start_x, start_y, offset, heading, speed, destination):
+        # We remember the starting x coordinate.
         self.start_x = start_x
+        # We remember the starting y coordinate (typo kept for compatibility).
         self.stat_y = start_y
+        # We track the current x position, starting at the origin point.
         self.x = start_x
+        # We track the current y position, starting at the origin point.
         self.y = start_y
+        # We store the wait time before the intruder starts moving.
         self.offset = offset
+        # We store the current heading in radians.
         self.heading = heading
+        # We keep the movement speed per step.
         self.speed = speed
+        # We remember the destination point.
         self.destination = destination
+        # We track the current position for plotting.
         self.position = [self.x, self.y]
 
     def step(self, n_step, new_heading):
+        # If we have not reached the offset yet we hold the starting position.
         if n_step <= self.offset:
             self.x = self.start_x
             self.y = self.start_y
         else:
+            # Otherwise we update the heading and move forward.
             self.heading = new_heading
             self.x = np.clip(self.x + self.speed *np.cos(new_heading), 0, 100)
             self.y = np.clip(self.y + self.speed *np.sin(new_heading), 0, 100)
+        # We return the updated position.
         return self.x, self.y
 
 
@@ -87,24 +127,34 @@ class Agent():
         #    - fileinfo:       metadata about this scenario (e.g., filename, index)
     """
     def __init__(self):
+        # We pull one random conflict scenario out of the dataset.
         o_resolved_path, o_unres_path, o_heading, o_startposition, o_offset_dist_scaled, o_destination, \
         i_path, i_headinglist, i_startposition, i_offset_dist_scaled, i_destination, fileinfo = get_conflict_scenario(featurefile)
         # 2) Store ownship’s “resolved” (ATCO-approved) vs. “unresolved” paths
+        # We keep the resolved path so the agent knows the safe route.
         self.o_resolved_path = o_resolved_path
+        # We also keep the original unresolved path for reference.
         self.o_unresolved_path = o_unres_path
         # 3) Initial and current heading for ownship
         def _wrap_pi(a: float) -> float:
+            # We wrap any angle into the [-pi, pi) range.
             return ((float(a) + math.pi) % (2.0 * math.pi)) - math.pi
 
+        # We store the initial heading in wrapped form.
         self.o_initial_heading = _wrap_pi(o_heading)
+        # We also track the mutable heading during flight.
         self.o_heading = self.o_initial_heading
 
         # 4) Start position (tuple) vs. mutable position list
+        # We remember the start as an immutable tuple.
         self.o_start = tuple(o_startposition)
+        # We also keep a mutable copy we can update as the plane moves.
         self.o_position = o_startposition
         # 5) Distance until conflict (“offset”), scaled for ownship
+        # This distance tells us when the conflict begins for ownship.
         self.o_offset_dist = o_offset_dist_scaled
         # 6) Final waypoint for ownship
+        # We store the final destination point for ownship.
         self.o_destination = o_destination
             # --- Ensure the resolved (ATCO) path runs from START → DESTINATION ---
         def _ensure_forward_path(path, start, dest):
@@ -119,39 +169,53 @@ class Agent():
             return path if keep_cost <= flip_cost else list(reversed(path))
 
         if len(o_resolved_path) >= 2:
+            # We make sure the stored resolved path points in the right direction.
             self.o_resolved_path = _ensure_forward_path(o_resolved_path, self.o_start, self.o_destination)
         else:
             # Degenerate path (just in case) – keep as provided
             self.o_resolved_path = o_resolved_path
 
         # 7) Record actual flown trajectory
+        # We start the flown path list with the starting position.
         self.o_newpathlist = [self.o_position]
 
         # 8) Build LineString **after** possibly reversing the path
+        # We create a shapely line so we can project the plane onto the path.
         self.ATCO_path_linestring = LineString(self.o_resolved_path)
 
         # 9) Intruder: headings & positions
+        # We store the intruder headings sequence.
         self.i_headinglist = i_headinglist
+        # We save the intruder start position as an immutable tuple.
         self.i_start = tuple(i_startposition)
+        # We also keep a mutable intruder position.
         self.i_position = i_startposition
 
         # 10) Intruder path/offset/destination
+        # We keep the intruder path for reference.
         self.i_path = i_path
+        # We store the distance until the intruder reaches the conflict.
         self.i_offset_dist = i_offset_dist_scaled
+        # We record the intruder destination point.
         self.i_destination = i_destination
 
         # 11) Fixed speeds (units/step)
+        # Both aircraft move at a constant speed of two units per step.
         self.o_speed = 2
         self.i_speed = 2
 
         # 12) Steps to each offset
+        # We convert the conflict distance into time steps for ownship.
         self.o_offset = int(np.ceil(self.o_offset_dist / self.o_speed))
+        # We do the same conversion for the intruder.
         self.i_offset = int(np.ceil(self.i_offset_dist / self.i_speed))
 
         # 13) Count of applied actions
+        # We reset the action counter for logging decisions.
         self.n_actions = 0
 
         # 14) Scenario metadata
+        # We store the metadata about the loaded scenario.
         self.fileinfo = fileinfo
 
     def step(self, n_step, new_heading):
@@ -194,12 +258,19 @@ class Agent():
         """
         Aim a little ahead on the ATCO path (pure-pursuit). Returns heading in radians.
         """
+        # We turn the current ownship location into a shapely point.
         cur = Point(self.o_position[0], self.o_position[1])
+        # We find how far along the ATCO path this point sits.
         s = self.ATCO_path_linestring.project(cur)
+        # We look a bit ahead along the path to smooth the heading command.
         s_next = min(self.ATCO_path_linestring.length, s + lookahead)
+        # We pick the target point at that lookahead distance.
         tgt = self.ATCO_path_linestring.interpolate(s_next)
+        # We compute the x offset between the target and the current plane position.
         dx = tgt.x - self.o_position[0]
+        # We compute the y offset between the target and the current plane position.
         dy = tgt.y - self.o_position[1]
+        # We convert the offsets into a desired heading angle.
         return math.atan2(dy, dx)
 
 class StructuredEnv(gym.Env):
@@ -208,22 +279,32 @@ class StructuredEnv(gym.Env):
     creates a fresh Agent. It initializes step and reward counters, then defines how many actions are possible 
     and what shape/value-ranges our observations will have. This tells any RL algorithm how to talk to our environment.
     """
+    # Minimum safe separation distance between aircraft in grid units.
     SAFE_R = 5 # Minimum safe separation distance between aircraft
+    # Hard cap on how many steps the episode can run.
     MAX_STEP = 60 # Maximum number of time-steps per episode
 
     def __init__(self, Reward_Params= [-1, -1, -1, -1, -1, 1], start_llm_at_step: int = 15):
         # 1) Store the list of six reward-component weights (a1…a6)
+        # We store the reward weights so the reward function can use them later.
         self.Reward_Params = Reward_Params
         # 2) Create a new conflict-scenario agent (ownship + intruder)
+        # We create a brand new agent with fresh aircraft positions.
         self.agent = Agent()
         # 3) Initialize the reward from the last step, the current step counter and the accumulated total reward
+        # We reset the immediate reward value.
         self.reward = 0
+        # We reset the step counter back to zero.
         self.n_step = 0
+        # We reset the total episode reward tracker.
         self.total_reward = 0
+        # Actions are 13 discrete turn bins from -30° to +30°.
         self.action_space = spaces.Discrete(13)
+        # We compute one observation to learn the vector length.
         first_obs = self.observation_func()
         n = first_obs.size
 
+        # We start with very wide observation bounds.
         low = np.full(n, -np.inf, dtype=np.float64)
         high = np.full(n,  np.inf, dtype=np.float64)
 
@@ -260,7 +341,9 @@ class StructuredEnv(gym.Env):
         # 15..16: along-track s and remaining path length >= 0
         low[15:17] = 0.0
 
+        # We register the observation space so Gym knows valid ranges.
         self.observation_space = spaces.Box(low=low, high=high, shape=(n,), dtype=np.float64)
+        # We store when the controller should start asking the LLM.
         self.start_llm_at_step = start_llm_at_step  # call LLM only once ≥ this controller step
 
     def reset(self, seed=None, options=None):
@@ -310,21 +393,27 @@ class StructuredEnv(gym.Env):
         # Steps 0–4: autopilot hugs the ATCO path.
         # Step ≥ 5: autopilot OFF → base is current heading; only LLM deltas change it.
         if self.n_step < self.start_llm_at_step:
+            # Early in the episode we follow the planned ATCO heading.
             base_heading = self.agent.path_follow_heading(lookahead=1.0)
         else:
+            # Later on we use the current heading and rely on actions to adjust.
             base_heading = self.agent.o_heading  # keep flying what we have unless LLM adds a delta
 
         # --- Discrete delta from action (0.175/2 ≈ 5° per bin) ---
         if action < 7:
+            # Actions 0-6 add positive multiples of 5 degrees.
             angle = action * (0.175/2)          # +0,+5,...,+30 deg
         else:
+            # Actions 7-12 subtract 5 degree steps.
             angle = (action - 6) * -(0.175/2)   # -5,...,-30 deg
 
         # Final heading this step
+        # We combine the base heading with the discrete change.
         ownship_heading = base_heading + angle
 
 
         # 4) Move both aircraft one step using the composed heading
+        # We update both the ownship and intruder states.
         self.agent.step(self.n_step, ownship_heading)
 
         # 5) Measure distances for termination checks:
@@ -332,21 +421,30 @@ class StructuredEnv(gym.Env):
         #    - Ownship to its destination
         #    - Intruder to its destination
         #    - Separation between the two aircraft
+        # We grab the current ownship position.
         p1 = self.agent.o_position
         # o_destination = self.agent.o_destination
+        # We cast the ownship destination to a NumPy array for math.
         o_destination = np.array(self.agent.o_destination, dtype=float)
+        # We grab the current intruder position.
         p2 = self.agent.i_position
+        # We store the intruder destination.
         i_destination = self.agent.i_destination
+        # We measure how far ownship is from its goal.
         dist1_to_dest = np.linalg.norm(np.array(p1) - np.array(o_destination))
+        # We measure how far intruder is from its own goal.
         dist2_to_dest = np.linalg.norm(np.array(p2) - np.array(i_destination))
+        # We measure the separation distance between both aircraft.
         sep_dist = np.linalg.norm(np.array(p1) - np.array(p2))
 
         # 6) Terminate if both reached within 5 units of their goals
         if (dist1_to_dest < 5) and (dist2_to_dest < 5):
+            # Both aircraft are safely near their goals, so we end the episode.
             terminated = True
         
         # 7) Terminate if they come closer than SAFE_R (collision risk)
         if (sep_dist < self.SAFE_R):
+            # If they are too close we stop immediately due to collision risk.
             terminated = True
 
         # 8) Terminate if ownship is moving away from its goal by more than a small threshold
@@ -357,19 +455,24 @@ class StructuredEnv(gym.Env):
             prev_distance = np.linalg.norm(o_destination - previous_location)
             current_distance = np.linalg.norm(o_destination - o_current_location)
             if prev_distance - current_distance < -threshold:
+                # If the ownship is drifting away we also stop the run.
                 terminated = True # Punish for moving away
 
         # 9) Truncate if we exceed MAX_STEP
         if self.n_step >= self.MAX_STEP:
+            # Episodes longer than MAX_STEP are truncated.
             truncated = True
         
         # 10) Compute the reward, passing a combined “done” flag
         combined_done_for_reward_func = terminated or truncated
+        # We calculate the reward with knowledge of whether the episode ended.
         self.reward = self.reward_func(combined_done_for_reward_func)
+        # We add this step's reward to the running total.
         self.total_reward += self.reward
-        
+
         # 11) Build next observation and empty info dict
         observation = self.observation_func()
+        # We return an empty info dictionary as required by Gym.
         info = {}
         # 12) Return the Gym-standard 5-tuple
         return observation, self.reward, terminated, truncated, info # Return 5 values
@@ -403,10 +506,15 @@ class StructuredEnv(gym.Env):
         #    • Create a Point for ownship’s current pos
         #    • Compute its distance to the approved LineString (in same units)
         #    • Scale by 20/1000 to form the deviation reward
+        # We measure how far the ownship is from the destination.
         o_destination = np.array(self.agent.o_destination)       
+        # We create a point out of the current ownship position.
         o_current_location = Point(self.agent.o_position)
+        # We grab the resolved ATCO path line.
         ATCO_path_linestring = self.agent.ATCO_path_linestring
+        # We compute the shortest distance from ownship to the ATCO path.
         dist = o_current_location.distance(ATCO_path_linestring)
+        # We scale the distance to form a small penalty.
         reward_traj_dev =  20 * (dist/200)
         # 4) Combine any CTDreward (currently zero) with the trajectory deviation
         Reward_Deviation = CTDreward + reward_traj_dev # This is negative, so it penalizes deviation
@@ -427,7 +535,7 @@ class StructuredEnv(gym.Env):
             # 7a) Collision or near-miss bonus/penalty: if we ended due to separation breach
             if (dis1 < self.SAFE_R) :
                 Reward_LOS = 10 # This is a negative reward, so it penalizes loss of separation
- 
+
             # 7b) If we reached the maximum number of steps without reaching the destination
             if self.n_step == self.MAX_STEP:
                 # Penalize based on how far ownship still is from its destination
@@ -467,8 +575,10 @@ class StructuredEnv(gym.Env):
             else:
                 Reward_Reached = - dist1/10 # penalize for not reaching destination (proportional to remaining distance)
 
+        # We mix all parts using the provided weights.
         reward = a1 * Reward_Step + a2 *Reward_Deviation + a3 * Reward_LOS + \
                     a5 * Reward_Not_Reached + a6 * Reward_Reached + Moving_back_reward 
+        # We return the final number back to the caller.
         return reward        
 
 
@@ -492,18 +602,27 @@ class StructuredEnv(gym.Env):
         """
         observation  = []
 
+        # Ownship X coordinate.
         observation.append(self.agent.o_position[0])
+        # Ownship Y coordinate.
         observation.append(self.agent.o_position[1])
+        # Intruder X coordinate.
         observation.append(self.agent.i_position[0])
+        # Intruder Y coordinate.
         observation.append(self.agent.i_position[1])
+        # Ownship destination X coordinate.
         observation.append(self.agent.o_destination[0])
+        # Ownship destination Y coordinate.
         observation.append(self.agent.o_destination[1])
         # observation.append(self.agent.i_destination[0])
         # observation.append(self.agent.i_destination[1])
     
 
+        # Distance between ownship and intruder.
         dist1 = np.linalg.norm(np.array(self.agent.o_position) - np.array(self.agent.i_position)) 
+        # Distance from ownship to its destination.
         dist_o_d = np.linalg.norm(np.array(self.agent.o_position) - np.array(self.agent.o_destination))
+        # Distance from intruder to its destination.
         dist_i_d = np.linalg.norm(np.array(self.agent.i_position) - np.array(self.agent.i_destination))
 
         # Distance between ownship and intruder
@@ -514,13 +633,16 @@ class StructuredEnv(gym.Env):
         observation.append(dist_i_d)
         # individual coordinates
 
+        # We build a point for the ownship location to measure path distances.
         current_location = Point(self.agent.o_position)
         # How far ownship is from its ORIGINAL unresolved path
         CTD_distance  = current_location.distance(LineString(self.agent.o_unresolved_path))
         # How far ownship is from the ATCO-approved path
         dist_from_ATCO_path = current_location.distance(self.agent.ATCO_path_linestring)
 
+        # Distance to unresolved path.
         observation.append(CTD_distance) #
+        # Distance to resolved ATCO path.
         observation.append(dist_from_ATCO_path)
 
         # Ownship’s current heading angle (radians)
@@ -529,6 +651,7 @@ class StructuredEnv(gym.Env):
         # New LLM observation:
         # --- NEW ATCO-path features ---
                 # --- NEW ATCO-path features ---
+        # We reuse shapely points to compute new path features.
         cur_pt = Point(self.agent.o_position[0], self.agent.o_position[1])
         line = self.agent.ATCO_path_linestring
 
@@ -555,7 +678,7 @@ class StructuredEnv(gym.Env):
         # heading_error_to_path_deg = (path - own) wrapped to (-180, 180]
         heading_error_to_path_deg = ((path_heading_deg - own_heading_deg + 180.0) % 360.0) - 180.0
 
-        # Keep ObsSnapshot’s expected order:
+        # We add path heading, heading error, and signed cross-track in the expected order.
         observation.extend([
             path_heading_deg,           # index 12
             heading_error_to_path_deg,  # index 13
@@ -565,6 +688,7 @@ class StructuredEnv(gym.Env):
         # (Optional) You can still add these extras; ObsSnapshot just ignores them:
         along_track_s = float(s)
         remaining_path_len = float(line.length - s)
+        # We append how far along the path we are and how much path remains.
         observation.extend([along_track_s, remaining_path_len])  # indices 15,16 (optional)
    
         # Convert to a NumPy array and return
@@ -581,22 +705,31 @@ class StructuredEnv(gym.Env):
         start, current, and destination points, the ATCO-approved path, and safety circles. It can either display the 
         figure interactively or save it to disk. The close method is a no-op placeholder for any future cleanup.
         """
+        # We decide where to save images; default folder is under Images.
         folder_path = Path(folder) if folder is not None else project_path('Images')
         # 1) Draw the static sector background
         figure = plot_sector() # Call our helper to redraw boundaries/waypoints
+        # We fetch the axes so we can add points and paths.
         ax = figure.gca()  # Grab the current Axes for plotting overlays
         # ax.scatter(50,50, s = 200)
         
         # 2)Plot ownship’s current position (black dot), Plot ownship’s start (black triangle), Plot ownship’s destination (black star)
+        # Black dot marks current ownship position.
         ax.scatter(self.agent.o_position[0], self.agent.o_position[1], c = 'black', s = 40)
+        # Black triangle marks ownship start.
         ax.scatter(self.agent.o_start[0], self.agent.o_start[1] , c = 'black', s = 50, marker = '^')
+        # Black star marks ownship destination.
         ax.scatter(self.agent.o_destination[0], self.agent.o_destination[1], c = 'black', s = 20, marker= '*')
 
         # 3) Plot intruder’s current position (maroon dot), Plot intruder’s start (maroon triangle), Plot intruder’s destination (maroon star)
+        # Maroon dot marks intruder current position.
         ax.scatter(self.agent.i_position[0], self.agent.i_position[1], c = 'maroon', s = 40)
+        # Maroon triangle marks intruder start.
         ax.scatter(self.agent.i_start[0], self.agent.i_start[1] , c = 'maroon', s = 50, marker = '^')
+        # Maroon star marks intruder destination.
         ax.scatter(self.agent.i_destination[0], self.agent.i_destination[1], c = 'maroon', s = 20, marker= '*')
         x, y = [],[]
+        # We collect the unresolved path points in case we want to plot them later.
         for i in range(len(self.agent.o_unresolved_path)):
             x.append(self.agent.o_unresolved_path[i][0])    
             y.append(self.agent.o_unresolved_path[i][1])
@@ -605,6 +738,7 @@ class StructuredEnv(gym.Env):
         #add circle to the destination
         
         # 4) Draw the ATCO-approved path as a dashed maroon line
+        # The ATCO path is drawn as a dashed maroon line.
         x_, y_ = self.agent.ATCO_path_linestring.xy
         ax.plot(x_, y_, color = 'maroon',linestyle = '--', alpha = 1)
 
@@ -613,9 +747,11 @@ class StructuredEnv(gym.Env):
                               alpha = 0.2)
         circle2 = plt.Circle((self.agent.i_destination[0], self.agent.i_destination[1]), 5, color = 'maroon',\
                               alpha = 0.5)
+        # We add faint circles to show acceptable arrival area.
         ax.add_patch(circle1)
         ax.add_patch(circle2)
         # 6) Annotate title with step number, recent reward, totals, headings, and offsets
+        # Title summarises current timestep, reward stats, headings, and offsets.
         ax.set_title("Step {} - Reward {:.3f} - Total Reward {:.3f} - headings{}  - offsets(O:I){}".format(self.n_step,self.reward,\
                                                                             self.total_reward,\
                                                                                 ((self.agent.o_initial_heading) ,\
@@ -626,9 +762,10 @@ class StructuredEnv(gym.Env):
         
         # 7) Display the plot or save it to a file
         if show:
+            # When asked we pop the figure on screen.
             plt.show()
         else:
-            # Save the plot as a PNG file named by step number
+            # Otherwise we ensure the folder exists and save to disk.
             folder_path.mkdir(parents=True, exist_ok=True)
             output_path = folder_path / f"image_{self.n_step:03d}.png"
             plt.savefig(output_path)

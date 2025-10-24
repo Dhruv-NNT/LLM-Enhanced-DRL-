@@ -58,9 +58,9 @@ Current situation (all numbers are in scenario units):
 - Step index: 1
 - Ownship position: x=86.1, y=68.0
 - Intruder position: x=68.1, y=89.3
-- Ownship destination: x=18.6, y=60.2
+- Ownship destination: x=19.0, y=60.3
 - Separation (ownship ↔ intruder): 27.89
-- Distances: ownship→dest=67.99, intruder→dest=67.49
+- Distances: ownship→dest=67.55, intruder→dest=67.49
 - Deviation: cross-track-to-original=0.00, distance-to-ATCO-path=0.00
 - Ownship heading: -151.9° (0°=east, positive is counter-clockwise)
 - ATCO path heading: -151.9°
@@ -69,7 +69,7 @@ Current situation (all numbers are in scenario units):
 - provided_heading_error_to_path: -0.0° (Δ=0.0°)
 
 Derived signals (simple math, for decision support):
-- Heading error to destination: -21.5° (destination is to your right)
+- Heading error to destination: -21.4° (destination is to your right)
 - Bearing error to intruder:   -77.7° (intruder is to your right; ahead)
 - Separation trend (Δsep):      N/A (no previous observation)
 
@@ -86,12 +86,12 @@ ATCO baseline (two-phase mode):
 Baseline decision hints: start turns inside the typical window; prefer smaller bins when geometry is mild; avoid cross-track values beyond p90 unless necessary.
 
 PAST CASES (closest matches):
-- t001_wait_turn: sep≈27.9, ttcp≈n/a, dist≈68.0, head_err_path≈n/a; decision: turn 0°, hold 2
-  summary: The current separation distance is 27.9 units, with a bearing error to the intruder of -77.7°.  The absence of kinematic data prevents TTCP and relative speed calculation. The geometry suggests a potential need for a left turn in the EXECUTE_TURN phase to maintain safe separation. The heading error to the ATCO path is 0.0 degrees.
-  rationale: Following precedent from past cases (t001_wait_turn), a holding step is necessary to ensure safety and allow for a more informed decision. Since we are in the WAIT_TURN phase, no turn is executed. The intruder's position to the right suggests a potential need for a left turn in the EXECUTE_TURN phase. Prioritizing safety, a holding step is chosen.
-- t001_wait_turn: sep≈27.9, ttcp≈n/a, dist≈68.0, head_err_path≈n/a; decision: turn 0°, hold 2
-  summary: The current separation distance is 27.89 units. The bearing error to the intruder is -77.7 degrees, indicating the intruder is ahead and to the right.  The absence of kinematic data prevents the calculation of TTCP and relative speed. The heading error to the ATCO path is 0.0 degrees.  The geometry suggests a potential need for a left turn in the EXECUTE_TURN phase to maintain safe separation.
-  rationale: Following precedent from past cases (t001_wait_turn), a holding step is necessary to ensure safety and allow for a more informed decision. Since we are in the WAIT_TURN phase, no turn is executed. The intruder's position to the right suggests a potential need for a left turn in the EXECUTE_TURN phase. Prioritizing safety, a holding step is chosen.
-- t001_wait_turn: sep≈27.9, ttcp≈n/a, dist≈67.9, head_err_path≈n/a; decision: turn 0°, hold 2
-  summary: Current separation is 27.89 units. Bearing error to intruder is -77.7°, indicating the intruder is ahead and to the right.  Heading error to the ATCO path is 0.0°. Lack of kinematic data prevents TTCP and relative speed calculations.  The geometry suggests a potential need for a right turn in the EXECUTE_TURN phase to maintain safe separation.
+- t001_wait_turn: sep≈27.9, ttcp≈n/a, dist≈67.6, head_err_path≈n/a; decision: turn 0°, hold 2
+  summary: The current separation distance is 27.89 units. The bearing error to the intruder is -77.7°, indicating a position ahead and to the right. The heading error to the ATCO path is 0.0°.  The lack of kinematic data prevents TTCP and relative speed calculations. The geometry suggests a potential need for a right turn in the EXECUTE_TURN phase to maintain safe separation. The current phase is WAIT_TURN, so no maneuver is executed.
+  rationale: Following precedent from past cases (t001_wait_turn), a holding step is necessary to ensure safety and allow for a more informed decision. Since we are in the WAIT_TURN phase, no turn is executed. The intruder's position to the right suggests a potential need for a right turn in the EXECUTE_TURN phase. Prioritizing safety, a holding step is chosen.
+- t001_wait_turn: sep≈27.9, ttcp≈n/a, dist≈67.5, head_err_path≈n/a; decision: turn 0°, hold 2
+  summary: The current separation distance is 27.89 units. The bearing error to the intruder is -77.7°, indicating the intruder is positioned ahead and to the right. The heading error to the ATCO path is 0.0°. The lack of kinematic data prevents TTCP and relative speed calculations. The geometry suggests a potential need for a right turn in the EXECUTE_TURN phase to maintain safe separation.
+  rationale: Following precedent from past cases (t001_wait_turn), a holding step is necessary to ensure safety and allow for a more informed decision. Since we are in the WAIT_TURN phase, no turn is executed. The intruder's position to the right suggests a potential need for a right turn in the EXECUTE_TURN phase. Prioritizing safety, a holding step is chosen.
+- t001_wait_turn: sep≈27.9, ttcp≈n/a, dist≈67.7, head_err_path≈n/a; decision: turn 0°, hold 2
+  summary: The current situation presents a separation of 27.9 units between ownship and the intruder. The bearing error to the intruder is -77.7°, indicating a position ahead and to the right. The heading error to the ATCO path is 0.0°. Lack of kinematic data prevents TTCP and relative speed calculations. The geometry suggests a potential need for a right turn in the EXECUTE_TURN phase to maintain safe separation.
   rationale: Following precedent from past cases (t001_wait_turn), a holding step is necessary to ensure safety and allow for a more informed decision. Since we are in the WAIT_TURN phase, no turn is executed. The intruder's position to the right suggests a potential need for a right turn in the EXECUTE_TURN phase. Prioritizing safety, a holding step is chosen.

@@ -1,42 +1,40 @@
-# LLM-DRL Restructured Code
+# LLM-DRL Restructured Code (Easy Guide)
 
-This directory converts the former `RL - LLM (Complete Code Pipeline).ipynb` notebook into importable Python modules and small entry-point scripts. The goal is to keep the number of files low while making the hybrid PPO + LLM pipeline easier to modify and reuse.
+This folder turns the original notebook pipeline into small Python files. The goal is to follow the same PPO + LLM idea but make each step clear and reusable.
 
-## Layout
-- `configs.py` – central knobs (run names, logging paths, PPO schedule, reward weights).
-- `train.py` – hybrid training loop with PPO + optional LLM guidance episodes.
-- `evaluate.py` – deterministic rollouts that load saved PPO weights and export GIFs.
-- `rl_llm/env.py` – scenario loader, `Agent`, and `StructuredEnv` gym environment.
-- `rl_llm/ppo.py` – running statistics, hybrid actor-critic network, PPO wrapper, checkpoint helpers.
-- `rl_llm/llm.py` – prompt builder, controller FSM, Ollama helpers, memory bookkeeping, ghost comparison.
-- `rl_llm/utils.py` – geometry, plotting, and scenario-selection helpers copied from the original `utils.py`.
-- `rl_llm/__init__.py` – convenience re-export of the main classes.
+## How the code runs (simple steps)
+1. **Set knobs** – `configs.py` holds run names, log folders, reward weights, and when the LLM should join. Think of it as the single place to change paths or schedules.
+2. **Start training** – `train.py` imports everything, builds the `PPO` agent, creates the `StructuredEnv`, and loops over episodes. During some episodes it also talks to the LLM through `LLMGuidanceController`.
+3. **Load a scenario** – `rl_llm/env.py` creates the air-traffic world. Important pieces are:
+   - `Agent`, `Ownship`, `Intruder` for aircraft state.
+   - `StructuredEnv.step()` which applies an action, moves both planes, checks safety, and computes reward.
+4. **Learn actions** – `rl_llm/ppo.py` keeps all PPO tools:
+   - `HybridActorCritic` and `RolloutBuffer` store experience.
+   - `PPO.update()` learns from the buffer.
+   - `save_training_checkpoint()` and `load_training_checkpoint()` handle resumes.
+5. **Talk to the LLM** – `rl_llm/llm.py` manages prompts and decisions:
+   - `BasePromptBuilder` explains the current state to the model.
+   - `LLMGuidanceController` decides when to ask for help, stores answers, and replays them.
+   - `ghost_compare_hold()` compares the LLM turn against the pure PPO turn.
+6. **Use geometry helpers** – `rl_llm/utils.py` converts raw flight data into the 0–100 grid, chooses random conflict cases, and draws the sector map.
+7. **Review results** – `evaluate.py` loads the best PPO weights, plays one deterministic episode, saves frames, and turns them into a GIF.
 
-## Prompts to Restore
-Two placeholders must be populated manually (per user request):
-1. `rl_llm/llm.py` → `PROMPT_INSTRUCTIONS`: paste the “Base prompt without the comments” text from notebook cell 21.
-2. `rl_llm/llm.py` → `EVALUATOR_PROMPT_TEMPLATE`: paste the evaluator rubric prompt from notebook cell 23 (inside `call_llm_evaluator`).
+## Important helpers (quick reference)
+- `StructuredEnv.reset()` / `step()` – start and advance the episode.
+- `PPO.select_action_hybrid()` – choose an action that can blend LLM advice.
+- `LLMGuidanceController.next_action()` – build a prompt, get the LLM answer, and convert it into a turn + hold time.
+- `ghost_compare_hold()` – simulate PPO vs LLM turns without touching the live environment.
 
-Leave the surrounding formatting intact; both placeholders accept multi-line strings. The evaluator template should include a `{context}` token where the episode JSON is injected.
+## Before running
+- Make sure `featurefile_transformed_2.csv` and the path folders under `configs.py` exist.
 
-## Usage
-1. Ensure the dataset referenced in `configs.FEATUREFILE_PATH` (`featurefile_transformed_2.csv`) is available relative to the project root.
-2. Install the dependencies listed in the original repository (e.g., `pip install -r requirements.txt`).
-3. Launch training:
-   ```bash
-   python train.py
-   ```
-   Checkpoints and TensorBoard logs are written to the run directory printed at startup (inside `log/PPO/`).
-4. Run evaluation rollouts and export GIFs:
-   ```bash
-   python evaluate.py
-   ```
-   GIFs are written to `configs.EVAL_OUTPUT_DIR`.
+## Command line cheatsheet
+```bash
+# Train PPO + optional LLM guidance
+python train.py
 
-## Notes
-- All logic is copied verbatim from the notebook cells, apart from minimal structural glue, the prompt placeholders, and the run-directory safeguards.
+# Evaluate the saved policy and build GIFs
+python evaluate.py
+```
 
-- Training runs now call `configs.ensure_unique_subdir` so a new timestamped log directory is created if the base name already exists; set `ALLOW_TRAIN_OVERWRITE = True` in `configs.py` if you explicitly want to reuse an existing folder.
-- GIF exports use the same helper, preventing accidental overwrites; toggle `ALLOW_EVAL_OVERWRITE` when you need to reuse an output folder.
-- The training script resumes from `configs.LAST_CKPT_PATH` when present, otherwise falls back to weights-only checkpoints (`checkpoint_*.pth`) or starts from scratch.
-- Memory logs (`memory/run_*`) are pruned automatically to avoid runaway storage.
+Logs, checkpoints, and GIFs appear in the folders printed on screen (they come from the paths in `configs.py`).

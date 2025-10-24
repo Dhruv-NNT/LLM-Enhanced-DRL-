@@ -4,6 +4,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
+# Training run naming and logging locations.
 RUN_NAME = "PPO_v8_LLM_RL"
 LOG_DIR = str(PROJECT_ROOT / "log" / "PPO" / RUN_NAME)
 BEST_MODEL_PATH = str(Path(LOG_DIR) / "best_model.pth")

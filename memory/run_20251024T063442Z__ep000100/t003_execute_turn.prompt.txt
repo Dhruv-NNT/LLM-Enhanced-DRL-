@@ -41,8 +41,8 @@ YOUR OUTPUT (strict JSON):
   }
 }
 A PHASE STATE block will be provided below. Use it exactly as given.PHASE STATE (controller-supplied):
-- current_phase: WAIT_TURN
-- step_index: 1
+- current_phase: EXECUTE_TURN
+- step_index: 3
 - allowed_bins: [-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30]
 - VALID_PHASES: ['WAIT_TURN','EXECUTE_TURN']
 - enforcement:
@@ -55,12 +55,12 @@ Current observation, derived signals, and recent history are:
 
 
 Current situation (all numbers are in scenario units):
-- Step index: 1
+- Step index: 3
 - Ownship position: x=68.1, y=89.3
-- Intruder position: x=40.2, y=80.0
-- Ownship destination: x=22.7, y=40.0
-- Separation (ownship ↔ intruder): 29.33
-- Distances: ownship→dest=67.00, intruder→dest=62.20
+- Intruder position: x=42.9, y=77.1
+- Ownship destination: x=70.8, y=38.4
+- Separation (ownship ↔ intruder): 27.94
+- Distances: ownship→dest=50.93, intruder→dest=58.20
 - Deviation: cross-track-to-original=0.01, distance-to-ATCO-path=0.00
 - Ownship heading: -118.0° (0°=east, positive is counter-clockwise)
 - ATCO path heading: -118.0°
@@ -69,15 +69,15 @@ Current situation (all numbers are in scenario units):
 - provided_heading_error_to_path: -0.0° (Δ=0.0°)
 
 Derived signals (simple math, for decision support):
-- Heading error to destination: -14.6° (destination is to your right)
-- Bearing error to intruder:   -43.5° (intruder is to your right; ahead)
-- Separation trend (Δsep):      N/A (no previous observation)
+- Heading error to destination: +31.1° (destination is to your left)
+- Bearing error to intruder:   -36.0° (intruder is to your right; ahead)
+- Separation trend (Δsep):      -0.634 per step (closing)
 
-Kinematics (needs a previous observation to compute):
-- Ownship speed: N/A
-- Intruder speed: N/A
-- Relative speed: N/A
-- TTCP (to CPA): N/A
+Kinematics (scenario-units per step; 1 step = 2 min):
+- Ownship speed: 0.000
+- Intruder speed: 2.000
+- Relative speed |v_rel|: 2.000
+- TTCP (to CPA): 3.98 steps (~8.0 min)
 
 ATCO baseline (two-phase mode):
 - Turn magnitudes (how big the first turn usually is): 0°:0%, 5°:0%, 10°:0%, 15°:0%, 20°:0%, 25°:0%, 30°:100%. Most common bins → 30° (100%). Rule-of-thumb: small turns (≤10°) ≈ 0% of cases; large turns (≥20°) ≈ 100%.
@@ -86,12 +86,12 @@ ATCO baseline (two-phase mode):
 Baseline decision hints: start turns inside the typical window; prefer smaller bins when geometry is mild; avoid cross-track values beyond p90 unless necessary.
 
 PAST CASES (closest matches):
-- t001_wait_turn: sep≈29.3, ttcp≈n/a, dist≈67.0, head_err_path≈n/a; decision: turn 0°, hold 2
-  summary: The aircraft is in the WAIT_TURN phase, exhibiting a bearing error to the intruder of -43.5° and a heading error to the destination of -14.6°.  Separation is 29.33 units. Lack of kinematic data prevents trend analysis of speed and TTCP. The conflicting geometry necessitates a holding step to monitor the situation before initiating a turn.
-  rationale: The conflicting geometry (intruder and destination both to the right) and the WAIT_TURN phase dictate a holding step to monitor the situation. Past cases (t001_wait_turn) have demonstrated that a holding step is appropriate in similar circumstances, allowing for assessment of the evolving situation before initiating a turn. The phase dictates that we hold for now.
-- t001_wait_turn: sep≈29.3, ttcp≈n/a, dist≈67.0, head_err_path≈n/a; decision: turn 0°, hold 2
-  summary: The aircraft is in the WAIT_TURN phase, with a bearing error to the intruder of -43.5° and a heading error to the destination of -14.6°. Separation is 29.33 units, and ownship→destination distance is 67.00. Lack of kinematic data prevents trend analysis of speed and TTCP. The conflicting geometry necessitates a holding step to monitor the situation before initiating a turn.  The phase dictates that we hold for now.
-  rationale: The conflicting geometry (intruder and destination both to the right) and the WAIT_TURN phase dictate a holding step to monitor the situation. Past cases (t001_wait_turn) have demonstrated that a holding step is appropriate in similar circumstances, allowing for assessment of the evolving situation before initiating a turn. The phase dictates that we hold for now.
-- t001_wait_turn: sep≈29.3, ttcp≈n/a, dist≈66.9, head_err_path≈n/a; decision: turn 0°, hold 2
-  summary: The aircraft is currently in the WAIT_TURN phase, with a bearing error to the intruder of -43.5° and a heading error to the destination of -14.6°.  The geometry presents a conflicting situation, with both the intruder and destination located to the right of ownship's current heading. Lack of kinematic data prevents trend analysis and limits assessment of separation and TTCP trends. The current phase mandates a holding step to monitor the situation before initiating a turn.
-  rationale: The conflicting geometry (intruder and destination both to the right) and the WAIT_TURN phase dictate a holding step to monitor the situation. Past cases (t001_wait_turn) have demonstrated that a holding step is appropriate in similar circumstances, allowing for assessment of the evolving situation before initiating a turn. The phase dictates that we hold for now.
+- t003_execute_turn: sep≈27.9, ttcp≈4.0, dist≈50.9, head_err_path≈n/a; decision: turn -30°, hold 3
+  summary: Given the bearing error to intruder (-36.0°) and decreasing separation trend, a left turn is chosen to maximize separation. The closest past case (t003_execute_turn) informs this decision.
+  rationale: The sign rule and past case (t003_execute_turn) suggest a -30° turn to increase separation, which aligns with the geometry of the situation.
+- t003_execute_turn: sep≈27.9, ttcp≈4.0, dist≈50.9, head_err_path≈n/a; decision: turn -30°, hold 3
+  summary: Given the bearing error to intruder (-36.0°), heading error to path (+0.0°), and decreasing separation trend, a -30° turn is chosen to maximize separation. A hold of 3 steps will allow for initial separation to be assessed and the effectiveness of the turn to be evaluated.
+  rationale: The sign rule and past case (t003_execute_turn) inform the decision to turn left (-30°).
+- t003_execute_turn: sep≈27.9, ttcp≈4.0, dist≈50.9, head_err_path≈n/a; decision: turn -30°, hold 3
+  summary: The intruder presents a bearing error of -36.0°, indicating an approach from the right. The separation is decreasing at a rate of -0.634 units/step, with a TTCP of 3.98 steps. The geometry closely matches past corrective maneuvers (t003_execute_turn). A -30° turn is selected to increase separation, aligned with the sign rule and consistent with past cases.
+  rationale: The intruder is closing from the right, necessitating a left turn to increase separation. Following the sign rule and referencing past corrective maneuvers (t003_execute_turn), a -30° turn is chosen to maximize separation. A hold of 3 steps will allow for initial separation to be assessed and the effectiveness of the turn to be evaluated.
