@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251024T063442Z__ep000100",
+    "tag": "t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "170321set2_1_QR191.csv",
+      "170321set2_1_KL190.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251024T063442Z__ep000100/t001_wait_turn.prompt.txt",
+    "sha1": "4169ba143ff41ce6ae296c596e629fa6a8feb62c"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 29.33401191556494,
+    "dist_o_dest": 50.92868133539782,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": null,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.9956443606277,
+    "heading_err_path_deg": -3.524291969370097e-12
+  },
+  "answer": {
+    "scenario_summary": "Waiting for the EXECUTE_TURN phase with a potential left turn.",
+    "technical_summary": "The current situation indicates a potential need for a left turn in the EXECUTE_TURN phase, as the intruder is to our right and the heading error to destination is +31.1°.",
+    "rationale": "Following past cases (t001_wait_turn), we are holding the current heading and preparing for a potential turn in the EXECUTE_TURN phase. The intruder's position to the right (-43.5° bearing error) suggests a potential need for a left turn.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 29.33401191556494
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 2
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.01,
+    "ppo_return": -0.01,
+    "ppo_turn_deg": 5,
+    "return_horizon": 1
+  },
+  "hold_effect": {
+    "n_steps": 1,
+    "min_sep_during_hold": 28.577040797018903,
+    "ttcp_end": 4.979624293502907,
+    "dist_o_dest_end": 50.92868133539782,
+    "deltas": {
+      "sep_oi": -0.756971118546037,
+      "ttcp": null,
+      "dist_o_dest": 0.0
+    }
+  },
+  "observation_after": {
+    "step": 2,
+    "sep_oi": 28.577040797018903,
+    "dist_o_dest": 50.92868133539782,
+    "dist_i_dest": 60.20120899009128,
+    "ttcp": 4.979624293502907,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.9956443606277,
+    "heading_err_path_deg": -3.524291969370097e-12
+  }
+}

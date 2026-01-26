@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251024T063442Z__ep000100",
+    "tag": "t003_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 3,
+    "fileinfo": [
+      "170321set2_1_QR191.csv",
+      "170321set2_1_KL190.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251024T063442Z__ep000100/t003_execute_turn.prompt.txt",
+    "sha1": "4ba69862d40dd50e18dafa63eb688e401aef5d11"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 27.942982417173365,
+    "dist_o_dest": 50.92868133539782,
+    "dist_i_dest": 58.20122262880133,
+    "ttcp": 3.9796242935029067,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.9956443606277,
+    "heading_err_path_deg": -3.524291969370097e-12
+  },
+  "answer": {
+    "scenario_summary": "",
+    "technical_summary": "",
+    "rationale": "",
+    "metrics": {
+      "ttcp": 3.9796242935029067,
+      "separation_distance": 27.942982417173365
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": 5,
+      "hold_steps": 0
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.1389551394457102,
+    "ppo_return": -0.1389551394457102,
+    "ppo_turn_deg": 5,
+    "return_horizon": 3
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 22.546147503654364,
+    "ttcp_end": 14.399643299866264,
+    "dist_o_dest_end": 45.25218631161733,
+    "deltas": {
+      "sep_oi": -5.396834913519001,
+      "ttcp": 10.420019006363358,
+      "dist_o_dest": -5.67649502378049
+    }
+  },
+  "observation_after": {
+    "step": 6,
+    "sep_oi": 22.546147503654364,
+    "dist_o_dest": 45.25218631161733,
+    "dist_i_dest": 52.20129854021035,
+    "ttcp": 14.399643299866264,
+    "own_heading_deg": -92.92874082365067,
+    "path_heading_deg": -117.99564436061485,
+    "heading_err_path_deg": -25.066903536964162
+  }
+}

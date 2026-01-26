@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "run_20251024T064345Z__ep000300",
+    "tag": "t003_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 3,
+    "fileinfo": [
+      "290321set2_1_PR131.csv",
+      "290321set2_1_3K130.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/memory/run_20251024T064345Z__ep000300/t003_execute_turn.prompt.txt",
+    "sha1": "230ca82a5cd785a932c4438e0cb7aba54d6a540e"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 28.36490733321547,
+    "dist_o_dest": 65.16875892147027,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": 0.0,
+    "own_heading_deg": -146.91092789481107,
+    "path_heading_deg": -151.92430860220105,
+    "heading_err_path_deg": -5.0133807073899845
+  },
+  "answer": {
+    "scenario_summary": "Ownship at x=83.2, y=65.4, heading -146.9°; intruder at x=68.1, y=89.3; ownship destination at x=18.3, y=60.2.",
+    "technical_summary": "Current situation: decreasing separation (-0.045 units/step), TTCP 0.00 steps (~0.0 min); intruder position to the right (bearing error -90.7°).",
+    "rationale": "Given the decreasing separation, short TTCP, and the intruder's position to the right, a turn away from the intruder is necessary to increase separation. This decision aligns with past cases like t003_execute_turn where similar geometry required a corrective maneuver.",
+    "metrics": {
+      "ttcp": 0.0,
+      "separation_distance": 28.36490733321547
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -20,
+      "hold_steps": 2
+    }
+  },
+  "branch_compare": {
+    "llm_return": -0.08779013062455766,
+    "ppo_return": -0.5838159968714439,
+    "ppo_turn_deg": 5,
+    "return_horizon": 3
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 28.634025986827258,
+    "ttcp_end": 0.0,
+    "dist_o_dest_end": 60.371507821935396,
+    "deltas": {
+      "sep_oi": 1.3730686534100371,
+      "ttcp": 0.0,
+      "dist_o_dest": -4.797251099534876
+    }
+  },
+  "observation_after": {
+    "step": 6,
+    "sep_oi": 29.737975986625507,
+    "dist_o_dest": 60.371507821935396,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": 0.0,
+    "own_heading_deg": -141.89754718741636,
+    "path_heading_deg": -172.6663882116149,
+    "heading_err_path_deg": -30.768841024198537
+  }
+}
