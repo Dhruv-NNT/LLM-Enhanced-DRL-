@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep004_t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "290321set2_1_QR201.csv",
+      "290321set2_1_TR200.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/memory/ep004_t001_wait_turn.prompt.txt",
+    "sha1": "940e63e2f9034f6f7f2bb7f4d942848a224a33fc"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 27.88869352555788,
+    "dist_o_dest": 51.41000381491912,
+    "dist_i_dest": 76.13942350878405,
+    "ttcp": null,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -117.99564436063031,
+    "heading_err_path_deg": -6.139089236967266e-12
+  },
+  "answer": {
+    "scenario_summary": "Ownship at x=68.1, y=89.3, heading -118.0°, deviating cross-track-to-original by +0.01. Intruder at x=86.1, y=68.0. Ownship destination at x=70.9, y=38.0.",
+    "technical_summary": "Current situation: ownship position, intruder position, ownship heading, deviation from original path, and signed cross-track-to-path. Heading error to destination +31.2°, bearing error to intruder +68.4°.",
+    "rationale": "Considering the current situation, I will choose a small turn to the right (5°) to increase separation and maintain a safe distance while still progressing toward my destination.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 27.88869352555788
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 1
+    }
+  },
+  "apply_log": {
+    "applied_step": 1,
+    "heading_before_apply_deg": -117.99564436062418,
+    "heading_after_apply_deg": -117.99564436062418,
+    "delta_heading_deg": 0.0,
+    "turn_commanded_deg": 0.0
+  },
+  "hold_effect": {
+    "n_steps": 1,
+    "min_sep_during_hold": 27.214536732922884,
+    "ttcp_end": 4.143527121860611,
+    "dist_o_dest_end": 49.709370362188494,
+    "deltas": {
+      "sep_oi": -0.6741567926349958,
+      "ttcp": null,
+      "dist_o_dest": -1.700633452730628
+    }
+  },
+  "observation_after": {
+    "step": 2,
+    "sep_oi": 27.214536732922884,
+    "dist_o_dest": 49.709370362188494,
+    "dist_i_dest": 76.13942350878405,
+    "ttcp": 4.143527121860611,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -118.66987534592755,
+    "heading_err_path_deg": -0.6742309853033817
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

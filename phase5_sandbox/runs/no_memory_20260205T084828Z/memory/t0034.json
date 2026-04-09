@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0034",
+    "run_id": "memory",
+    "step": 34,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 34,
+    "sep_oi": 16.03714709002776,
+    "dist_o_dest": 15.994156509012575,
+    "dist_i_dest": 3.1921083745272343,
+    "ttcp": 0.0,
+    "own_heading_deg": -143.06254789759768,
+    "path_heading_deg": -145.63937464658412,
+    "heading_err_path_deg": -2.5768267489864343,
+    "signed_cross_track_to_path": 1.1250413852469263
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, exhibiting a slight heading error and positive cross-track error. The separation between ownship and the intruder is increasing, and the intruder is moving further away from ownship's nose. The path deviation is worsening.",
+    "technical_summary": "Ownship's heading (-143.1\u00b0) is slightly off the ATCO path heading (-145.6\u00b0), resulting in a heading error of -2.6\u00b0. The cross-track error is positive (+1.13), indicating ownship is to the left of the path. The separation between ownship and the intruder is increasing at a rate of +0.912 per step. The TTCP is near zero, suggesting a potential conflict in the near future. The trend of the heading error to the destination is worsening.",
+    "rationale": "The current situation requires a correction to align with the ATCO path. Given the relatively mild deviation and the need to reduce both heading and cross-track errors, a moderate turn to the right (positive heading change) is appropriate.  The history shows a worsening trend, and the separation is increasing. A larger turn will help to correct the path deviation more quickly.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0014",
+    "run_id": "memory",
+    "step": 14,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 14,
+    "sep_oi": 5.674296488605627,
+    "dist_o_dest": 45.44145043783311,
+    "dist_i_dest": 48.201351440169276,
+    "ttcp": 1.7911416705933365,
+    "own_heading_deg": -102.95550223844005,
+    "path_heading_deg": -126.79009856163235,
+    "heading_err_path_deg": -23.834596323192272,
+    "signed_cross_track_to_path": -1.9086139310430124
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and closing rapidly on an intruder. Emergency procedures are active, requiring a corrective heading change. The goal is to mitigate the immediate collision risk while staying aligned with the ATCO path as much as possible.",
+    "technical_summary": "Ownship is exhibiting a significant heading error (-23.8\u00b0) and a slight cross-track deviation (-1.91) relative to the ATCO path. The TTCP to the intruder is critically low (1.79 steps) and decreasing rapidly. Kinematic analysis confirms a closing relative velocity. Given the emergency status, a corrective maneuver is necessary, prioritized by the provided candidate table based on TTCP reduction.",
+    "rationale": "Emergency procedures are in effect, necessitating a corrective maneuver. The candidate table prioritizes turns based on TTCP reduction. The -30\u00b0 turn offers the most immediate reduction in TTCP, while also providing a substantial correction to the heading error. Given the emergency conditions, prioritizing TTCP is paramount.",
+    "metrics": {
+      "ttcp": 1.79,
+      "separation_distance": 5.67
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

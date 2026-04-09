@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep003_t007_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 7,
+    "fileinfo": [
+      "050421set2_1_TR200.csv",
+      "050421set2_1_TR201.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/memory/ep003_t007_merge_back.prompt.txt",
+    "sha1": "078b8d9ffdf0cfcc073861f82ff47601beb5a563"
+  },
+  "observation_before": {
+    "step": 7,
+    "sep_oi": 25.352105443809474,
+    "dist_o_dest": 63.70101729138732,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 6.969706232011193,
+    "own_heading_deg": -156.93768930960047,
+    "path_heading_deg": -154.63125131559917,
+    "heading_err_path_deg": 2.3064379940013
+  },
+  "answer": {
+    "scenario_summary": "",
+    "technical_summary": "",
+    "rationale": "",
+    "metrics": {
+      "ttcp": 6.969706232011193,
+      "separation_distance": 25.352105443809474
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  },
+  "apply_log": {
+    "applied_step": 7,
+    "heading_before_apply_deg": -156.93768930960047,
+    "heading_after_apply_deg": -146.91092789481107,
+    "delta_heading_deg": 10.026761414789405,
+    "turn_commanded_deg": 10.0
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 21.67413706083166,
+    "ttcp_end": 5.706709712596594,
+    "dist_o_dest_end": 57.747527082052315,
+    "deltas": {
+      "sep_oi": -3.677968382977813,
+      "ttcp": -1.2629965194145987,
+      "dist_o_dest": -5.953490209335008
+    }
+  },
+  "observation_after": {
+    "step": 10,
+    "sep_oi": 21.67413706083166,
+    "dist_o_dest": 57.747527082052315,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 5.706709712596594,
+    "own_heading_deg": -146.91092789481107,
+    "path_heading_deg": -154.25647761287593,
+    "heading_err_path_deg": -7.345549718064859
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

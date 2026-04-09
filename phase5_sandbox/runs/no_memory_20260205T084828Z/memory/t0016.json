@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0016",
+    "run_id": "memory",
+    "step": 16,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 16,
+    "sep_oi": 12.048286606988327,
+    "dist_o_dest": 46.67845823122351,
+    "dist_i_dest": 38.409395901101675,
+    "ttcp": 4.464704598058785,
+    "own_heading_deg": -121.84402435783754,
+    "path_heading_deg": -123.42744547132045,
+    "heading_err_path_deg": -1.583421113482899,
+    "signed_cross_track_to_path": -0.3852192256666254
+  },
+  "answer": {
+    "scenario_summary": "Ownship is tracking slightly off the ATCO path, exhibiting a small heading error and a minor cross-track deviation. The intruder is closing in, requiring careful attention to separation. The goal is to correct the path deviation while maintaining adequate separation.",
+    "technical_summary": "Ownship's heading error to the ATCO path is -1.6\u00b0, indicating a slight deviation to the right. The cross-track error is -0.39, meaning ownship is slightly left of the path. The TTCP to the intruder is 4.46 steps, and the separation is decreasing at a rate of -2.324 units per step. Recent trends show a worsening alignment with the destination and a decreasing separation with the intruder. The current situation requires a course correction to realign with the ATCO path.",
+    "rationale": "The primary goal is to reduce both the heading error to the ATCO path and the cross-track deviation. Given the small magnitude of the errors, a moderate turn is sufficient. A turn of -15 degrees will help reduce both errors while avoiding overly aggressive maneuvers. The ATCO baseline suggests that a turn of 15\u00b0 is a reasonable choice in this situation.",
+    "metrics": {
+      "ttcp": 4.46,
+      "separation_distance": 12.05
+    },
+    "maneuver": {
+      "heading_change_deg": -15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

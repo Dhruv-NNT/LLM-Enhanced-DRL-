@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0028",
+    "run_id": "memory",
+    "step": 28,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 28,
+    "sep_oi": 9.570273980631224,
+    "dist_o_dest": 7.484550886848501,
+    "dist_i_dest": 8.201866970772166,
+    "ttcp": 0.0,
+    "own_heading_deg": -82.90197940886128,
+    "path_heading_deg": -81.2275403515746,
+    "heading_err_path_deg": 1.674439057286662,
+    "signed_cross_track_to_path": -1.7933680038512225
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and is currently tracking slightly left of the intended route. The intruder is also positioned to the left of ownship and the destination, with a closing separation. A course correction is needed to realign with the ATCO path and maintain safe separation.",
+    "technical_summary": "Ownship's heading error to the ATCO path is +1.7\u00b0, indicating a deviation to the right. The cross-track error is -1.79, meaning ownship is left of the path. The separation between ownship and the intruder is increasing, and the TTCP is near zero, suggesting a potential conflict if the current trajectory is maintained. The heading error to the destination is worsening, and the intruder's position relative to ownship's nose is changing, indicating a need for immediate course correction.",
+    "rationale": "The primary objective is to reduce the heading error to the ATCO path. Given the small heading error (+1.7\u00b0), a moderate turn is sufficient to realign. A larger turn would introduce unnecessary cross-track deviation. The ATCO baseline suggests a preference for larger turns in this scenario, but a smaller turn is appropriate given the current, mild deviation.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": -10,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

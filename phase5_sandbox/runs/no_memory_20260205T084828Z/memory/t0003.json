@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0003",
+    "run_id": "memory",
+    "step": 3,
+    "trigger_reason": "none"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 30.608117561583313,
+    "dist_o_dest": 72.33519280444044,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 11.856832582675231,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -152.338604745688,
+    "heading_err_path_deg": -0.41429614348223254,
+    "signed_cross_track_to_path": -0.16491712778223597
+  },
+  "answer": {
+    "scenario_summary": "Ownship is tracking towards its destination, slightly off the ATCO path. The intruder is further out and closing. A minor heading correction is needed to realign with the ATCO path.",
+    "technical_summary": "Ownship is currently 0.16 units left of the ATCO path, with a heading error of -0.4\u00b0. The heading error to the destination is -1.5\u00b0, indicating a similar deviation. The separation to the intruder is decreasing, with a TTCP of 11.86 steps. The current situation requires a small heading correction to minimize path error.",
+    "rationale": "The primary goal is to realign with the ATCO path. Given the small heading error (-0.4\u00b0), a small correction is sufficient. A larger turn is unnecessary and could introduce unnecessary deviations. The geometry is mild, so a smaller bin is appropriate.",
+    "metrics": {
+      "ttcp": 11.86,
+      "separation_distance": 30.61
+    },
+    "maneuver": {
+      "heading_change_deg": 5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "guidance": {
+    "heading_deg": 0,
+    "hold_steps": 2,
+    "phase": "WAIT_TURN",
+    "source": "llm",
+    "issued_step": 0,
+    "raw_text": "Here is my output in the strict JSON format:\n\n{\n  \"answer\": {\n    \"scenario_summary\": \"Ownship is currently at position x=86.1, y=68.0, heading -151.9\u00b0, and moving away from destination.\",\n    \"technical_summary\": \"The intruder is ahead (bearing error to intruder = -77.7\u00b0) and closing. Separation between ownship and intruder is 27.89 units. Heading error to path is +0.0\u00b0. The current phase is WAIT_TURN.\",\n    \"rationale\": \"Given the situation, I will choose a holding maneuver to maintain distance from the intruder and avoid any potential risks.\",\n    \"metrics\": {\n      \"ttcp\": null,\n      \"separation_distance\": null\n    },\n    \"maneuver\": {\n      \"phase\": \"WAIT_TURN\",\n      \"heading_change_deg\": 0,\n      \"hold_steps\": 2\n    }\n  }\n}\n\nNote that I've chosen to hold for a few steps (hold_steps = 2) to keep an eye on the situation and maintain a safe distance from the intruder.",
+    "parsed": {
+      "answer": {
+        "scenario_summary": "Ownship is currently at position x=86.1, y=68.0, heading -151.9\u00b0, and moving away from destination.",
+        "technical_summary": "The intruder is ahead (bearing error to intruder = -77.7\u00b0) and closing. Separation between ownship and intruder is 27.89 units. Heading error to path is +0.0\u00b0. The current phase is WAIT_TURN.",
+        "rationale": "Given the situation, I will choose a holding maneuver to maintain distance from the intruder and avoid any potential risks.",
+        "metrics": {
+          "ttcp": null,
+          "separation_distance": null
+        },
+        "maneuver": {
+          "phase": "WAIT_TURN",
+          "heading_change_deg": 0,
+          "hold_steps": 2
+        }
+      }
+    }
+  },
+  "used_source": "cached",
+  "new_call": false,
+  "hold_remaining": 1,
+  "cached_from_step": 0
+}

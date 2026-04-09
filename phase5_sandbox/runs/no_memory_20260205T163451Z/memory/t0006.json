@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0006",
+    "run_id": "memory",
+    "step": 6,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 6,
+    "sep_oi": 21.39866300262209,
+    "dist_o_dest": 57.377288849665305,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 10.507256158220668,
+    "own_heading_deg": -163.11607072717646,
+    "path_heading_deg": -134.39980111721445,
+    "heading_err_path_deg": 28.71626960996204,
+    "signed_cross_track_to_path": -1.956397401839482
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is off the ATCO path, exhibiting a heading error and a slight cross-track deviation. The aircraft is closing on the intruder, but with a reasonable TTCP. The primary concern is realignment with the ATCO path.",
+    "technical_summary": "The aircraft is currently positioned at x=61.5, y=82.2. The heading error to the ATCO path is +28.7\u00b0, indicating a need to turn left. The signed cross-track error is -1.96, suggesting a slight deviation to the left of the path. The TTCP to the intruder is 10.51 steps, which is a reasonable separation. The aircraft's current heading (-163.1\u00b0) is significantly different from the ATCO path heading (-134.4\u00b0).",
+    "rationale": "The aircraft is currently off the ATCO path. Alignment is the priority. Given the significant heading error, a turn of 30\u00b0 is common and aligned with the ATCO baseline. No other factors (separation, destination) warrant a different maneuver.",
+    "metrics": {
+      "ttcp": 10.51,
+      "separation_distance": 21.4
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

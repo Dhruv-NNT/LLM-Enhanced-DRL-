@@ -1,0 +1,9 @@
+{
+  "scenario": {
+    "label": "B",
+    "seed": 202,
+    "steps": 22,
+    "description": "Intruder crosses from right-to-left with mild offset."
+  },
+  "created_at": "2025-11-18T16:25:48Z"
+}

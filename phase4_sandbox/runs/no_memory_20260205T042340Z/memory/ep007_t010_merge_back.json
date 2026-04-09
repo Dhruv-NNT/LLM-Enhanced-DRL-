@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep007_t010_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 10,
+    "fileinfo": [
+      "170321set3_1_PR231.csv",
+      "170321set3_1_KL230.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/memory/ep007_t010_merge_back.prompt.txt",
+    "sha1": "93ba79d319a27bb17be908b5d45c7b8c340da74a"
+  },
+  "observation_before": {
+    "step": 10,
+    "sep_oi": 20.684816830336665,
+    "dist_o_dest": 50.3577780944125,
+    "dist_i_dest": 59.77676817383691,
+    "ttcp": 13.591452399361158,
+    "own_heading_deg": -156.9376893096005,
+    "path_heading_deg": -176.4013720906551,
+    "heading_err_path_deg": -19.463682781054587
+  },
+  "answer": {
+    "scenario_summary": "Merge back maneuver initiated due to closing intruder and need to align with ATCO path.",
+    "technical_summary": "The current situation shows a separation distance of 20.68 units, with the intruder closing in at a rate of -1.178 per step. The ownship is not aligned with the ATCO path, requiring a turn to reduce signed cross-track error and heading_error_to_path_deg.",
+    "rationale": "Based on past cases (ep002_t010_merge_back), a moderate turn (-20°) should be sufficient to get back on track while maintaining a safe distance. The intruder's position is abeam/behind, indicating a need for a turn towards the path centerline.",
+    "metrics": {
+      "ttcp": 13.591452399361158,
+      "separation_distance": 20.684816830336665
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -20,
+      "hold_steps": 1
+    }
+  },
+  "apply_log": {
+    "applied_step": 10,
+    "heading_before_apply_deg": -156.9376893096005,
+    "heading_after_apply_deg": -176.9912121391793,
+    "delta_heading_deg": -20.05352282957881,
+    "turn_commanded_deg": -20.0
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 16.217991905185496,
+    "ttcp_end": 10.858645524647489,
+    "dist_o_dest_end": 44.35846717556071,
+    "deltas": {
+      "sep_oi": -4.466824925151169,
+      "ttcp": -2.7328068747136687,
+      "dist_o_dest": -5.999310918851791
+    }
+  },
+  "observation_after": {
+    "step": 13,
+    "sep_oi": 16.217991905185496,
+    "dist_o_dest": 44.35846717556071,
+    "dist_i_dest": 53.795779747111034,
+    "ttcp": 10.858645524647489,
+    "own_heading_deg": -176.9912121391793,
+    "path_heading_deg": -176.34440469750376,
+    "heading_err_path_deg": 0.6468074416755485
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

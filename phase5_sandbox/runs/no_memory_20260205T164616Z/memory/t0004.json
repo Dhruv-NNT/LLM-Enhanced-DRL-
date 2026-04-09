@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0004",
+    "run_id": "memory",
+    "step": 4,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 4,
+    "sep_oi": 24.81937656316087,
+    "dist_o_dest": 61.099948841894076,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 9.942114175534513,
+    "own_heading_deg": -133.03578648280828,
+    "path_heading_deg": -117.9956443606166,
+    "heading_err_path_deg": 15.040142122191696,
+    "signed_cross_track_to_path": -0.676225905584158
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is deviating from the ATCO path. The aircraft is slightly to the left and ahead of the intruder. The aircraft's heading error to the path is positive, indicating a left deviation.",
+    "technical_summary": "The aircraft is currently at position (64.7, 84.4), with a heading of -133.0\u00b0. The ATCO path heading is -118.0\u00b0, resulting in a +15.0\u00b0 heading error to the path. The aircraft is 0.68 units left of the path, with a cross-track error of -0.68. The aircraft is closing on the intruder at a rate of 1.629 units per step. The TTCP to CPA is 9.94 steps. The aircraft is deviating from the ATCO path.",
+    "rationale": "The aircraft is currently outside the alignment checklist criteria.  The primary goal is to reduce both the heading error and cross-track error. A left turn is required to align with the ATCO path.",
+    "metrics": {
+      "ttcp": 9.94,
+      "separation_distance": 24.82
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep010_t027_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 27,
+    "fileinfo": [
+      "170621set2_1_SQ260.csv",
+      "170621set2_1_QR261.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T045244Z/memory/ep010_t027_merge_back.prompt.txt",
+    "sha1": "4c357a783cc9f9160cd2473d8102f2def0537f44"
+  },
+  "observation_before": {
+    "step": 27,
+    "sep_oi": 15.773392629459563,
+    "dist_o_dest": 30.64826300239325,
+    "dist_i_dest": 16.40957559650538,
+    "ttcp": 0.0,
+    "own_heading_deg": -131.87078577262696,
+    "path_heading_deg": -163.56606615332012,
+    "heading_err_path_deg": -31.695280380693134
+  },
+  "answer": {
+    "scenario_summary": "Merging back into ATCO path, prioritizing safety and reducing separation.",
+    "technical_summary": "Ownship position: x=48.3, y=36.8; Intruder position: x=38.6, y=49.2. Separation: 15.77. Heading error to path: -31.7°. Signed cross-track to path: +9.53.",
+    "rationale": "Recent trends indicate closing in on intruder; need to prioritize safety by reducing separation and TTCP. Aided by the baseline hints, I will follow the PAST CASE ep002_t011_merge_back for guidance.",
+    "metrics": {
+      "ttcp": 0.0,
+      "separation_distance": 15.773392629459563
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -20,
+      "hold_steps": 2
+    }
+  },
+  "apply_log": {
+    "applied_step": 27,
+    "heading_before_apply_deg": -131.870785772627,
+    "heading_after_apply_deg": -156.9376893096005,
+    "delta_heading_deg": -25.066903536973513,
+    "turn_commanded_deg": -25.0
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 16.95822053475725,
+    "ttcp_end": 0.0,
+    "dist_o_dest_end": 25.006076679183057,
+    "deltas": {
+      "sep_oi": 3.6628742803386682,
+      "ttcp": 0.0,
+      "dist_o_dest": -5.642186323210193
+    }
+  },
+  "observation_after": {
+    "step": 30,
+    "sep_oi": 19.43626690979823,
+    "dist_o_dest": 25.006076679183057,
+    "dist_i_dest": 10.409704301382957,
+    "ttcp": 0.0,
+    "own_heading_deg": -156.9376893096005,
+    "path_heading_deg": -163.37618602402162,
+    "heading_err_path_deg": -6.43849671442112
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

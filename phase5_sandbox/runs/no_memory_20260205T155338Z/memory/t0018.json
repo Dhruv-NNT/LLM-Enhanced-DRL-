@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0018",
+    "run_id": "memory",
+    "step": 18,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 18,
+    "sep_oi": 7.1988163918155585,
+    "dist_o_dest": 42.82574700909317,
+    "dist_i_dest": 43.79593845409335,
+    "ttcp": 0.0,
+    "own_heading_deg": -187.0179735539686,
+    "path_heading_deg": -170.92524197899058,
+    "heading_err_path_deg": 16.092731574978018,
+    "signed_cross_track_to_path": -9.589221042219084
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off the ATCO path, approaching the intruder. The situation is critical, and emergency procedures are active.  The goal is to avoid collision while returning to the ATCO path.",
+    "technical_summary": "The aircraft is significantly off the ATCO path, exhibiting a substantial heading error and a negative cross-track error.  Kinematics indicate a closing distance to the intruder.  Emergency procedures are in effect, necessitating a decisive maneuver to avoid collision. The TTCP is extremely low, indicating an imminent risk.",
+    "rationale": "Due to the emergency state, HARD RULES are suspended, and we must choose from the provided candidate list. The goal is to immediately alter course to avoid the intruder, prioritizing the smallest eligible turn.  The provided table indicates that all turns are equally effective in terms of TTCP, so we're selecting the smallest eligible turn.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

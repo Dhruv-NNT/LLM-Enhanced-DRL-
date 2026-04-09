@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0027",
+    "run_id": "memory",
+    "step": 27,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 27,
+    "sep_oi": 8.495593457085908,
+    "dist_o_dest": 28.180372422394107,
+    "dist_i_dest": 25.796396563777893,
+    "ttcp": 4.122846703954083,
+    "own_heading_deg": -131.87078577262687,
+    "path_heading_deg": -166.92441890090822,
+    "heading_err_path_deg": -35.05363312828135,
+    "signed_cross_track_to_path": 0.23939568479569626
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off the ATCO path, heading right of the desired route. The intruder is ahead and slightly to the left. Emergency mode is active, requiring a turn to avoid a potential conflict.",
+    "technical_summary": "Ownship's heading error to the ATCO path is -35.1\u00b0, indicating a significant deviation to the right. The cross-track error is positive (+0.24), confirming the leftward offset. Emergency mode is active, dictating a turn from the provided candidate list to mitigate the risk. TTCP is 4.12 steps, indicating a relatively short time to potential conflict.",
+    "rationale": "Due to the active emergency mode, I am constrained to choose from the provided candidate list of turns. The goal is to avoid the intruder while adhering to the emergency procedures. The smallest eligible turn is preferred to minimize deviation from the intended path, but any turn is necessary to avoid the intruder.",
+    "metrics": {
+      "ttcp": 4.12,
+      "separation_distance": 8.5
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

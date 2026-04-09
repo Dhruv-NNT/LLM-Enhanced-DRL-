@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0004",
+    "run_id": "memory",
+    "step": 4,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 4,
+    "sep_oi": 24.93047024096071,
+    "dist_o_dest": 61.10898338210849,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 9.25125249410353,
+    "own_heading_deg": -128.02240577541357,
+    "path_heading_deg": -117.9956443606166,
+    "heading_err_path_deg": 10.026761414796965,
+    "signed_cross_track_to_path": -0.5054507388822674
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is deviating from the ATCO path. The aircraft is slightly left of the path and has a heading error of 10 degrees. The aircraft is closing on the intruder.",
+    "technical_summary": "The aircraft is currently at position (64.8, 84.3) and has a heading error of +10.0\u00b0 relative to the ATCO path. The cross-track error is -0.51, indicating the aircraft is slightly left of the path. The aircraft's heading is -128.0\u00b0, while the ATCO path heading is -118.0\u00b0. The TTCP to the intruder is 9.25 steps, and the separation is decreasing at a rate of -1.518 units per step. The aircraft's kinematics show a speed of 2.000 units per step.",
+    "rationale": "The aircraft is currently off the ATCO path. Following the Alignment Checklist, a correction is required to return the aircraft to the path. Given the heading error of 10 degrees, a turn to the right is necessary. A smaller turn is preferred to maintain a smooth trajectory.",
+    "metrics": {
+      "ttcp": 9.25,
+      "separation_distance": 24.93
+    },
+    "maneuver": {
+      "heading_change_deg": -5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

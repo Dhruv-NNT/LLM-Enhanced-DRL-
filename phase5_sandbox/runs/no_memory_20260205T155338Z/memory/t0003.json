@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0003",
+    "run_id": "memory",
+    "step": 3,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 30.388313272935434,
+    "dist_o_dest": 71.70410481065852,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 12.641790185016601,
+    "own_heading_deg": -146.91092789481107,
+    "path_heading_deg": -152.33860474567845,
+    "heading_err_path_deg": -5.427676850867385,
+    "signed_cross_track_to_path": 0.18462729042143905
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path. The heading error and cross-track error are both positive, indicating a need to turn to the left. The ATCO path is to the right, and the destination is also to the right.",
+    "technical_summary": "The current heading error is -5.4\u00b0, and the signed cross-track error is +0.18. The heading error is reducing, but the cross-track error is slightly positive. The TTCP to the intruder is 12.64 steps. The current step is within the typical window for initiating course corrections, and the geometry suggests a left turn is appropriate to reduce both errors.",
+    "rationale": "The current situation requires a left turn to correct both the heading error and the cross-track error. Given the relatively small errors, a moderate turn is preferred.  The ATCO baseline suggests a larger turn is typical, but given the current path deviation, a smaller turn is more appropriate to minimize off-route distance.",
+    "metrics": {
+      "ttcp": 12.64,
+      "separation_distance": 30.39
+    },
+    "maneuver": {
+      "heading_change_deg": -15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -15,
+    "hold_steps": 0
+  }
+}

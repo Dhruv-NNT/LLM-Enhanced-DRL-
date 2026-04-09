@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0004",
+    "run_id": "memory",
+    "step": 4,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 4,
+    "sep_oi": 29.108039211522176,
+    "dist_o_dest": 69.72287183988225,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 9.021454604318986,
+    "own_heading_deg": -161.95107001699517,
+    "path_heading_deg": -151.92430860221282,
+    "heading_err_path_deg": 10.026761414782356,
+    "signed_cross_track_to_path": -0.15417283037274776
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path. The heading error is positive, indicating a need to turn left. The cross-track error is slightly negative, suggesting a minor correction is needed.",
+    "technical_summary": "The aircraft is currently 10.0\u00b0 off the ATCO path with a slight cross-track error of -0.15. The heading error is positive, indicating the path lies to the left. Kinematic analysis shows a closing separation rate of -1.280 units per step. The current heading is -162.0\u00b0, and the ATCO path heading is -151.9\u00b0. Given the positive heading error, a left turn is required to realign with the path. The cross-track error is minor, so a moderate turn should suffice.",
+    "rationale": "The primary goal is to reduce the heading error to the ATCO path. A moderate left turn will correct the heading without significantly impacting the cross-track error. Given the minor negative cross-track error, a turn of -15 degrees is appropriate to correct the heading error while maintaining a relatively small cross-track deviation.",
+    "metrics": {
+      "ttcp": 9.02,
+      "separation_distance": 29.11
+    },
+    "maneuver": {
+      "heading_change_deg": -15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -15,
+    "hold_steps": 0
+  }
+}

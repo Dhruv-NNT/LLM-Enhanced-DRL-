@@ -1,0 +1,14 @@
+{
+  "guidance": {
+    "heading_deg": 0,
+    "hold_steps": 1,
+    "phase": "WAIT_TURN",
+    "source": "heuristic",
+    "issued_step": 0,
+    "note": "LLM response missing JSON, using heuristic result.",
+    "raw_text": "Here is my output:\n\n{\n\"answer\": {\n  \"scenario_summary\": \"Ownship and intruder are converging, with separation decreasing. Intruder is ahead of ownship.\",\n  \"technical_summary\": \"Given the current situation, I will prioritize opening up separation and increasing TTCP. Since the intruder is ahead of ownship, a turn away from it is necessary to improve safety. The smallest turn magnitude that achieves this while not worsening ownship\u2192destination distance is chosen.\",\n  \"rationale\": \"I am following the baseline hints: starting turns inside the typical window (0-5 steps) and preferring smaller bins when geometry is mild. In this case, a small turn away from the intruder will increase separation and reduce TTCP.\",\n  \"metrics\": {\n    \"ttcp\": null,\n    \"separation_distance\": null\n  },\n  \"maneuver\": {\n    \"phase\": \"EXECUTE_TURN\",\n    \"heading_change_deg\": -15,\n    \"hold_steps\": 2\n  }\n}\n"
+  },
+  "used_source": "heuristic",
+  "new_call": true,
+  "hold_remaining": 1
+}

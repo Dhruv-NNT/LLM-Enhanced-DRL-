@@ -1,0 +1,14 @@
+{
+  "guidance": {
+    "heading_deg": -25,
+    "hold_steps": 3,
+    "phase": "EXECUTE_TURN",
+    "source": "heuristic",
+    "issued_step": 4,
+    "note": "LLM response missing JSON, using heuristic result.",
+    "raw_text": "Here is my strict JSON output:\n\n{\n\"answer\": {\n  \"scenario_summary\": \"Ownship and intruder are closing, with a separation distance of 23.23 units.\",\n  \"technical_summary\": \"The scenario features an ownship heading error to the ATCO path of +20.1\u00b0, with the intruder ahead at -10.0\u00b0. The relative speed is 2.845, and TTCP is 6.71 steps (~13.4 min).\",\n  \"rationale\": \"Based on the sign rule, since the intruder is to my right (bearing error > 0\u00b0), I will TURN RIGHT (-15\u00b0) to increase separation. This decision is informed by past cases where closing scenarios require a small turn to maintain safety.\",\n  \"metrics\": {\n    \"ttcp\": null,\n    \"separation_distance\": null\n  },\n  \"maneuver\": {\n    \"phase\": \"EXECUTE_TURN\",\n    \"heading_change_deg\": -15,\n    \"hold_steps\": 1\n  }\n}\nNote that I've chosen a small turn (-15\u00b0) to increase separation and maintain safety, as per the sign rule. The hold_steps is set to 1 to keep the heading for a few steps before re-evaluating the situation."
+  },
+  "used_source": "heuristic",
+  "new_call": true,
+  "hold_remaining": 3
+}

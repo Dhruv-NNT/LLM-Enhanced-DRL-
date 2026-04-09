@@ -1,0 +1,29 @@
+{
+  "guidance": {
+    "heading_deg": -20,
+    "hold_steps": 2,
+    "phase": "EXECUTE_TURN",
+    "source": "llm",
+    "issued_step": 2,
+    "raw_text": "Here is my cautious ATCO helper's response:\n\n```\n{\n  \"answer\": {\n    \"scenario_summary\": \"Intruder closing on ownship, heading error to intruder +76.4\u00b0 (to the left).\",\n    \"technical_summary\": \"Separation trend \u0394sep = -0.541 per step, TTCP to CPA 3.14 steps (~6.3 min), ownship speed 2.000, intruder speed 0.000.\",\n    \"rationale\": \"Safety is the top priority. With the intruder closing and heading error to intruder +76.4\u00b0 (left), I will execute a turn away from the intruder.\",\n    \"metrics\": {\n      \"ttcp\": null,\n      \"separation_distance\": null\n    },\n    \"maneuver\": {\n      \"phase\": \"EXECUTE_TURN\",\n      \"heading_change_deg\": -20,\n      \"hold_steps\": 2\n    }\n  }\n}\n```\n\nMy reasoning is as follows:\n\n1. Safety: With the intruder closing and heading error to intruder +76.4\u00b0 (left), I prioritize keeping ownship safely away from the intruder.\n2. Turn direction: Since the intruder is on the left, I turn right (-20\u00b0) according to the sign rule.\n3. Holding steps: I choose a short hold of 2 steps to maintain the heading change and keep a safe distance from the intruder.\n\nPlease note that my output strictly follows the given format and rules.",
+    "parsed": {
+      "answer": {
+        "scenario_summary": "Intruder closing on ownship, heading error to intruder +76.4\u00b0 (to the left).",
+        "technical_summary": "Separation trend \u0394sep = -0.541 per step, TTCP to CPA 3.14 steps (~6.3 min), ownship speed 2.000, intruder speed 0.000.",
+        "rationale": "Safety is the top priority. With the intruder closing and heading error to intruder +76.4\u00b0 (left), I will execute a turn away from the intruder.",
+        "metrics": {
+          "ttcp": null,
+          "separation_distance": null
+        },
+        "maneuver": {
+          "phase": "EXECUTE_TURN",
+          "heading_change_deg": -20,
+          "hold_steps": 2
+        }
+      }
+    }
+  },
+  "used_source": "llm",
+  "new_call": true,
+  "hold_remaining": 2
+}

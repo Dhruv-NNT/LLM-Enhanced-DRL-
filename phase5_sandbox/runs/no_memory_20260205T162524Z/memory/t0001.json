@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0001",
+    "run_id": "memory",
+    "step": 1,
+    "trigger_reason": "none"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 33.69581517414292,
+    "dist_o_dest": 76.39093972823268,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.9243086022121,
+    "heading_err_path_deg": -6.338041202980094e-12,
+    "signed_cross_track_to_path": 0.0
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is on the ATCO path. The aircraft is slightly off from its destination. The intruder is ahead and slightly to the left.",
+    "technical_summary": "The aircraft is currently aligned with the ATCO path, showing no heading or cross-track error. The aircraft is deviating from its intended destination. The intruder is positioned ahead and slightly to the left. No separation trends are available due to the lack of previous observations.",
+    "rationale": "The aircraft is aligned with the ATCO path. Given the absence of separation trends and the need to correct the aircraft's position relative to its destination, a slight turn to the right is appropriate. The ATCO baseline suggests a preference for larger turns, but a smaller correction is sufficient given the current situation.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 33.7
+    },
+    "maneuver": {
+      "heading_change_deg": 5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

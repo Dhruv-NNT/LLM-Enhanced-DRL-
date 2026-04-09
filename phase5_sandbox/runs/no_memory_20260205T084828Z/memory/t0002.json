@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0002",
+    "run_id": "memory",
+    "step": 2,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 2,
+    "sep_oi": 32.18247226869164,
+    "dist_o_dest": 74.33448975824595,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 11.962054865611693,
+    "own_heading_deg": -156.93768930960047,
+    "path_heading_deg": -152.338604745688,
+    "heading_err_path_deg": 4.59908456391247,
+    "signed_cross_track_to_path": -0.1698723310726504
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and needs correction. The intruder is ahead and slightly to the left. The situation requires a course correction to realign with the ATCO path.",
+    "technical_summary": "Ownship's heading error to the ATCO path is +4.6 degrees, indicating a deviation to the right. The cross-track error is slightly negative (-0.17), meaning ownship is marginally left of the path. The heading error to the destination is +3.5 degrees. The TTCP to the intruder is 11.96 steps. The current step is within the typical window for initiating course corrections, and a moderate turn is expected.",
+    "rationale": "The path trigger indicates a need to correct the deviation from the ATCO path. Given the small cross-track error and the moderate heading error, a moderate turn is appropriate. The ATCO baseline suggests a preference for larger bins (30 degrees) in this situation, but a smaller turn is acceptable given the current minor deviation.",
+    "metrics": {
+      "ttcp": 11.96,
+      "separation_distance": 32.18
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

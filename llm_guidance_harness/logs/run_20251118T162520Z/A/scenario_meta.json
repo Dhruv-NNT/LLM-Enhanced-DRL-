@@ -1,0 +1,9 @@
+{
+  "scenario": {
+    "label": "A",
+    "seed": 101,
+    "steps": 18,
+    "description": "Head-on closing encounter with both at cruise speed."
+  },
+  "created_at": "2025-11-18T16:25:20Z"
+}

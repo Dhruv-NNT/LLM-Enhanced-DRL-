@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "plots_seed123",
+    "tag": "t015_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 15,
+    "fileinfo": [
+      "100621set1_1_3K251.csv",
+      "100621set1_1_SQ250.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/plots/memory/t015_merge_back.prompt.txt",
+    "sha1": "a207fd45f8eba494cc2f6c3ae4eeafcc026e3547"
+  },
+  "observation_before": {
+    "step": 15,
+    "sep_oi": 12.948512708519573,
+    "dist_o_dest": 40.739956292192424,
+    "dist_i_dest": 49.7863316191818,
+    "ttcp": 8.65654941996759,
+    "own_heading_deg": -176.9912121391793,
+    "path_heading_deg": 144.28043145552175,
+    "heading_err_path_deg": -38.728356405298996
+  },
+  "answer": {
+    "scenario_summary": "",
+    "technical_summary": "",
+    "rationale": "",
+    "metrics": {
+      "ttcp": 8.65654941996759,
+      "separation_distance": 12.948512708519573
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 6.3090465132096964,
+    "ttcp_end": 2.7988868505116393,
+    "dist_o_dest_end": 35.3823817010612,
+    "deltas": {
+      "sep_oi": -6.639466195309876,
+      "ttcp": -5.85766256945595,
+      "dist_o_dest": -5.357574591131225
+    }
+  },
+  "observation_after": {
+    "step": 18,
+    "sep_oi": 6.3090465132096964,
+    "dist_o_dest": 35.3823817010612,
+    "dist_i_dest": 43.78648152177019,
+    "ttcp": 2.7988868505116393,
+    "own_heading_deg": -202.05811567615282,
+    "path_heading_deg": -166.56326242891168,
+    "heading_err_path_deg": 35.49485324724111
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "evaluator disabled",
+    "delta_action": null
+  }
+}

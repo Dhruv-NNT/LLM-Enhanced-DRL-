@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0007",
+    "run_id": "memory",
+    "step": 7,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 7,
+    "sep_oi": 22.955476634156334,
+    "dist_o_dest": 56.352069694543744,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 8.26040751393344,
+    "own_heading_deg": -138.04916719020298,
+    "path_heading_deg": -134.39980111722284,
+    "heading_err_path_deg": 3.6493660729801434,
+    "signed_cross_track_to_path": 1.363822986981691
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and is closing on an intruder. The situation is exacerbated by emergency protocols which restrict maneuver choices. A turn is required to return to the path and maintain safe separation from the intruder.",
+    "technical_summary": "Ownship is currently 3.6\u00b0 off the ATCO path and 1.36 units left of the path. The heading error to the destination is 2.1\u00b0 to the left. The TTCP to the intruder is 8.26 steps. The closing rate is -1.479 units per step. Given the emergency situation, a turn is required to correct the path deviation and maintain separation. The most conservative approach is to choose the smallest eligible turn that reduces both the heading error and cross-track error.",
+    "rationale": "Due to emergency protocols, only a limited set of turns are permitted. The smallest eligible turn, -25\u00b0, is selected to begin correcting the path deviation while maintaining a safe separation from the intruder. This aligns with the goal of reducing both the heading error and cross-track error, while adhering to the emergency constraints.",
+    "metrics": {
+      "ttcp": 2.0,
+      "separation_distance": 22.96
+    },
+    "maneuver": {
+      "heading_change_deg": -25,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -25,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "plots_seed123",
+    "tag": "t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "100621set1_1_3K251.csv",
+      "100621set1_1_SQ250.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/plots/memory/t001_wait_turn.prompt.txt",
+    "sha1": "79fa171f371f39c5fb153235748aa1a6576daf13"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 27.88869352555788,
+    "dist_o_dest": 68.19206347515816,
+    "dist_i_dest": 67.4884894352363,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.9243086022096,
+    "heading_err_path_deg": -3.836930773104541e-12
+  },
+  "answer": {
+    "scenario_summary": "Maintaining a safe distance from the intruder while progressing toward destination.",
+    "technical_summary": "Given the current situation, I'll follow the baseline decision hints: start turns inside the typical window (≈3 steps) and prefer smaller bins when geometry is mild. Heading error to destination is -21.5°, bearing error to intruder is -77.7°, separation distance is 27.89 units.",
+    "rationale": "The past case t001_wait_turn matches my current situation, so I'll follow its decision: turn 0° and hold for 2 steps.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 27.88869352555788
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 2
+    }
+  },
+  "hold_effect": {
+    "n_steps": 1,
+    "min_sep_during_hold": 27.532644247340745,
+    "ttcp_end": 1.9665909139835591,
+    "dist_o_dest_end": 66.33494544989054,
+    "deltas": {
+      "sep_oi": -0.35604927821713517,
+      "ttcp": null,
+      "dist_o_dest": -1.8571180252676243
+    }
+  },
+  "observation_after": {
+    "step": 2,
+    "sep_oi": 27.532644247340745,
+    "dist_o_dest": 66.33494544989054,
+    "dist_i_dest": 67.4884894352363,
+    "ttcp": 1.9665909139835591,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -152.33860474568985,
+    "heading_err_path_deg": -0.41429614348407995
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "evaluator disabled",
+    "delta_action": null
+  }
+}

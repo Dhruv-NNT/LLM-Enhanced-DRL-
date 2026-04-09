@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0026",
+    "run_id": "memory",
+    "step": 26,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 26,
+    "sep_oi": 8.697659119228975,
+    "dist_o_dest": 11.41283465246121,
+    "dist_i_dest": 12.201813896255228,
+    "ttcp": 0.0,
+    "own_heading_deg": -67.86183728667716,
+    "path_heading_deg": -64.8838211016122,
+    "heading_err_path_deg": 2.9780161850649733,
+    "signed_cross_track_to_path": -2.091460362589581
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and is slightly right of the desired heading. The intruder is ahead and to the left, with a closing separation. The ownship is progressing toward its destination, but needs a course correction.",
+    "technical_summary": "The ownship's heading error to the ATCO path is +3.0\u00b0, indicating a slight deviation to the right. The cross-track error is -2.09, indicating ownship is slightly left of the path. The separation with the intruder is increasing, with a trend of +0.227 per step. Kinematic analysis reveals a relative speed of 0.709, and a TTCP of 0.00 steps. The last 5 steps show a worsening alignment with the destination and increasing separation from the intruder.",
+    "rationale": "The primary goal is to reduce both heading error to the ATCO path and cross-track error. A turn of -15 degrees will aggressively reduce the heading error while also reducing the cross-track error. The safety trigger and path trigger are both active, indicating a need for decisive action.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": -15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

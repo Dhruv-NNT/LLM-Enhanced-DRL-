@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0037",
+    "run_id": "memory",
+    "step": 37,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 37,
+    "sep_oi": 9.616447070896054,
+    "dist_o_dest": 16.0381992485391,
+    "dist_i_dest": 5.799467893776875,
+    "ttcp": 0.0,
+    "own_heading_deg": -136.88416648002158,
+    "path_heading_deg": -172.99814300602557,
+    "heading_err_path_deg": -36.113976526003995,
+    "signed_cross_track_to_path": 9.424529144401049
+  },
+  "answer": {
+    "scenario_summary": "Ownship is significantly off the ATCO path, with a large heading error and positive cross-track error. The intruder is ahead and slightly to the left.  Emergency mode is active, requiring a turn to avoid collision.",
+    "technical_summary": "Ownship's heading error to the ATCO path is -36.1\u00b0, indicating a substantial deviation to the right. The cross-track error is +9.42, meaning ownship is left of the path. Kinematic analysis shows a closing separation rate and a worsening alignment with the destination. Emergency mode dictates a turn to mitigate collision risk, prioritizing the smallest eligible bin.",
+    "rationale": "Due to emergency mode, I must choose a turn from the provided candidate list. The smallest candidate, +15\u00b0, is selected to begin course correction. Given the urgency, a smaller turn is preferable to minimize further deviation and maintain a stable trajectory.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 20,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 20,
+    "hold_steps": 0
+  }
+}

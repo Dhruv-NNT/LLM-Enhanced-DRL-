@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0033",
+    "run_id": "memory",
+    "step": 33,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 33,
+    "sep_oi": 15.125186567377366,
+    "dist_o_dest": 17.98995941739823,
+    "dist_i_dest": 5.130191770291004,
+    "ttcp": 0.0,
+    "own_heading_deg": -148.07592860499236,
+    "path_heading_deg": -145.63937464658412,
+    "heading_err_path_deg": 2.43655395840824,
+    "signed_cross_track_to_path": 1.0464114794961012
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, with a slight heading error and a positive cross-track error. The separation between ownship and the intruder is increasing, and the intruder is moving further away from ownship's nose. The path error is worsening.",
+    "technical_summary": "Ownship's heading error to the ATCO path is +2.4\u00b0, and the signed cross-track error is +1.05. The separation between ownship and the intruder is increasing at a rate of +0.723 units per step, indicating a potential conflict if no corrective action is taken. The intruder is moving further away from ownship's nose. The TTCP is near zero, and the separation trend is concerning. The heading error to the destination is worsening.",
+    "rationale": "The primary objective is to reduce both heading error and cross-track error. Given the current trajectory and the increasing separation with the intruder, a moderate left turn is required to correct the path deviation and maintain safety. A larger turn is preferred to quickly address the path error.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

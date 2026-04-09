@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0034",
+    "run_id": "memory",
+    "step": 34,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 34,
+    "sep_oi": 9.135160212268964,
+    "dist_o_dest": 19.543812574595115,
+    "dist_i_dest": 11.797630856612194,
+    "ttcp": 0.0,
+    "own_heading_deg": -126.85740506523217,
+    "path_heading_deg": -166.86962945552744,
+    "heading_err_path_deg": -40.01222439029527,
+    "signed_cross_track_to_path": 7.652938961517461
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off the ATCO path, experiencing a significant heading error and cross-track deviation. The intruder is closing in. Emergency mode is active, requiring a corrective maneuver.",
+    "technical_summary": "The aircraft is currently 40.0\u00b0 off the ATCO path heading and 7.65 units left of the path. The heading error is decreasing, but the cross-track deviation remains high. The intruder is closing in, with a TTCP of 0.00 steps. Emergency mode dictates a corrective heading change from the provided candidate list.",
+    "rationale": "Due to the emergency situation, the standard path-following rules are suspended. The smallest eligible turn is selected to begin correcting the aircraft's position and avoid a collision with the intruder.",
+    "metrics": {
+      "ttcp": 0.0,
+      "separation_distance": 9.14
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

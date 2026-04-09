@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0021",
+    "run_id": "memory",
+    "step": 21,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 21,
+    "sep_oi": 8.166053296330743,
+    "dist_o_dest": 21.39306646982651,
+    "dist_i_dest": 22.20169389578352,
+    "ttcp": 0.7705967000307474,
+    "own_heading_deg": -62.84845657928246,
+    "path_heading_deg": -64.8878527348328,
+    "heading_err_path_deg": -2.0393961555503495,
+    "signed_cross_track_to_path": -1.9220392750155562
+  },
+  "answer": {
+    "scenario_summary": "Ownship is tracking slightly left of the ATCO path, with a minor heading error. The intruder is ahead and slightly to the left, with a decreasing separation. The goal is to correct the path deviation while maintaining safe separation from the intruder.",
+    "technical_summary": "Ownship's cross-track error is 1.92 units, and the heading error to the path is -2.0 degrees. The separation between ownship and the intruder is decreasing at a rate of 0.045 units per step.  Kinematic analysis indicates a relative speed of 0.536, leading to a TTCP of 0.77 steps. The current situation suggests a need for a corrective heading change to align with the ATCO path and maintain separation.",
+    "rationale": "The primary goal is to reduce both the cross-track error and the heading error. Given the geometry and the need to align with the ATCO path, a moderate heading change to the right is warranted. A larger turn (e.g., 30 degrees) is preferred over smaller turns, as the ATCO baseline suggests, to quickly correct the deviation.",
+    "metrics": {
+      "ttcp": 0.77,
+      "separation_distance": 8.17
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

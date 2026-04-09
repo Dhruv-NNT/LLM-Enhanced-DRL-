@@ -1,0 +1,29 @@
+{
+  "guidance": {
+    "heading_deg": -20,
+    "hold_steps": 2,
+    "phase": "EXECUTE_TURN",
+    "source": "llm",
+    "issued_step": 6,
+    "raw_text": "Here is my output in JSON format:\n\n{\n  \"answer\": {\n    \"scenario_summary\": \"Ownship is closing with intruder at a rate of -0.474 per step, with current separation of 26.55 units. Intruder is to the left and slightly behind ownship.\",\n    \"technical_summary\": \"Current situation indicates ownship is closing with intruder, with a heading error to destination of +62.6\u00b0 and bearing error to intruder of +100.9\u00b0. Separation trend is negative, indicating closure.\",\n    \"rationale\": \"Given the current separation and trend, I prioritize increasing separation by turning away from the intruder. A smaller turn will also help avoid worsening ownship\u2192destination distance.\",\n    \"metrics\": {\n      \"ttcp\": null,\n      \"separation_distance\": null\n    },\n    \"maneuver\": {\n      \"phase\": \"EXECUTE_TURN\",\n      \"heading_change_deg\": -20,\n      \"hold_steps\": 2\n    }\n  }\n}\n\nNote: I chose a heading change of -20\u00b0 (turn left) to increase separation and avoid worsening ownship\u2192destination distance. The hold steps are set to 2 to maintain this new heading for a short period before reassessing the situation.",
+    "parsed": {
+      "answer": {
+        "scenario_summary": "Ownship is closing with intruder at a rate of -0.474 per step, with current separation of 26.55 units. Intruder is to the left and slightly behind ownship.",
+        "technical_summary": "Current situation indicates ownship is closing with intruder, with a heading error to destination of +62.6\u00b0 and bearing error to intruder of +100.9\u00b0. Separation trend is negative, indicating closure.",
+        "rationale": "Given the current separation and trend, I prioritize increasing separation by turning away from the intruder. A smaller turn will also help avoid worsening ownship\u2192destination distance.",
+        "metrics": {
+          "ttcp": null,
+          "separation_distance": null
+        },
+        "maneuver": {
+          "phase": "EXECUTE_TURN",
+          "heading_change_deg": -20,
+          "hold_steps": 2
+        }
+      }
+    }
+  },
+  "used_source": "llm",
+  "new_call": true,
+  "hold_remaining": 2
+}

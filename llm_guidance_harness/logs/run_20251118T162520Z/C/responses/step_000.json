@@ -1,0 +1,14 @@
+{
+  "guidance": {
+    "heading_deg": 0,
+    "hold_steps": 1,
+    "phase": "WAIT_TURN",
+    "source": "heuristic",
+    "issued_step": 0,
+    "note": "LLM response missing JSON, using heuristic result.",
+    "raw_text": "Here is my JSON output:\n\n{\n\"answer\": {\n\"scenario_summary\": \"Current situation: ownship at x=68.1, y=89.3, heading -118.0\u00b0, destination at x=70.8, y=38.6, separation 29.33 units.\",\n\"technical_summary\": \"Ownship ahead of intruder (bearing error to intruder = -43.5\u00b0), close proximity (separation trend N/A).\",\n\"rationale\": \"Based on the situation, I will choose a small turn to increase separation and avoid the intruder.\",\n\"metrics\": {\n\"ttcp\": null,\n\"separation_distance\": null\n},\n\"maneuver\": {\n\"phase\": \"EXECUTE_TURN\",\n\"heading_change_deg\": -10,\n\"hold_steps\": 2\n}\n}\nPlease note that I have chosen a small turn to the right (-10\u00b0) and a hold for 2 steps to increase separation and avoid the intruder."
+  },
+  "used_source": "heuristic",
+  "new_call": true,
+  "hold_remaining": 1
+}

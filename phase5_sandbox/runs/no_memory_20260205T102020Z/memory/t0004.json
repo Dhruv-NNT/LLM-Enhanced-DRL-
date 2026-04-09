@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0004",
+    "run_id": "memory",
+    "step": 4,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 4,
+    "sep_oi": 24.968664269222288,
+    "dist_o_dest": 62.86249164233711,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": 10.516871486331796,
+    "own_heading_deg": -207.0714963835475,
+    "path_heading_deg": -152.33860474568962,
+    "heading_err_path_deg": 54.732891637857875,
+    "signed_cross_track_to_path": -2.297003520738012
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off-track and approaching its destination. The intruder is ahead and to the right. Emergency procedures are active, requiring a corrective turn.",
+    "technical_summary": "Ownship is currently 2.30 units left of the ATCO path, with a heading error of +54.7\u00b0. The cross-track error is negative, indicating a left deviation. The TTCP to CPA is 10.52 steps.  The situation requires a turn to correct the deviation and align with the ATCO path. Emergency mode dictates a turn from a restricted set of options.",
+    "rationale": "Given the emergency active state, I must choose from the provided candidate list. The smallest eligible turn is preferred unless instructed otherwise. The candidate list prioritizes turns to the left to reduce the heading error and bring the aircraft back on track.  The emergency candidate list shows a trend of decreasing TTCP as the turn magnitude increases, so a larger turn will reduce the risk of a collision.",
+    "metrics": {
+      "ttcp": 10.52,
+      "separation_distance": 24.97
+    },
+    "maneuver": {
+      "heading_change_deg": -25,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -25,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0015",
+    "run_id": "memory",
+    "step": 15,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 15,
+    "sep_oi": 5.354276332527307,
+    "dist_o_dest": 43.44490627682506,
+    "dist_i_dest": 46.20139223455574,
+    "ttcp": 0.0,
+    "own_heading_deg": -133.03578648280828,
+    "path_heading_deg": -126.79009856163717,
+    "heading_err_path_deg": 6.245687921171111,
+    "signed_cross_track_to_path": -2.1101813572665082
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and closing on an intruder. The situation is exacerbated by the emergency mode, which restricts maneuver options. The goal is to correct the path deviation while maintaining separation from the intruder.",
+    "technical_summary": "Ownship is experiencing a 6.2\u00b0 heading error to the ATCO path and a -2.11 cross-track error. The TTCP to the intruder is critical (0 steps). Kinematic analysis reveals a closing rate of -0.320 units per step. Given the emergency mode, the available turn bins are restricted, and the decision prioritizes the smallest eligible turn to correct the path deviation. The current heading error to the destination is 3.4 degrees, and the bearing error to the intruder is 50.0 degrees.",
+    "rationale": "Due to the emergency mode, the available bins are limited. The goal is to reduce the cross-track error and correct the heading error to the ATCO path. The smallest available turn is selected to minimize the risk of further deviation and maintain separation. The emergency candidate table dictates the available options.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 5.35
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

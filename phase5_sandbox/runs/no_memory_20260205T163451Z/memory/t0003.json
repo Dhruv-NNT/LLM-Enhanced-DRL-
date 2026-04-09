@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0003",
+    "run_id": "memory",
+    "step": 3,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 27.506117369218238,
+    "dist_o_dest": 64.68149439157223,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": 0.0,
+    "own_heading_deg": -146.91092789481107,
+    "path_heading_deg": -152.33860474567942,
+    "heading_err_path_deg": -5.427676850868352,
+    "signed_cross_track_to_path": 0.18462729042143905
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is deviating from the ATCO path. The aircraft is approaching the intruder, but the intruder is relatively stationary. The aircraft is slightly left of the ATCO path and has a heading error to the path.",
+    "technical_summary": "The aircraft is currently at position (82.7, 66.0), with a heading of -146.9\u00b0. The ATCO path has a heading of -152.3\u00b0, resulting in a heading error of -5.4\u00b0. The cross-track error is +0.18, indicating a slight deviation to the left of the path. The TTCP is critically low, indicating an imminent close-proximity situation. The aircraft is closing on the intruder at a rate of 2.000 units per step.",
+    "rationale": "The aircraft is slightly left of the ATCO path, and the heading error to the path is -5.4\u00b0. To correct this and avoid further deviation, a small turn to the right is required. Given the imminent close-proximity situation with the intruder, a conservative approach is warranted. A smaller turn will reduce the heading error and cross-track error without overcorrecting.",
+    "metrics": {
+      "ttcp": 0.0,
+      "separation_distance": 27.51
+    },
+    "maneuver": {
+      "heading_change_deg": -10,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -10,
+    "hold_steps": 0
+  }
+}

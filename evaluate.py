@@ -13,6 +13,7 @@ from rl_llm.ppo import PPO, warmup_obs_norm, device
 
 
 def _ensure_clean_dir(path: str) -> None:
+    # Create the folder if needed and remove any leftover frame PNGs.
     Path(path).mkdir(parents=True, exist_ok=True)
     for png in Path(path).glob("image_*.png"):
         try:
@@ -39,6 +40,7 @@ def rollout_to_gif(env: StructuredEnv, agent: PPO, ep_index: int = 1) -> float:
     ep_ret = 0.0
     done = False
 
+    # Capture the starting frame before stepping the environment.
     env.render(show=False, folder=frames_dir + "/")
 
     while not done:
@@ -56,6 +58,7 @@ def rollout_to_gif(env: StructuredEnv, agent: PPO, ep_index: int = 1) -> float:
         env.render(show=False, folder=frames_dir + "/")
 
         if env.n_step > env.MAX_STEP + 5:
+            # Safety guard so evaluation never hangs if MAX_STEP logic changes.
             break
 
     gif_path = os.path.join(EVAL_OUTPUT_DIR, f"ep{ep_index:03d}.gif")
@@ -70,6 +73,7 @@ def main() -> None:
     ), f"Not found: {EVAL_BEST_MODEL_PATH}"
     os.makedirs(EVAL_OUTPUT_DIR, exist_ok=True)
 
+    # Build the evaluation environment and reload the trained model.
     env = StructuredEnv(start_llm_at_step=START_LLM_AT_STEP)
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
@@ -91,6 +95,7 @@ def main() -> None:
 
     returns: List[float] = []
     for ep in range(1, 2):
+        # Roll out once and store the score for reporting.
         ret = rollout_to_gif(env, agent, ep)
         returns.append(ret)
 

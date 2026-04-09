@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0036",
+    "run_id": "memory",
+    "step": 36,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 36,
+    "sep_oi": 18.117957840421855,
+    "dist_o_dest": 12.030204615926491,
+    "dist_i_dest": 1.3910152981555544,
+    "ttcp": 0.0,
+    "own_heading_deg": -133.03578648280825,
+    "path_heading_deg": -134.4857930567821,
+    "heading_err_path_deg": -1.4500065739738375,
+    "signed_cross_track_to_path": 0.8596232784783057
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path. The intruder is ahead and slightly to the right. Separation is increasing, and ownship is becoming more misaligned with the destination.",
+    "technical_summary": "Ownship's heading error to the ATCO path is -1.5\u00b0, indicating a slight deviation to the right. The cross-track error is +0.86, meaning ownship is left of the path. The separation between ownship and the intruder is increasing, and the TTCP is near zero, suggesting a potential conflict. Kinematic analysis shows a relative speed of 3.477, and the separation trend is positive, indicating increasing distance between aircraft.  The heading error to the destination is worsening, with ownship now 5.6\u00b0 right of the direct path.",
+    "rationale": "The primary goal is to realign ownship with the ATCO path. Given the slight deviation and the increasing separation, a moderate turn to the right is appropriate to correct the path error without inducing excessive cross-track distance. The ATCO baseline suggests a preference for larger turns in this situation, but a smaller correction is sufficient given the current geometry.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

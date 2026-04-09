@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0033",
+    "run_id": "memory",
+    "step": 33,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 33,
+    "sep_oi": 9.12892876973442,
+    "dist_o_dest": 20.322894694645825,
+    "dist_i_dest": 13.79727626788082,
+    "ttcp": 3.4912248246308115,
+    "own_heading_deg": -131.87078577262687,
+    "path_heading_deg": -166.90250019628252,
+    "heading_err_path_deg": -35.03171442365564,
+    "signed_cross_track_to_path": 6.366539848395063
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off the ATCO path, heading towards the destination. The intruder is nearby. Emergency mode is active, requiring a turn from a limited set of options.",
+    "technical_summary": "Ownship is currently 35.0\u00b0 off the ATCO path, with a positive cross-track error of 6.37. The heading error is worsening, and the cross-track error is significant. The ATCO path heading is 35.0\u00b0 to the right of ownship\u2019s heading. Emergency mode dictates a turn from a restricted set of options. TTCP to CPA is 3.49 steps.",
+    "rationale": "Given the emergency situation and the limited turn options, the smallest eligible turn (+5\u00b0) is selected to begin correcting the path deviation. The emergency mode overrides the typical preference for smaller turns when not in emergency mode.",
+    "metrics": {
+      "ttcp": 3.49,
+      "separation_distance": 9.13
+    },
+    "maneuver": {
+      "heading_change_deg": 5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

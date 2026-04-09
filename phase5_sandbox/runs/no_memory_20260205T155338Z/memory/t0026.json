@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0026",
+    "run_id": "memory",
+    "step": 26,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 26,
+    "sep_oi": 8.50011854539587,
+    "dist_o_dest": 29.74685012920392,
+    "dist_i_dest": 27.796300657891717,
+    "ttcp": 0.49424167837567384,
+    "own_heading_deg": -126.85740506523217,
+    "path_heading_deg": -166.93537971444826,
+    "heading_err_path_deg": -40.07797464921609,
+    "signed_cross_track_to_path": -0.9093993965979916
+  },
+  "answer": {
+    "scenario_summary": "Ownship is significantly off the ATCO path, with a large heading error and a negative cross-track error. The intruder is closing in, and a turn is required to avoid a conflict. Emergency mode is active, and the controller is providing a limited set of candidate turns.",
+    "technical_summary": "The aircraft is experiencing a significant heading error (-40.1\u00b0) and a negative cross-track error (-0.91). Kinematic analysis indicates a closing separation rate. The current situation necessitates a maneuver to correct the path deviation and maintain safe separation. Emergency mode is active, limiting the available turning options. The TTCP to the intruder is short at 0.49 steps.",
+    "rationale": "Given the emergency mode and the need to correct the significant path deviation, I must select a candidate turn from the provided list. Since the intruder is closing and the situation is critical, I will select the smallest available turn, -5\u00b0, to initiate a correction while minimizing the risk of overshooting.",
+    "metrics": {
+      "ttcp": 0.49,
+      "separation_distance": 8.5
+    },
+    "maneuver": {
+      "heading_change_deg": -5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

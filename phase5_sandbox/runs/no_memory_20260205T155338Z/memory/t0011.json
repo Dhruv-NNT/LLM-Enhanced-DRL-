@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0011",
+    "run_id": "memory",
+    "step": 11,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 11,
+    "sep_oi": 21.067333037223165,
+    "dist_o_dest": 56.64718393772846,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 9.061180906754489,
+    "own_heading_deg": -116.83064365044287,
+    "path_heading_deg": -154.25647761287132,
+    "heading_err_path_deg": -37.42583396242847,
+    "signed_cross_track_to_path": 0.4274427771989307
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off the ATCO path and approaching the intruder. Emergency mode is active, requiring a turn to the left. The goal is to avoid collision while adhering to the emergency procedure.",
+    "technical_summary": "Ownship is experiencing a significant heading error (-37.4\u00b0) and a small cross-track error (+0.43) relative to the ATCO path. The TTCP to the intruder is 9.06 steps, indicating a potential collision risk. Kinematic analysis shows a decreasing separation rate, confirming the closing distance. Emergency mode is active, dictating a left turn to avoid the intruder. The emergency procedure limits the available turn bins, prioritizing the smallest eligible turn.",
+    "rationale": "Emergency mode is active, and the candidate list dictates the available turns. The smallest eligible turn is prioritized to minimize deviation from the intended path and to ensure a swift resolution to the emergency situation. The emergency procedure overrides normal decision-making rules.",
+    "metrics": {
+      "ttcp": 10.0,
+      "separation_distance": 20.0
+    },
+    "maneuver": {
+      "heading_change_deg": -25,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -25,
+    "hold_steps": 0
+  }
+}

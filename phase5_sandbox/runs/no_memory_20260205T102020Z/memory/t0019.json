@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0019",
+    "run_id": "memory",
+    "step": 19,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 19,
+    "sep_oi": 5.7049597631901,
+    "dist_o_dest": 39.51063815967167,
+    "dist_i_dest": 38.20148025765899,
+    "ttcp": 0.0,
+    "own_heading_deg": -77.88859870146655,
+    "path_heading_deg": -126.79607320410169,
+    "heading_err_path_deg": -48.907474502635125,
+    "signed_cross_track_to_path": 3.8166805617456565
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and is in emergency mode. The intruder is closing in, and a maneuver is required to avoid a collision while returning to the ATCO path.",
+    "technical_summary": "Ownship's heading error to the ATCO path is -48.9\u00b0, and the signed cross-track error is +3.82. The TTCP to the intruder is 0.00 steps, indicating an imminent collision.  The separation is decreasing, but has recently begun to increase. The ATCO baseline suggests a large turn is typical in this situation. Given the emergency mode and the need to quickly reduce both heading and cross-track error, a larger turn is warranted.",
+    "rationale": "Emergency mode dictates adherence to the candidate list. The intruder is closing rapidly, and the TTCP is near zero. A large turn is needed to avoid a collision and return to the ATCO path. The candidate list dictates the choice of a turn between -30\u00b0 and +30\u00b0. The smallest eligible turn is selected.",
+    "metrics": {
+      "ttcp": 0.0,
+      "separation_distance": 5.7
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

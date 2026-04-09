@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0004",
+    "run_id": "memory",
+    "step": 4,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 4,
+    "sep_oi": 28.8547209813691,
+    "dist_o_dest": 70.40642874651792,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 11.64561586821634,
+    "own_heading_deg": -146.91092789481107,
+    "path_heading_deg": -151.9243086022121,
+    "heading_err_path_deg": -5.013380707401041,
+    "signed_cross_track_to_path": 0.19404344481445088
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path. The heading error and cross-track error are both positive, indicating a need to turn to the left. The ATCO path is to the right, so a left turn is required to correct the deviation.",
+    "technical_summary": "The current heading error to the ATCO path is -5.0\u00b0, and the signed cross-track error is +0.19.  This indicates that ownship is slightly to the left of the desired path.  The TTCP is 11.65 steps, indicating a relatively long time before closest approach with the intruder.  The heading error is within the range where a correction is needed, and a left turn is the appropriate maneuver. The current ATCO baseline suggests a preference for larger turns, but a smaller correction is appropriate given the mild deviation.",
+    "rationale": "The current deviation from the ATCO path requires a left turn to reduce both the heading error and cross-track error.  Given the mild deviation, a smaller turn is preferable to avoid overcorrection. The ATCO baseline suggests larger turns are common, but a smaller correction is appropriate given the current situation.",
+    "metrics": {
+      "ttcp": 11.65,
+      "separation_distance": 28.85
+    },
+    "maneuver": {
+      "heading_change_deg": -10,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -10,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0027",
+    "run_id": "memory",
+    "step": 27,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 27,
+    "sep_oi": 8.876321739807544,
+    "dist_o_dest": 9.428988371851418,
+    "dist_i_dest": 10.201857191426473,
+    "ttcp": 0.0,
+    "own_heading_deg": -62.84845657928246,
+    "path_heading_deg": -81.94984399377803,
+    "heading_err_path_deg": -19.101387414495576,
+    "signed_cross_track_to_path": -1.7525975928572215
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, exhibiting a negative heading error and a slight cross-track error. The separation between ownship and the intruder is increasing, and the intruder is now significantly ahead and to the left. The ATCO path is to the right of ownship.",
+    "technical_summary": "Ownship's current position is x=67.9, y=46.5, heading -62.8\u00b0. The ATCO path heading is -81.9\u00b0, resulting in a -19.1\u00b0 heading error. The cross-track error is -1.75, indicating a slight deviation to the left of the path. The separation between ownship and the intruder is increasing at a rate of +0.179 per step. The intruder is now significantly ahead and to the left, requiring a course correction to maintain separation and return to the ATCO path.",
+    "rationale": "The primary goal is to reduce both the heading error to the path and the cross-track error. A turn of 30\u00b0 to the right is the largest allowed bin, but it will rapidly reduce the heading error and significantly decrease the cross-track error. The increasing separation with the intruder is a secondary concern that will be addressed by returning to the ATCO path.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -20,
+    "hold_steps": 0
+  }
+}

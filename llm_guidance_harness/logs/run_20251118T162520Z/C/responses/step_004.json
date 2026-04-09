@@ -1,0 +1,29 @@
+{
+  "guidance": {
+    "heading_deg": -20,
+    "hold_steps": 2,
+    "phase": "EXECUTE_TURN",
+    "source": "llm",
+    "issued_step": 4,
+    "raw_text": "Here's my output:\n\n```\n{\n  \"answer\": {\n    \"scenario_summary\": \"Executing a turn to increase separation from the intruder.\",\n    \"technical_summary\": \"The intruder is closing, so we need to act quickly. The heading error to destination indicates that the destination is still ahead, but we should prioritize opening up space between ownship and the intruder. Given the relatively slow speeds of both ownship and the intruder, a moderate-sized turn should be sufficient.\",\n    \"rationale\": \"The past case of this scenario suggests that a conservative approach will lead to better outcomes.\",\n    \"metrics\": {\n      \"ttcp\": null,\n      \"separation_distance\": null\n    },\n    \"maneuver\": {\n      \"phase\": \"EXECUTE_TURN\",\n      \"heading_change_deg\": -20,\n      \"hold_steps\": 2\n    }\n  }\n}\n```\n\nIn this scenario, I chose to execute a turn away from the intruder. The heading error to destination suggests that the destination is still ahead, but we should prioritize opening up space between ownship and the intruder. Given the relatively slow speeds of both ownship and the intruder, a moderate-sized turn (-20\u00b0) should be sufficient. I chose this direction based on the sign rule, which dictates turning away from the intruder when it's ahead.",
+    "parsed": {
+      "answer": {
+        "scenario_summary": "Executing a turn to increase separation from the intruder.",
+        "technical_summary": "The intruder is closing, so we need to act quickly. The heading error to destination indicates that the destination is still ahead, but we should prioritize opening up space between ownship and the intruder. Given the relatively slow speeds of both ownship and the intruder, a moderate-sized turn should be sufficient.",
+        "rationale": "The past case of this scenario suggests that a conservative approach will lead to better outcomes.",
+        "metrics": {
+          "ttcp": null,
+          "separation_distance": null
+        },
+        "maneuver": {
+          "phase": "EXECUTE_TURN",
+          "heading_change_deg": -20,
+          "hold_steps": 2
+        }
+      }
+    }
+  },
+  "used_source": "llm",
+  "new_call": true,
+  "hold_remaining": 2
+}

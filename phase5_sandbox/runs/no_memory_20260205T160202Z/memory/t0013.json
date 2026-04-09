@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0013",
+    "run_id": "memory",
+    "step": 13,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 13,
+    "sep_oi": 12.044306077265816,
+    "dist_o_dest": 46.330150108309844,
+    "dist_i_dest": 53.795779747111034,
+    "ttcp": 6.251276232566414,
+    "own_heading_deg": -192.03135426136333,
+    "path_heading_deg": -176.3444046975053,
+    "heading_err_path_deg": 15.686949563858064,
+    "signed_cross_track_to_path": -3.2894266242547214
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, exhibiting a heading error and cross-track error. The separation to the intruder is decreasing, requiring a course correction to maintain safe separation and return to the path. The ATCO path is to the left.",
+    "technical_summary": "The aircraft is currently 15.7\u00b0 off the ATCO path to the left and 3.29 units left of the cross-track. The separation to the intruder is decreasing at a rate of approximately 1.924 units per step. The aircraft's heading is 192.0\u00b0, while the ATCO path heading is 176.3\u00b0. Kinematic analysis shows a relative speed of 1.925 units/step, with a TTCP of 6.25 steps. The aircraft's trajectory is currently worse aligned with the destination than at the start.",
+    "rationale": "The aircraft is significantly off the ATCO path, and the separation to the intruder is decreasing. A course correction is needed to return to the path and maintain safe separation. Given the magnitude of the deviation, a moderate turn is required to efficiently reduce both heading and cross-track error. The ATCO path is to the left, so a turn to the right is needed.",
+    "metrics": {
+      "ttcp": 6.25,
+      "separation_distance": 12.04
+    },
+    "maneuver": {
+      "heading_change_deg": -20,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -20,
+    "hold_steps": 0
+  }
+}

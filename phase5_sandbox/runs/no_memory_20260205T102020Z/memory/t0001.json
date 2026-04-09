@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0001",
+    "run_id": "memory",
+    "step": 1,
+    "trigger_reason": "none"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 27.89993469526396,
+    "dist_o_dest": 68.31215913409926,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.9243086022005,
+    "heading_err_path_deg": 5.258016244624741e-12,
+    "signed_cross_track_to_path": 0.0
+  },
+  "answer": {
+    "scenario_summary": "Ownship is tracking along the ATCO path, maintaining a heading of -151.9\u00b0. The path heading matches the current heading, and the cross-track error is minimal. The destination is to the right of the current heading.",
+    "technical_summary": "The aircraft is currently aligned with the ATCO path. The heading error to the path is 0\u00b0, and the signed cross-track error is 0.00. Derived signals indicate that the destination is to the right of the current heading. The lack of prior observations limits kinematic analysis.",
+    "rationale": "Since the heading error and cross-track error are both minimal, a small correction is warranted to maintain the desired path. A slight turn to the left (positive heading change) will help to correct the minor error and keep the aircraft on course.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 27.9
+    },
+    "maneuver": {
+      "heading_change_deg": 5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

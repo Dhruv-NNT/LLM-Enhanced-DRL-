@@ -1,0 +1,29 @@
+{
+  "guidance": {
+    "heading_deg": -20,
+    "hold_steps": 2,
+    "phase": "EXECUTE_TURN",
+    "source": "llm",
+    "issued_step": 16,
+    "raw_text": "Here is my output:\n\n```\n{\n  \"answer\": {\n    \"scenario_summary\": \"Ownship and intruder are closing in on each other, with a separation of 8.80 units.\",\n    \"technical_summary\": \"The ownship is heading -217.1\u00b0 and the ATCO path is at +172.5\u00b0, resulting in a positive cross-track error to the original path. The bearing error to the intruder is +83.1\u00b0, indicating it's ahead and to the left.\",\n    \"rationale\": \"Based on the safety override condition (separation < SAFE_R*1.2) and the TTCP \u2264 3, I will prioritize increasing separation by turning away from the intruder.\",\n    \"metrics\": {\n      \"ttcp\": null,\n      \"separation_distance\": null\n    },\n    \"maneuver\": {\n      \"phase\": \"EXECUTE_TURN\",\n      \"heading_change_deg\": -20,\n      \"hold_steps\": 2\n    }\n  }\n}\n```\n\nPlease let me know if this meets your requirements.",
+    "parsed": {
+      "answer": {
+        "scenario_summary": "Ownship and intruder are closing in on each other, with a separation of 8.80 units.",
+        "technical_summary": "The ownship is heading -217.1\u00b0 and the ATCO path is at +172.5\u00b0, resulting in a positive cross-track error to the original path. The bearing error to the intruder is +83.1\u00b0, indicating it's ahead and to the left.",
+        "rationale": "Based on the safety override condition (separation < SAFE_R*1.2) and the TTCP \u2264 3, I will prioritize increasing separation by turning away from the intruder.",
+        "metrics": {
+          "ttcp": null,
+          "separation_distance": null
+        },
+        "maneuver": {
+          "phase": "EXECUTE_TURN",
+          "heading_change_deg": -20,
+          "hold_steps": 2
+        }
+      }
+    }
+  },
+  "used_source": "llm",
+  "new_call": true,
+  "hold_remaining": 2
+}

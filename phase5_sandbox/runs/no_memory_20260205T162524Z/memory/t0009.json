@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0009",
+    "run_id": "memory",
+    "step": 9,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 9,
+    "sep_oi": 19.543198405364127,
+    "dist_o_dest": 54.63413237113624,
+    "dist_i_dest": 61.696244853798724,
+    "ttcp": 5.559777111350079,
+    "own_heading_deg": -232.13839992052104,
+    "path_heading_deg": -176.3444046975053,
+    "heading_err_path_deg": 55.79399522301574,
+    "signed_cross_track_to_path": -2.276289656876915
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is off the ATCO path and closing on the intruder. The aircraft is significantly left of the path and the heading error is large. The aircraft is also deviating from the direct path to the destination.",
+    "technical_summary": "The aircraft is currently positioned at x=72.6, y=65.9. The intruder is at x=65.2, y=84.0. The cross-track error is -2.28, and the heading error to the ATCO path is +55.8\u00b0.  The separation is decreasing at a rate of -3.229 units per step. The TTCP to CPA is 5.56 steps. The aircraft's heading is -232.1\u00b0, and the ATCO path heading is -176.3\u00b0. The aircraft is currently deviating from the direct path to the destination. The closing rate indicates a potential conflict if no corrective action is taken.",
+    "rationale": "The aircraft is significantly off the ATCO path and needs a course correction to return to the planned route. Given the large heading error and the closing separation with the intruder, a larger turn is necessary to address both the path deviation and the potential conflict. Considering the ATCO baseline, a turn of 30 degrees is a common first step for significant deviations.",
+    "metrics": {
+      "ttcp": 5.56,
+      "separation_distance": 19.54
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

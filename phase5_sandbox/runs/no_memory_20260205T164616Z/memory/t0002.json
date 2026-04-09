@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0002",
+    "run_id": "memory",
+    "step": 2,
+    "trigger_reason": "none"
+  },
+  "observation_before": {
+    "step": 2,
+    "sep_oi": 27.917628913977413,
+    "dist_o_dest": 65.06813459366548,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 9.636281360494763,
+    "own_heading_deg": -117.99564436062418,
+    "path_heading_deg": -118.66987534592627,
+    "heading_err_path_deg": -0.6742309853020743,
+    "signed_cross_track_to_path": 0.005986587424123207
+  },
+  "answer": {
+    "scenario_summary": "The ownship is tracking slightly off the ATCO path, with a small heading error and cross-track deviation. The intruder is ahead and slightly to the right. The ownship is closing on the intruder.",
+    "technical_summary": "The ownship is currently at position (67.1, 87.5), heading -118.0\u00b0. The ATCO path heading is -118.7\u00b0, resulting in a small heading error of -0.7\u00b0. The signed cross-track error is +0.01, indicating a slight deviation to the left of the path. The TTCP to the intruder is 9.64 steps. The heading error is trending slightly positive, while the cross-track error is small and stable. The separation is decreasing at a rate of -1.416 per step.",
+    "rationale": "The ownship is slightly off the ATCO path. Given the small heading error and cross-track deviation, a small correction is needed. The ATCO baseline suggests that small corrections are common, and larger turns are reserved for more significant deviations.",
+    "metrics": {
+      "ttcp": 9.64,
+      "separation_distance": 27.92
+    },
+    "maneuver": {
+      "heading_change_deg": -5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

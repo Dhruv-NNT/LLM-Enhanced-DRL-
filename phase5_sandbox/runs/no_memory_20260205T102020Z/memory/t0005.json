@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0005",
+    "run_id": "memory",
+    "step": 5,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 5,
+    "sep_oi": 22.98744578857502,
+    "dist_o_dest": 61.85756735269689,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": 11.376441438307763,
+    "own_heading_deg": -232.13839992052104,
+    "path_heading_deg": -151.92430860221066,
+    "heading_err_path_deg": 80.21409131831035,
+    "signed_cross_track_to_path": -4.265459937253678
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off the ATCO path and needs to correct its heading. The intruder is ahead and slightly to the right. Emergency mode is active, restricting maneuver options.",
+    "technical_summary": "Ownship is currently 4.27 units left of the ATCO path, with a heading error of +80.2\u00b0. The heading error to the destination is +60.6\u00b0. The TTCP to the intruder is 11.38 steps, and the separation is decreasing. Emergency mode is active due to a prior event, limiting the available turn options. The ATCO path is to the left, and the current heading is significantly different.",
+    "rationale": "Emergency mode restricts turn options. Given the large heading error and the need to align with the ATCO path, a larger turn is necessary. The ATCO path is to the left, so a turn to the left (negative heading change) is required. Given the emergency constraints, the available bins are limited and a larger turn is preferred.",
+    "metrics": {
+      "ttcp": 11.38,
+      "separation_distance": 22.99
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

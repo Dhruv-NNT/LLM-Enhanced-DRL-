@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0035",
+    "run_id": "memory",
+    "step": 35,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 35,
+    "sep_oi": 16.811566932847395,
+    "dist_o_dest": 14.02196676706184,
+    "dist_i_dest": 1.4367460753164036,
+    "ttcp": 0.0,
+    "own_heading_deg": -148.07592860499236,
+    "path_heading_deg": -135.06453032130628,
+    "heading_err_path_deg": 13.011398283686077,
+    "signed_cross_track_to_path": 0.7948592540333557
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, with a positive heading error and a slight cross-track error. The intruder is ahead and to the right, with a closing separation. The situation requires a corrective maneuver to return to the ATCO path.",
+    "technical_summary": "Ownship's heading error to the ATCO path is +13.0\u00b0, indicating a deviation to the right. The cross-track error is +0.79, also indicating a rightward deviation. The separation between ownship and the intruder is increasing, and the TTCP is near zero, suggesting a potential conflict if the current trajectory is maintained. The current heading error is worsening, and the separation is increasing, both trends are unfavorable.",
+    "rationale": "The primary goal is to reduce the heading error to the ATCO path and the cross-track error. A turn of -30 degrees is chosen to aggressively correct the heading error and minimize the cross-track deviation. This bin aligns with the ATCO baseline for larger corrections.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 15,
+    "hold_steps": 0
+  }
+}

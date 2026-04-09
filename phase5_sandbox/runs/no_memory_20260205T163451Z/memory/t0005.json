@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0005",
+    "run_id": "memory",
+    "step": 5,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 5,
+    "sep_oi": 23.365804663344104,
+    "dist_o_dest": 59.1090736643608,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 8.945939858734258,
+    "own_heading_deg": -133.03578648280828,
+    "path_heading_deg": -129.0418266455773,
+    "heading_err_path_deg": 3.993959837230989,
+    "signed_cross_track_to_path": -0.9235677713718355
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is currently off the ATCO path, exhibiting a heading error and cross-track error. The aircraft is approaching the intruder. A course correction is needed to return to the ATCO path.",
+    "technical_summary": "The aircraft's heading error to the ATCO path is +4.0\u00b0, indicating a slight deviation to the left. The signed cross-track error is -0.92, confirming the aircraft is slightly to the left of the path. The TTCP to the intruder is 8.95 steps, suggesting a closing separation. The aircraft's current heading (-133.0\u00b0) is 4.0\u00b0 off the ATCO path heading (-129.0\u00b0).",
+    "rationale": "The aircraft is off the ATCO path. The alignment checklist dictates a course correction. Given the positive heading error, a turn to the left (positive turn bin) is required to return to the path. The smallest allowed turn bin will be selected to minimize deviation.",
+    "metrics": {
+      "ttcp": 8.95,
+      "separation_distance": 23.37
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

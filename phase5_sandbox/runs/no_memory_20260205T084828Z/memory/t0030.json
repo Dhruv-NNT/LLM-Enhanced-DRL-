@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0030",
+    "run_id": "memory",
+    "step": 30,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 30,
+    "sep_oi": 12.910614307659054,
+    "dist_o_dest": 23.95280351479748,
+    "dist_i_dest": 11.077489507185309,
+    "ttcp": 0.0,
+    "own_heading_deg": -143.06254789759768,
+    "path_heading_deg": -145.15682014016855,
+    "heading_err_path_deg": -2.0942722425708666,
+    "signed_cross_track_to_path": 1.1547677202648772
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, with a slight heading error and a positive cross-track error. The intruder is ahead and to the right, with a separation that is increasing. The goal is to correct the path deviation while maintaining separation.",
+    "technical_summary": "Ownship's heading error to the ATCO path is -2.1\u00b0, and the signed cross-track error is +1.15. The separation between ownship and the intruder is increasing at a rate of +0.746 units per step. The heading error to the destination is 1.8\u00b0, indicating a slight misalignment with the final destination. Kinematic analysis reveals a relative speed of 1.148 units per step, and a TTCP of 0 steps, suggesting a potential collision risk if the current trajectory is maintained. The recent trend shows a worsening alignment with the destination and an increasing separation from the intruder.",
+    "rationale": "The current heading error and cross-track error necessitate a corrective maneuver. Given the safety trigger and the allowed bins, a moderate turn to the right is selected to reduce both the heading error and the cross-track error. A turn of -10\u00b0 is chosen to prioritize path correction while remaining within the allowed bin range and avoiding overly aggressive maneuvers. The baseline hints suggest that moderate turns are common in this situation.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": -10,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

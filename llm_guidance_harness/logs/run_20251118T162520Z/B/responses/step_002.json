@@ -1,0 +1,29 @@
+{
+  "guidance": {
+    "heading_deg": -15,
+    "hold_steps": 2,
+    "phase": "EXECUTE_TURN",
+    "source": "llm",
+    "issued_step": 2,
+    "raw_text": "Here's my cautious ATCO helper output:\n\n```\n{\n  \"answer\": {\n    \"scenario_summary\": \"Ownship is approaching the intruder, and the separation is decreasing.\",\n    \"technical_summary\": \"The ownship is closing in on the intruder, with a current separation of 27.32 units. The heading error to destination is -22.8\u00b0, indicating that the ownship needs to turn right to reach its destination.\",\n    \"rationale\": \"Given the current situation and trends, I've decided to execute a small turn away from the intruder to increase separation and maintain a safe distance.\",\n    \"metrics\": {\n      \"ttcp\": null,\n      \"separation_distance\": null\n    },\n    \"maneuver\": {\n      \"phase\": \"EXECUTE_TURN\",\n      \"heading_change_deg\": -15,\n      \"hold_steps\": 2\n    }\n  }\n}\n```\n\nI've chosen to execute a turn away from the intruder, as the separation is decreasing and we need to increase it. I've selected a heading change of -15\u00b0 (a right turn), which should help us maintain a safe distance from the intruder.",
+    "parsed": {
+      "answer": {
+        "scenario_summary": "Ownship is approaching the intruder, and the separation is decreasing.",
+        "technical_summary": "The ownship is closing in on the intruder, with a current separation of 27.32 units. The heading error to destination is -22.8\u00b0, indicating that the ownship needs to turn right to reach its destination.",
+        "rationale": "Given the current situation and trends, I've decided to execute a small turn away from the intruder to increase separation and maintain a safe distance.",
+        "metrics": {
+          "ttcp": null,
+          "separation_distance": null
+        },
+        "maneuver": {
+          "phase": "EXECUTE_TURN",
+          "heading_change_deg": -15,
+          "hold_steps": 2
+        }
+      }
+    }
+  },
+  "used_source": "llm",
+  "new_call": true,
+  "hold_remaining": 2
+}

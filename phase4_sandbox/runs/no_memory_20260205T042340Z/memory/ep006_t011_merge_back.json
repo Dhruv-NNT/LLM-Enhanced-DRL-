@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep006_t011_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 11,
+    "fileinfo": [
+      "170321set1_1_QR181.csv",
+      "170321set1_1_3K180.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/memory/ep006_t011_merge_back.prompt.txt",
+    "sha1": "4e62a15b54719c8751ab8fa21fa9c44bca4c94e7"
+  },
+  "observation_before": {
+    "step": 11,
+    "sep_oi": 9.39452178355449,
+    "dist_o_dest": 48.5753595201754,
+    "dist_i_dest": 52.20129854021035,
+    "ttcp": 3.8330151884243904,
+    "own_heading_deg": -123.0090250680189,
+    "path_heading_deg": -155.36974783626033,
+    "heading_err_path_deg": -32.36072276824143
+  },
+  "answer": {
+    "scenario_summary": "Intruder closing in; need to merge with ATCO path while maintaining a safe distance.",
+    "technical_summary": "Current situation: ownship position (56.4, 73.2), intruder position (47.0, 72.6); separation 9.39; distances to destination 48.58 and 52.20 for ownship and intruder respectively; deviation from ATCO path cross-track (+3.04) and distance-to-path (3.04).",
+    "rationale": "Based on the current situation and trends, I will turn -15\u00b0 to reduce signed cross-track error and align with ATCO path.",
+    "metrics": {
+      "ttcp": 3.8330151884243904,
+      "separation_distance": 9.39452178355449
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -15,
+      "hold_steps": 2
+    }
+  },
+  "apply_log": {
+    "applied_step": 11,
+    "heading_before_apply_deg": -123.0090250680189,
+    "heading_after_apply_deg": -148.0759286049924,
+    "delta_heading_deg": -25.066903536973513,
+    "turn_commanded_deg": -25.0
+  }
+}

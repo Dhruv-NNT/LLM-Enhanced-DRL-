@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0022",
+    "run_id": "memory",
+    "step": 22,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 22,
+    "sep_oi": 8.193807627522714,
+    "dist_o_dest": 19.393068580853576,
+    "dist_i_dest": 20.201733579757068,
+    "ttcp": 0.0,
+    "own_heading_deg": -67.86183728667716,
+    "path_heading_deg": -64.88382110160912,
+    "heading_err_path_deg": 2.978016185068043,
+    "signed_cross_track_to_path": -2.025926802505307
+  },
+  "answer": {
+    "scenario_summary": "Ownship is tracking slightly left of the ATCO path. The intruder is ahead and to the left. Separation is decreasing slightly, but remains adequate. The goal is to correct the path deviation while maintaining safe separation.",
+    "technical_summary": "Ownship is experiencing a positive heading error of 3.0 degrees and a signed cross-track error of -2.03. The intruder is slightly ahead and to the left, with a decreasing separation. The TTCP is near zero, indicating a potential collision risk if the current trajectory is maintained. Recent trends show a slight decrease in separation and improved alignment with the destination, but the path deviation needs correction.",
+    "rationale": "The primary objective is to reduce the cross-track error. A turn of 15 degrees to the left will best reduce the path error while avoiding overly aggressive maneuvers. The safety trigger indicates the need for a corrective action, but the path trigger allows for a relatively large turn to correct the deviation.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": -15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0031",
+    "run_id": "memory",
+    "step": 31,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 31,
+    "sep_oi": 9.125531557074325,
+    "dist_o_dest": 22.75121064206921,
+    "dist_i_dest": 17.79680616231198,
+    "ttcp": 0.0,
+    "own_heading_deg": -166.9644507243898,
+    "path_heading_deg": -166.92441890090822,
+    "heading_err_path_deg": 0.04003182348156997,
+    "signed_cross_track_to_path": 4.212023514341957
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, with a cross-track error of 4.21 units and a heading error of 0\u00b0. The separation with the intruder is increasing, and TTCP is approaching zero. Emergency mode is active, requiring a turn towards the intruder.",
+    "technical_summary": "The aircraft is currently off the ATCO path, exhibiting a positive cross-track error indicating deviation to the left. The heading error is minimal, but the increasing separation between ownship and intruder, combined with the imminent TTCP, necessitates a corrective maneuver. Kinematic analysis reveals a closing relative velocity, emphasizing the need for prompt action.  The emergency mode dictates a turn toward the intruder, prioritizing safety over path adherence.",
+    "rationale": "Due to the emergency mode being active, the usual ATCO path adherence rules are suspended. The situation requires a turn towards the intruder to avoid a collision. The smallest eligible turn is selected to minimize the deviation from the intended course while addressing the immediate safety concern. The candidate list provided by the controller is used to select the appropriate turn.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

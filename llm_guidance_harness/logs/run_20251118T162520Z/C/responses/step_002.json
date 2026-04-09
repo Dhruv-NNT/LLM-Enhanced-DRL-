@@ -1,0 +1,29 @@
+{
+  "guidance": {
+    "heading_deg": -20,
+    "hold_steps": 2,
+    "phase": "EXECUTE_TURN",
+    "source": "llm",
+    "issued_step": 2,
+    "raw_text": "Here is my output in strict JSON format:\n\n{\n  \"answer\": {\n    \"scenario_summary\": \"Ownship is currently at position x=67.1, y=87.5 and heading -118.0\u00b0, approaching destination x=70.8, y=38.6 with a separation of 26.35 units.\",\n    \"technical_summary\": \"The ownship is closing in on the intruder (\u0394sep: -2.226 per step) with a bearing error to intruder of -38.6\u00b0 and heading error to path of -0.7\u00b0. The relative speed |v_rel| is 2.310.\",\n    \"rationale\": \"Given the closing separation and bearing error, I will execute a turn away from the intruder to increase separation. Since the geometry is mild, I will prefer a smaller bin.\",\n    \"metrics\": {\n      \"ttcp\": null,\n      \"separation_distance\": null\n    },\n    \"maneuver\": {\n      \"phase\": \"EXECUTE_TURN\",\n      \"heading_change_deg\": -20,\n      \"hold_steps\": 2\n    }\n  }\n}",
+    "parsed": {
+      "answer": {
+        "scenario_summary": "Ownship is currently at position x=67.1, y=87.5 and heading -118.0\u00b0, approaching destination x=70.8, y=38.6 with a separation of 26.35 units.",
+        "technical_summary": "The ownship is closing in on the intruder (\u0394sep: -2.226 per step) with a bearing error to intruder of -38.6\u00b0 and heading error to path of -0.7\u00b0. The relative speed |v_rel| is 2.310.",
+        "rationale": "Given the closing separation and bearing error, I will execute a turn away from the intruder to increase separation. Since the geometry is mild, I will prefer a smaller bin.",
+        "metrics": {
+          "ttcp": null,
+          "separation_distance": null
+        },
+        "maneuver": {
+          "phase": "EXECUTE_TURN",
+          "heading_change_deg": -20,
+          "hold_steps": 2
+        }
+      }
+    }
+  },
+  "used_source": "llm",
+  "new_call": true,
+  "hold_remaining": 2
+}

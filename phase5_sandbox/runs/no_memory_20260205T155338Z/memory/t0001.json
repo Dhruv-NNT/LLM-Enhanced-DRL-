@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0001",
+    "run_id": "memory",
+    "step": 1,
+    "trigger_reason": "none"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 33.69581517414292,
+    "dist_o_dest": 75.68706620189461,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.92430860220378,
+    "heading_err_path_deg": 1.9895196601282805e-12,
+    "signed_cross_track_to_path": 0.0
+  },
+  "answer": {
+    "scenario_summary": "Ownship is currently tracking along the ATCO path, but slightly off-track. The heading error to the path is minimal, and cross-track error is zero. The destination is ahead and slightly to the left.",
+    "technical_summary": "The current observation indicates a negligible heading error to the ATCO path (0.0\u00b0), with no cross-track deviation.  The ATCO path heading matches the ownship's heading. Kinematic data is unavailable due to the lack of a previous observation. The separation from the intruder is substantial.",
+    "rationale": "Given the minimal heading and cross-track errors, and in accordance with HARD RULE A, a zero-degree heading change is required to maintain the current track. The ATCO path and ownship's current heading are aligned, indicating no immediate need for course correction.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 33.7
+    },
+    "maneuver": {
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 0,
+    "hold_steps": 0
+  }
+}

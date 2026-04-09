@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0022",
+    "run_id": "memory",
+    "step": 22,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 22,
+    "sep_oi": 8.599888608507497,
+    "dist_o_dest": 35.15880717814133,
+    "dist_i_dest": 35.79611627589796,
+    "ttcp": 0.0,
+    "own_heading_deg": -136.8841664800216,
+    "path_heading_deg": -167.18983779070933,
+    "heading_err_path_deg": -30.30567131068773,
+    "signed_cross_track_to_path": -6.99538756076456
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, heading left of the desired trajectory. The intruder is positioned to the left and slightly ahead.  Emergency mode is active, requiring a turn to avoid potential conflict.",
+    "technical_summary": "The current heading error to the ATCO path is -30.3\u00b0, and the signed cross-track error is -7.00.  Kinematic analysis reveals a closing separation rate with the intruder, indicating a potential conflict if no corrective action is taken. Given the emergency situation, a turn is necessary to mitigate risk and align with the intruder avoidance strategy.",
+    "rationale": "In emergency mode, the objective is to avoid the intruder. The provided candidate list dictates the available turn options, prioritizing the smallest eligible turn to minimize deviation from the intended path while ensuring safety.  The smallest eligible turn is +30 degrees, which will move ownship to the right.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

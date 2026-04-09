@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0009",
+    "run_id": "memory",
+    "step": 9,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 9,
+    "sep_oi": 22.782942219163022,
+    "dist_o_dest": 60.35795556332044,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 5.868309632274431,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -154.25647761287163,
+    "heading_err_path_deg": -2.332169010665865,
+    "signed_cross_track_to_path": -0.01620163324481127
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path. The heading error to the path is small but negative, indicating a slight drift to the left. The intruder is ahead and to the left, and the separation is decreasing.",
+    "technical_summary": "Ownship's current position is x=71.9, y=60.8. The heading error to the ATCO path is -2.3\u00b0, and the signed cross-track error is -0.02. The TTCP to the intruder is 5.87 steps. The separation is decreasing at a rate of -1.092 per step. The heading error to the destination is 1.7\u00b0. The recent trend shows a worsening alignment with the destination, and the intruder is moving further away from ownship's nose.",
+    "rationale": "The primary goal is to correct the deviation from the ATCO path. The current situation has a small negative heading error, so a slight turn to the right (positive heading change) is needed to bring ownship back onto the path. Given the small heading error, a moderate turn is appropriate. The ATCO baseline suggests that turns between 20\u00b0 and 30\u00b0 are common in this situation.",
+    "metrics": {
+      "ttcp": 5.87,
+      "separation_distance": 22.78
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,20 @@
+2026-02-05T04:23:48.480796+00:00 fallback=parse_fail step=3 bearing_err=-49.5 turn=-5
+2026-02-05T04:23:52.534679+00:00 MERGE_BACK override: dir_sign=-1 mag=-10 step=7
+2026-02-05T04:23:57.266399+00:00 MERGE_BACK override: dir_sign=-1 mag=-10 step=11
+2026-02-05T04:24:10.808730+00:00 MERGE_BACK override: dir_sign=1 mag=10 step=6
+2026-02-05T04:24:14.948382+00:00 MERGE_BACK override: dir_sign=-1 mag=-20 step=10
+2026-02-05T04:24:31.139946+00:00 MERGE_BACK override: dir_sign=1 mag=10 step=7
+2026-02-05T04:24:42.543998+00:00 fallback=parse_fail step=3 bearing_err=+76.4 turn=5
+2026-02-05T04:24:46.705777+00:00 MERGE_BACK override: dir_sign=1 mag=25 step=7
+2026-02-05T04:24:56.693277+00:00 fallback=parse_fail step=2 bearing_err=+36.7 turn=5
+2026-02-05T04:25:02.265751+00:00 MERGE_BACK override: dir_sign=-1 mag=-10 step=6
+2026-02-05T04:25:18.306598+00:00 MERGE_BACK override: dir_sign=1 mag=10 step=7
+2026-02-05T04:25:23.584736+00:00 MERGE_BACK override: dir_sign=-1 mag=-25 step=11
+2026-02-05T04:25:37.301139+00:00 MERGE_BACK override: dir_sign=1 mag=10 step=6
+2026-02-05T04:25:41.890992+00:00 MERGE_BACK override: dir_sign=-1 mag=-20 step=10
+2026-02-05T04:25:58.400501+00:00 MERGE_BACK override: dir_sign=-1 mag=-10 step=6
+2026-02-05T04:26:21.426403+00:00 MERGE_BACK override: dir_sign=1 mag=25 step=7
+2026-02-05T04:26:25.024074+00:00 MERGE_BACK override: dir_sign=1 mag=25 step=11
+2026-02-05T04:26:29.735067+00:00 MERGE_BACK override: dir_sign=1 mag=15 step=15
+2026-02-05T04:26:34.189460+00:00 MERGE_BACK override: dir_sign=1 mag=10 step=19
+2026-02-05T04:26:49.755456+00:00 MERGE_BACK override: dir_sign=1 mag=10 step=6

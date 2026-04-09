@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0036",
+    "run_id": "memory",
+    "step": 36,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 36,
+    "sep_oi": 9.598938433616494,
+    "dist_o_dest": 16.66162014830448,
+    "dist_i_dest": 7.798395118930212,
+    "ttcp": 0.0,
+    "own_heading_deg": -156.9376893096004,
+    "path_heading_deg": -166.86962945552875,
+    "heading_err_path_deg": -9.931940145928365,
+    "signed_cross_track_to_path": 8.347395245583014
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, with a significant heading error and cross-track deviation. The intruder is closing in. Emergency mode is active, requiring a corrective turn.",
+    "technical_summary": "The aircraft is experiencing a -9.9\u00b0 heading error and a +8.35 cross-track deviation from the ATCO path.  Kinematic analysis indicates a decreasing TTCP and a relative closing speed. The current situation demands a corrective maneuver to mitigate the risk of collision and return to the ATCO path. Emergency mode is active, necessitating a turn from the provided candidate list.",
+    "rationale": "Due to emergency mode, I must choose from the provided candidate list. The candidates are ordered by TTCP at t+4, and the smallest TTCP is preferred. +20\u00b0 has a TTCP of 2.35 at t+4, which is the smallest, therefore this is the best choice.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 20,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 20,
+    "hold_steps": 0
+  }
+}

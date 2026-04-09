@@ -1,0 +1,29 @@
+{
+  "guidance": {
+    "heading_deg": -20,
+    "hold_steps": 1,
+    "phase": "EXECUTE_TURN",
+    "source": "llm",
+    "issued_step": 4,
+    "raw_text": "Here's my output in JSON format:\n\n```\n{\n  \"answer\": {\n    \"scenario_summary\": \"Ownship and intruder are approaching each other, with a closing separation of -0.944 units per step.\",\n    \"technical_summary\": \"Given the current situation, I'll prioritize safety by choosing a turn that opens up more space between us. The bearing error to the intruder is -63.8\u00b0, indicating it's on our right side. Since we're heading away from the destination, I'll try to minimize the ownship\u2192destination distance change.\",\n    \"rationale\": \"I chose this maneuver because it prioritizes safety and minimizes the risk of collision. I also considered the baseline hints, which suggest starting turns inside the typical window (0-5 steps).\",\n    \"metrics\": {\n      \"ttcp\": null,\n      \"separation_distance\": null\n    },\n    \"maneuver\": {\n      \"phase\": \"EXECUTE_TURN\",\n      \"heading_change_deg\": -20,\n      \"hold_steps\": 1\n    }\n  }\n}\n```\n\nIn this scenario, I decided to execute a turn away from the intruder, which is on our right side. Since we're heading away from the destination, I'll try to minimize the ownship\u2192destination distance change. The chosen turn magnitude is -20\u00b0, which should help open up more space between us and the intruder.",
+    "parsed": {
+      "answer": {
+        "scenario_summary": "Ownship and intruder are approaching each other, with a closing separation of -0.944 units per step.",
+        "technical_summary": "Given the current situation, I'll prioritize safety by choosing a turn that opens up more space between us. The bearing error to the intruder is -63.8\u00b0, indicating it's on our right side. Since we're heading away from the destination, I'll try to minimize the ownship\u2192destination distance change.",
+        "rationale": "I chose this maneuver because it prioritizes safety and minimizes the risk of collision. I also considered the baseline hints, which suggest starting turns inside the typical window (0-5 steps).",
+        "metrics": {
+          "ttcp": null,
+          "separation_distance": null
+        },
+        "maneuver": {
+          "phase": "EXECUTE_TURN",
+          "heading_change_deg": -20,
+          "hold_steps": 1
+        }
+      }
+    }
+  },
+  "used_source": "llm",
+  "new_call": true,
+  "hold_remaining": 1
+}

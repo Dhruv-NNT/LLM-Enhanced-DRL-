@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep003_t003_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 3,
+    "fileinfo": [
+      "050421set2_1_TR200.csv",
+      "050421set2_1_TR201.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T045244Z/memory/ep003_t003_execute_turn.prompt.txt",
+    "sha1": "a0701c3d350b547952357a5437dc35aa1da49d71"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 30.491963693051854,
+    "dist_o_dest": 71.68971384107152,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 11.853006899475492,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -152.33860474567373,
+    "heading_err_path_deg": -0.41429614346796484
+  },
+  "answer": {
+    "scenario_summary": "Executing TURN_LEFT due to intruder's bearing error of +39.0°, aiming to increase separation and reduce collision risk.",
+    "technical_summary": "Given the current situation with the intruder closing at a rate of -1.580 per step, I will execute a turn towards the intruder side per sign rule to increase separation and reduce the risk of collision.",
+    "rationale": "This decision is informed by past cases where similar geometry and trends were observed. A larger turn was chosen to account for the closing distance and the need to maintain safe separation.",
+    "metrics": {
+      "ttcp": 11.853006899475492,
+      "separation_distance": 30.491963693051854
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -20,
+      "hold_steps": 2
+    }
+  },
+  "apply_log": {
+    "applied_step": 3,
+    "heading_before_apply_deg": -151.92430860220577,
+    "heading_after_apply_deg": -171.97783143178458,
+    "delta_heading_deg": -20.05352282957881,
+    "turn_commanded_deg": -20.0
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 27.882726154343732,
+    "ttcp_end": 4.8463930025111805,
+    "dist_o_dest_end": 66.00631208542845,
+    "deltas": {
+      "sep_oi": -2.609237538708122,
+      "ttcp": -7.0066138969643115,
+      "dist_o_dest": -5.683401755643075
+    }
+  },
+  "observation_after": {
+    "step": 6,
+    "sep_oi": 27.882726154343732,
+    "dist_o_dest": 66.00631208542845,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 4.8463930025111805,
+    "own_heading_deg": -171.9778314317846,
+    "path_heading_deg": -154.256477612885,
+    "heading_err_path_deg": 17.721353818899587
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0020",
+    "run_id": "memory",
+    "step": 20,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 20,
+    "sep_oi": 8.210606660507537,
+    "dist_o_dest": 23.38628764198225,
+    "dist_i_dest": 24.201679284712622,
+    "ttcp": 0.7985455622409215,
+    "own_heading_deg": -67.86183728667716,
+    "path_heading_deg": -64.88382110161568,
+    "heading_err_path_deg": 2.9780161850614775,
+    "signed_cross_track_to_path": -1.9931600224630446
+  },
+  "answer": {
+    "scenario_summary": "Ownship is tracking slightly left of the ATCO path, with a small heading error. The intruder is ahead and slightly to the left, with a decreasing separation. The situation requires a course correction to maintain separation and adherence to the ATCO path.",
+    "technical_summary": "Ownship's cross-track error is -1.99, indicating a slight deviation to the left of the ATCO path. The heading error to the path is +3.0\u00b0, further confirming a need to adjust course to the left. The intruder is closing rapidly, with a TTCP of 0.80 steps. The current heading error to the destination is +0.5\u00b0, indicating a slight misalignment with the overall route. Kinematic analysis reveals a decreasing separation between ownship and the intruder, necessitating a prompt corrective action.",
+    "rationale": "The primary goal is to reduce both the heading error to the ATCO path and the cross-track error. Given the relatively small heading error and the need to maintain separation from the intruder, a moderate left turn is appropriate. A larger turn would be excessive and potentially introduce new conflicts. The ATCO baseline suggests a preference for larger turns in this situation, but a smaller turn is chosen to avoid overcorrection and maintain a smooth trajectory. No past cases directly informed this decision, as the situation is relatively mild.",
+    "metrics": {
+      "ttcp": 0.8,
+      "separation_distance": 8.21
+    },
+    "maneuver": {
+      "heading_change_deg": -15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "created_at": "2026-02-05T04:23:40Z",
+  "mode": "no_memory",
+  "memory_mode": "isolated",
+  "episodes": 10,
+  "base_seed": 12345,
+  "seeds": [
+    12345,
+    12346,
+    12347,
+    12348,
+    12349,
+    12350,
+    12351,
+    12352,
+    12353,
+    12354
+  ],
+  "output_dir": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z",
+  "gifs_dir": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/gifs",
+  "frames_root": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/frames",
+  "memory_dir": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/memory",
+  "memory_index": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/_index.jsonl",
+  "memory_path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/eval_memory.json",
+  "ollama_model": "gemma3:12",
+  "start_llm_at_step": 0,
+  "enable_evaluator": false
+}

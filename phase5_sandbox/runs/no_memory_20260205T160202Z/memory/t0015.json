@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0015",
+    "run_id": "memory",
+    "step": 15,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 15,
+    "sep_oi": 8.014901845731439,
+    "dist_o_dest": 42.85228246842369,
+    "dist_i_dest": 49.795834676527825,
+    "ttcp": 4.9730234345750075,
+    "own_heading_deg": -182.00459284657396,
+    "path_heading_deg": 144.2718490046159,
+    "heading_err_path_deg": -33.723558148810184,
+    "signed_cross_track_to_path": -3.169241176531193
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, exhibiting a significant heading error and cross-track error. The intruder is closing in. A course correction is needed to return to the path and maintain safe separation.",
+    "technical_summary": "The current situation indicates a substantial deviation from the ATCO path, with a heading error of -33.7\u00b0 and a cross-track error of -3.17.  The signed cross-track error is negative, indicating that ownship is to the left of the path. The heading error is increasing relative to the destination. TTCP to the intruder is 4.97 steps.  Kinematic analysis reveals a decreasing separation rate between ownship and the intruder, and a worsening alignment with the destination.  The ATCO baseline suggests a preference for larger turns in this scenario.",
+    "rationale": "Given the significant heading and cross-track errors, a larger turn is required to efficiently return to the ATCO path.  The ATCO baseline favors larger turns in this scenario. A turn of -30 degrees will reduce both the heading error and cross-track error.",
+    "metrics": {
+      "ttcp": 4.97,
+      "separation_distance": 8.01
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0003",
+    "run_id": "memory",
+    "step": 3,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 26.675253837213837,
+    "dist_o_dest": 64.53066138279043,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": 6.594111326184779,
+    "own_heading_deg": -176.9912121391793,
+    "path_heading_deg": -151.9243086022005,
+    "heading_err_path_deg": 25.06690353697877,
+    "signed_cross_track_to_path": -0.6629424029118327
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and is in emergency mode. The heading error to the path is significant, and a turn is required to correct the course. The ATCO has provided a list of candidate turns for this emergency situation.",
+    "technical_summary": "The current heading error to the ATCO path is +25.1\u00b0, and the signed cross-track error is -0.66.  The TTCP to the intruder is 6.59 steps. Given the emergency status, the ATCO has provided a list of candidate turns, all of which are to the left. The kinematics indicate a closing separation rate with the intruder, necessitating a course correction.",
+    "rationale": "Due to the emergency status, the ATCO has provided a limited set of candidate turns.  The largest turn, -30\u00b0, offers the greatest immediate correction to the heading error and the largest improvement in TTCP, and is therefore selected. The ATCO path is to the left, and the emergency procedure dictates choosing a turn to the left.",
+    "metrics": {
+      "ttcp": 6.59,
+      "separation_distance": 26.68
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

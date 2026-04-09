@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0002",
+    "run_id": "memory",
+    "step": 2,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 2,
+    "sep_oi": 27.71862294359641,
+    "dist_o_dest": 66.52816668070432,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": 0.7605372638405212,
+    "own_heading_deg": -146.91092789481107,
+    "path_heading_deg": -152.33860474569497,
+    "heading_err_path_deg": -5.427676850883898,
+    "signed_cross_track_to_path": 0.1796720871310048
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, requiring a corrective maneuver. The situation is complicated by an intruder and emergency procedures, mandating a turn towards the intruder.",
+    "technical_summary": "Ownship's heading error to the ATCO path is -5.4\u00b0, with a slight cross-track deviation of +0.18. The TTCP to CPA is 0.76 steps, indicating a relatively short time until potential conflict. Emergency procedures are active, restricting maneuver options and prioritizing turns towards the intruder. The intruder's bearing is -86.9\u00b0 relative to ownship, indicating it is ahead and to the right.",
+    "rationale": "Emergency procedures are active, restricting maneuver options and requiring a turn towards the intruder. The candidate table provides a list of turns that reduce TTCP and mitigate the intruder threat. Given the emergency constraints, the smallest eligible turn is chosen to minimize risk and maintain course stability.",
+    "metrics": {
+      "ttcp": 0.76,
+      "separation_distance": 27.72
+    },
+    "maneuver": {
+      "heading_change_deg": -5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

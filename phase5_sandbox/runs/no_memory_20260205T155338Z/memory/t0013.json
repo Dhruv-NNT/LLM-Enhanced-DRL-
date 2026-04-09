@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0013",
+    "run_id": "memory",
+    "step": 13,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 13,
+    "sep_oi": 16.65196948305717,
+    "dist_o_dest": 53.258767455944074,
+    "dist_i_dest": 46.409273492315634,
+    "ttcp": 5.494509899449309,
+    "own_heading_deg": -111.81726294304816,
+    "path_heading_deg": -154.32545972846384,
+    "heading_err_path_deg": -42.50819678541569,
+    "signed_cross_track_to_path": 2.216181218655622
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off the ATCO path, experiencing a significant heading error and cross-track deviation. The aircraft is closing on the intruder and is not aligned with its destination. The situation requires a course correction to return to the ATCO path.",
+    "technical_summary": "The aircraft is currently 42.5\u00b0 off the ATCO path heading, with a positive cross-track error of 2.22. The heading error is trending worse, and the cross-track error is significant. The TTCP to the intruder is 5.49 steps. Kinematic analysis indicates a closing rate between the aircraft and a worsening alignment with the destination. The situation is complicated by the post-emergency mode, prioritizing path alignment.",
+    "rationale": "The current heading error and cross-track deviation are substantial. Given the post-emergency mode, the priority is to return to the ATCO path. A turn of -30\u00b0 will significantly reduce both the heading error and the cross-track deviation, bringing the aircraft closer to the desired trajectory. This maneuver aligns with the ATCO baseline for re-alignment.",
+    "metrics": {
+      "ttcp": 5.49,
+      "separation_distance": 16.65
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

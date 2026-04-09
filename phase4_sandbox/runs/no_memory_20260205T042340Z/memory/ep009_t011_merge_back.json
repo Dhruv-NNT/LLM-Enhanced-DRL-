@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep009_t011_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 11,
+    "fileinfo": [
+      "290321set2_1_KL181.csv",
+      "290321set2_1_SQ180.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/memory/ep009_t011_merge_back.prompt.txt",
+    "sha1": "2048fe2ba806e8aa8faf68a086c3132024ea3b59"
+  },
+  "observation_before": {
+    "step": 11,
+    "sep_oi": 12.523104067006967,
+    "dist_o_dest": 40.81646016949694,
+    "dist_i_dest": 42.20141869260518,
+    "ttcp": 3.288736418023269,
+    "own_heading_deg": -112.98226365322948,
+    "path_heading_deg": -81.94856693150119,
+    "heading_err_path_deg": 31.03369672172829
+  },
+  "answer": {
+    "scenario_summary": "Analyzing current situation, derived signals, and recent history to determine optimal maneuver.",
+    "technical_summary": "Based on the current scenario, I decided to turn -20° to reduce |signed_cross_track_to_path| and shrink heading_error_to_path. This decision was influenced by the past case ep004_t007_merge_back.",
+    "rationale": "",
+    "metrics": {
+      "ttcp": 3.288736418023269,
+      "separation_distance": 12.523104067006967
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -20,
+      "hold_steps": 1
+    }
+  },
+  "apply_log": {
+    "applied_step": 11,
+    "heading_before_apply_deg": -112.98226365322948,
+    "heading_after_apply_deg": -87.91536011625597,
+    "delta_heading_deg": 25.066903536973513,
+    "turn_commanded_deg": 25.0
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 9.902350138801546,
+    "ttcp_end": 3.6493914299088885,
+    "dist_o_dest_end": 35.054489228442044,
+    "deltas": {
+      "sep_oi": -2.6207539282054206,
+      "ttcp": 0.36065501188561955,
+      "dist_o_dest": -5.761970941054898
+    }
+  },
+  "observation_after": {
+    "step": 14,
+    "sep_oi": 9.902350138801546,
+    "dist_o_dest": 35.054489228442044,
+    "dist_i_dest": 36.20150389589952,
+    "ttcp": 3.6493914299088885,
+    "own_heading_deg": -87.91536011625597,
+    "path_heading_deg": -132.10873040377945,
+    "heading_err_path_deg": -44.193370287523464
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

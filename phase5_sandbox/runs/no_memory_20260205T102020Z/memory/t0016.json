@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0016",
+    "run_id": "memory",
+    "step": 16,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 16,
+    "sep_oi": 5.423978979771339,
+    "dist_o_dest": 41.666792583273306,
+    "dist_i_dest": 44.20140486500306,
+    "ttcp": 0.0,
+    "own_heading_deg": -102.95550223844005,
+    "path_heading_deg": -127.42384510431067,
+    "heading_err_path_deg": -24.468342865870625,
+    "signed_cross_track_to_path": -1.296024757078449
+  },
+  "answer": {
+    "scenario_summary": "Ownship is tracking towards its destination, but is off the ATCO path and experiencing a closing separation with an intruder. The situation is further complicated by an emergency condition requiring adherence to a limited set of turn options.",
+    "technical_summary": "Ownship's heading error to the ATCO path is -24.5\u00b0 and cross-track error is -1.30. The separation with the intruder is closing at a rate of +0.07 units per step. Kinematic analysis reveals a closing relative speed of 1.863 units per step, with a TTCP of 0 steps. Given the emergency condition, only specific turn options are available to maintain separation and return to the ATCO path.",
+    "rationale": "Due to the emergency condition, we are restricted to a limited set of turn options. The intruder is ahead and to the left, and the smallest eligible turn, +5\u00b0, is selected to begin correcting the heading error and maintain separation. The ATCO baseline favors larger turns, but emergency protocols dictate adherence to the candidate list.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 5.42
+    },
+    "maneuver": {
+      "heading_change_deg": 5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

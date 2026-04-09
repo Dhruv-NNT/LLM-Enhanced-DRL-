@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0011",
+    "run_id": "memory",
+    "step": 11,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 11,
+    "sep_oi": 10.954034071951561,
+    "dist_o_dest": 50.89469179046977,
+    "dist_i_dest": 54.201284317460455,
+    "ttcp": 1.5787532879455761,
+    "own_heading_deg": -193.1963549715447,
+    "path_heading_deg": -155.732561051955,
+    "heading_err_path_deg": 37.463793919589705,
+    "signed_cross_track_to_path": -2.6306840502298425
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and closing on an intruder. The situation is exacerbated by an emergency mode, requiring adherence to a limited set of candidate turns. A turn to the left is necessary to correct the path deviation and manage the decreasing separation.",
+    "technical_summary": "The aircraft is experiencing a significant heading error to the ATCO path (+37.5\u00b0) and a negative cross-track error (-2.63), indicating deviation to the left of the intended route. The TTCP to the intruder is decreasing rapidly (1.58 steps), necessitating a corrective maneuver. Kinematic analysis reveals a closing relative speed of 3.823 units per step. The emergency mode restricts available turn options, prioritizing those that offer the best TTCP improvement.",
+    "rationale": "Due to the emergency mode, only a limited set of turns are available. The candidate turns all involve a left turn. Selecting the turn with the best TTCP improvement is the priority, as the intruder is rapidly closing. The +15\u00b0 turn provides the best TTCP improvement while still allowing a left turn.",
+    "metrics": {
+      "ttcp": 1.58,
+      "separation_distance": 10.95
+    },
+    "maneuver": {
+      "heading_change_deg": 15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

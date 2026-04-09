@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep010_t002_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 2,
+    "fileinfo": [
+      "170621set2_1_SQ260.csv",
+      "170621set2_1_QR261.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/memory/ep010_t002_execute_turn.prompt.txt",
+    "sha1": "5b1111eb711413c5075987499938a96610b203be"
+  },
+  "observation_before": {
+    "step": 2,
+    "sep_oi": 32.0715435402507,
+    "dist_o_dest": 74.33161787869875,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 12.853006899475494,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -152.338604745688,
+    "heading_err_path_deg": -0.41429614348223254
+  },
+  "answer": {
+    "scenario_summary": "Executing turn to increase separation distance while aligning with ATCO path.",
+    "technical_summary": "Given the closing intruder (Δsep = -0.355 per step, TTCP = 1.96 steps), prioritizing safety by increasing separation and aligning with ATCO path.",
+    "rationale": "Following past case ep001_t003_execute_turn, turning 5° left and holding for 0 steps.",
+    "metrics": {
+      "ttcp": 12.853006899475494,
+      "separation_distance": 32.0715435402507
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -5,
+      "hold_steps": 0
+    }
+  },
+  "apply_log": {
+    "applied_step": 2,
+    "heading_before_apply_deg": -151.92430860220577,
+    "heading_after_apply_deg": -156.93768930960047,
+    "delta_heading_deg": -5.0133807073947025,
+    "turn_commanded_deg": -5.0
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 27.881943473917342,
+    "ttcp_end": 8.965880548811432,
+    "dist_o_dest_end": 68.34296980112101,
+    "deltas": {
+      "sep_oi": -4.189600066333359,
+      "ttcp": -3.8871263506640616,
+      "dist_o_dest": -5.988648077577736
+    }
+  },
+  "observation_after": {
+    "step": 5,
+    "sep_oi": 27.881943473917342,
+    "dist_o_dest": 68.34296980112101,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 8.965880548811432,
+    "own_heading_deg": -156.93768930960047,
+    "path_heading_deg": -153.27978121441765,
+    "heading_err_path_deg": 3.657908095182819
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

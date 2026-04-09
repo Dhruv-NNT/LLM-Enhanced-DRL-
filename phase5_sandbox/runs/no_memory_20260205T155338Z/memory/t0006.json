@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0006",
+    "run_id": "memory",
+    "step": 6,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 6,
+    "sep_oi": 26.884974439712472,
+    "dist_o_dest": 65.89935302163838,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 9.810721985936508,
+    "own_heading_deg": -146.91092789481107,
+    "path_heading_deg": -154.2564776128804,
+    "heading_err_path_deg": -7.345549718069321,
+    "signed_cross_track_to_path": -0.77338143264787
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path. The heading error and cross-track error are both negative, indicating a deviation to the left of the desired track. The TTCP to the intruder is relatively long, and separation is decreasing.",
+    "technical_summary": "The current observation reveals a negative heading error of -7.3\u00b0 and a signed cross-track error of -0.77.  The heading error is decreasing, but the cross-track error is negative, meaning ownship is to the left of the path.  Kinematically, ownship is traveling at 2.0 units/step, and the TTCP to CPA with the intruder is 9.81 steps. The path deviation is minor, but requires correction to maintain adherence to the ATCO path.",
+    "rationale": "The primary goal is to correct the deviation from the ATCO path. Given the negative heading and cross-track errors, a turn to the right (positive heading change) is necessary. The ATCO path is to the right, so a right turn will reduce both errors.  A 15-degree turn is chosen to reduce the errors effectively without being overly aggressive. The baseline suggests that 30-degree turns are common, but a smaller correction is appropriate given the current minor deviation.",
+    "metrics": {
+      "ttcp": 9.81,
+      "separation_distance": 26.88
+    },
+    "maneuver": {
+      "heading_change_deg": 15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 15,
+    "hold_steps": 0
+  }
+}

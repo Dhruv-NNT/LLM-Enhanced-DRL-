@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0038",
+    "run_id": "memory",
+    "step": 38,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 38,
+    "sep_oi": 19.516122450545467,
+    "dist_o_dest": 8.042844285791938,
+    "dist_i_dest": 3.6271653049889747,
+    "ttcp": 0.0,
+    "own_heading_deg": -133.03578648280825,
+    "path_heading_deg": -134.48579305677788,
+    "heading_err_path_deg": -1.450006573969631,
+    "signed_cross_track_to_path": 0.7859276012536621
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating left of the ATCO path and is currently tracking away from the destination. The intruder is positioned to the right and slightly behind ownship, with a closing separation. A course correction is needed to return to the ATCO path and maintain adequate separation.",
+    "technical_summary": "Ownship's cross-track error is +0.79, indicating a deviation to the left of the ATCO path. The heading error to the path is -1.5\u00b0, further confirming the left deviation. Kinematic analysis reveals a decreasing alignment with the destination and a slight increase in separation with the intruder. The TTCP is critically low, indicating a potential conflict if no corrective action is taken. The current trend shows an increasing separation between ownship and the intruder, which requires prompt mitigation.",
+    "rationale": "The primary goal is to correct the cross-track error and reduce the heading error to the ATCO path. Given the current trajectory and the low TTCP, a moderate turn is necessary to quickly realign with the path. A turn bin of -15\u00b0 will provide a balance between rapid correction and avoiding excessive turn magnitude. This decision is informed by the ATCO baseline, which suggests a preference for larger turns when significant deviation exists.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": -15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

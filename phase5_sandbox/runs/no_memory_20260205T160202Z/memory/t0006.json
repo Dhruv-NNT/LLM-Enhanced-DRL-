@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0006",
+    "run_id": "memory",
+    "step": 6,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 6,
+    "sep_oi": 26.700494468731986,
+    "dist_o_dest": 66.51372759209757,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 4.974835061628093,
+    "own_heading_deg": -171.97783143178455,
+    "path_heading_deg": -154.25647761288215,
+    "heading_err_path_deg": 17.7213538189024,
+    "signed_cross_track_to_path": -0.6093202628917159
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path. The heading error and cross-track error are both positive, indicating a need to turn to the left. The ATCO path is to the left of ownship's current heading.",
+    "technical_summary": "Ownship's heading is -172.0\u00b0, while the ATCO path heading is -154.3\u00b0, resulting in a heading error of +17.7\u00b0. The signed cross-track error is -0.61, indicating a deviation to the left of the path. The TTCP is 4.97 steps, indicating a closing separation. The ATCO path is to the left, and a left turn is required to correct the deviation.",
+    "rationale": "The current heading error and cross-track error both require a left turn. A turn of -30 degrees will reduce both errors, aligning ownship towards the ATCO path.",
+    "metrics": {
+      "ttcp": 4.97,
+      "separation_distance": 26.7
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

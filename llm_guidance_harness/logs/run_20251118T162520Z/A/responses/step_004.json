@@ -1,0 +1,14 @@
+{
+  "guidance": {
+    "heading_deg": 10,
+    "hold_steps": 2,
+    "phase": "EXECUTE_TURN",
+    "source": "heuristic",
+    "issued_step": 4,
+    "note": "LLM response missing JSON, using heuristic result.",
+    "raw_text": "Here is my output in strict JSON format:\n\n{\n\"answer\": {\n\"scenario_summary\": \"Ownship is currently at x=62.8, y=83.7 with a heading of -158.1\u00b0, while the intruder is at x=84.3, y=67.1 with a bearing error to ownship of +120.5\u00b0.\",\n\"technical_summary\": \"The current separation distance is 27.15, and it's opening at a rate of +0.177 per step. The ownship speed is 2.000, and the intruder speed is also 2.000. The relative speed is 0.200.\",\n\"rationale\": \"Based on the sign rule, since the intruder is to our left (bearing error to intruder > 0\u00b0), we should TURN RIGHT (-5 or -10 degrees). However, due to the safety override, as the separation distance is near SAFE_R*1.2 and TTCP \u2264 3, we will choose the direction that increases separation fastest, which is also TURN RIGHT.\",\n\"metrics\": {\n\"ttcp\": null,\n\"separation_distance\": null\n},\n\"maneuver\": {\n\"phase\": \"EXECUTE_TURN\",\n\"heading_change_deg\": -10,\n\"hold_steps\": 1\n}\n}\n"
+  },
+  "used_source": "heuristic",
+  "new_call": true,
+  "hold_remaining": 2
+}

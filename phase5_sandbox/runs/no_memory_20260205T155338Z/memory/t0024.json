@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0024",
+    "run_id": "memory",
+    "step": 24,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 24,
+    "sep_oi": 8.52210966301982,
+    "dist_o_dest": 32.70618090034928,
+    "dist_i_dest": 31.796230036849376,
+    "ttcp": 0.0,
+    "own_heading_deg": -111.81726294304808,
+    "path_heading_deg": -166.9353797144496,
+    "heading_err_path_deg": -55.11811677140152,
+    "signed_cross_track_to_path": -3.617802593554998
+  },
+  "answer": {
+    "scenario_summary": "Ownship is significantly off course and approaching a potential conflict with an intruder. Emergency mode is active, requiring a corrective maneuver to avoid collision. The intruder is moving toward the nose.",
+    "technical_summary": "Ownship is experiencing a large heading error (-55.1\u00b0) and a moderate cross-track error (-3.62) relative to the ATCO path. The TTCP to the intruder is rapidly approaching zero, indicating a high risk of collision. Kinematic analysis reveals a closing relative speed, and the intruder is moving toward ownship's nose. Emergency mode is active, restricting maneuver choices to a pre-defined list of turns.",
+    "rationale": "Due to the emergency mode, I am restricted to a predefined list of turns to avoid collision. I must choose the smallest eligible turn to minimize deviation from the ATCO path while ensuring safety. The candidate list indicates that -10\u00b0 has the smallest TTCP.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": -10,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -10,
+    "hold_steps": 0
+  }
+}

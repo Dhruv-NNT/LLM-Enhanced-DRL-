@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0015",
+    "run_id": "memory",
+    "step": 15,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 15,
+    "sep_oi": 6.421978826747169,
+    "dist_o_dest": 47.915239636893055,
+    "dist_i_dest": 49.795834676527825,
+    "ttcp": 1.0284432488752893,
+    "own_heading_deg": -192.0313542613633,
+    "path_heading_deg": 144.28043145552905,
+    "heading_err_path_deg": -23.68821428310764,
+    "signed_cross_track_to_path": -11.078306427800728
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and is closing rapidly on the intruder. Emergency mode is active, requiring a turn to mitigate the risk. The intruder is slightly ahead and to the left.",
+    "technical_summary": "The aircraft is experiencing a significant heading error and cross-track deviation from the ATCO path. TTCP to the intruder is 1.03 steps, indicating a potential collision risk. Kinematic analysis shows a decreasing separation rate. Given the emergency situation, the controller is limited to the provided candidate list of turns.",
+    "rationale": "Due to the emergency situation, I am choosing from the provided candidate list. The smallest eligible turn is selected to minimize the impact on the current trajectory while addressing the immediate threat. The candidate list prioritizes turns to the left, which is the direction of the intruder.",
+    "metrics": {
+      "ttcp": 1.03,
+      "separation_distance": 6.42
+    },
+    "maneuver": {
+      "heading_change_deg": -5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "plots_seed123",
+    "tag": "t006_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 6,
+    "fileinfo": [
+      "100621set1_1_3K251.csv",
+      "100621set1_1_SQ250.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/plots/memory/t006_merge_back.prompt.txt",
+    "sha1": "94ab0fbc4fcc469b7e65c548342ce643d22eaa2d"
+  },
+  "observation_before": {
+    "step": 6,
+    "sep_oi": 24.767439489667424,
+    "dist_o_dest": 58.34078772420255,
+    "dist_i_dest": 67.4884894352363,
+    "ttcp": 2.5193887617590014,
+    "own_heading_deg": -171.9778314317846,
+    "path_heading_deg": -176.3444046975118,
+    "heading_err_path_deg": -4.366573265727226
+  },
+  "answer": {
+    "scenario_summary": "Merging with ATCO path while avoiding intruder, prioritizing safety and progress towards destination.",
+    "technical_summary": "Given the current situation, we are merging with the ATCO path while considering the intruder's position and our own heading. The heading error to the path is -4.4°, indicating a slight deviation to the right. To reduce this error, I will turn left by 15° (based on the sign rule) and hold for 2 steps.",
+    "rationale": "This decision was informed by past cases where merging with the ATCO path while avoiding an intruder required a slight correction in heading.",
+    "metrics": {
+      "ttcp": 2.5193887617590014,
+      "separation_distance": 24.767439489667424
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": 15,
+      "hold_steps": 2
+    }
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 21.66888108333095,
+    "ttcp_end": 16.20054237763635,
+    "dist_o_dest_end": 52.842498930630306,
+    "deltas": {
+      "sep_oi": -3.0985584063364726,
+      "ttcp": 13.681153615877347,
+      "dist_o_dest": -5.498288793572243
+    }
+  },
+  "observation_after": {
+    "step": 9,
+    "sep_oi": 21.66888108333095,
+    "dist_o_dest": 52.842498930630306,
+    "dist_i_dest": 61.69606512025866,
+    "ttcp": 16.20054237763635,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -176.34440469750606,
+    "heading_err_path_deg": -24.420096095300295
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "evaluator disabled",
+    "delta_action": null
+  }
+}

@@ -1,0 +1,5 @@
+episodes: 10
+safe: 3/10 (30.00%)
+mean min_sep: 5.189
+mean min_ttcp: 0.7388843605093018
+mean return: -19.621

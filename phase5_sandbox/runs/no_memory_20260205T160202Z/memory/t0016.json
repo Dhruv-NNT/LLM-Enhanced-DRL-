@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0016",
+    "run_id": "memory",
+    "step": 16,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 16,
+    "sep_oi": 5.637224581537721,
+    "dist_o_dest": 41.38627619003509,
+    "dist_i_dest": 47.7958804975107,
+    "ttcp": 2.083492001065076,
+    "own_heading_deg": -212.0848770909422,
+    "path_heading_deg": 152.0783383742572,
+    "heading_err_path_deg": 4.163215465199414,
+    "signed_cross_track_to_path": -3.0423892493267615
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and is on a collision course with an intruder. Emergency mode is active, requiring a corrective maneuver. The intruder is closing rapidly.",
+    "technical_summary": "Ownship is currently experiencing a heading error of +4.2\u00b0 and a cross-track error of -3.04 relative to the ATCO path. The intruder is closing at a rate of approximately 2.38 units per step, with a TTCP of 2.08 steps. Given the emergency situation, a turn is required to avoid a potential collision. The kinematics indicate a rapidly closing intruder, necessitating a decisive maneuver.",
+    "rationale": "Due to the emergency situation, I must select a turn from the provided candidate list. The goal is to avoid a collision with the intruder. I'm choosing the smallest eligible turn, -30\u00b0, as instructed by the emergency guidelines.",
+    "metrics": {
+      "ttcp": 6.56,
+      "separation_distance": 5.64
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

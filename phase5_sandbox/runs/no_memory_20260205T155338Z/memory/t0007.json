@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0007",
+    "run_id": "memory",
+    "step": 7,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 7,
+    "sep_oi": 25.13816231605647,
+    "dist_o_dest": 64.04466734127982,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 10.859330749448924,
+    "own_heading_deg": -131.87078577262696,
+    "path_heading_deg": -154.25647761287593,
+    "heading_err_path_deg": -22.38569184024894,
+    "signed_cross_track_to_path": -0.011702467294334625
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, exhibiting a significant heading error and a small cross-track error. The separation to the intruder is decreasing, requiring corrective action to return to the path and maintain safe separation.",
+    "technical_summary": "The current observation indicates a heading error of -22.4\u00b0 relative to the ATCO path and a minor cross-track error of -0.01. Kinematic analysis reveals a decreasing separation to the intruder and a worsening alignment with the destination. The heading error has increased significantly in the last step (-46.0\u00b0). The current situation demands a corrective maneuver to realign with the ATCO path and mitigate the decreasing separation to the intruder.",
+    "rationale": "The primary goal is to correct the heading error and return to the ATCO path. Given the magnitude of the heading error, a larger turn is necessary to achieve a significant correction.  A turn of -30\u00b0 will aggressively correct the heading error, while minimizing cross-track deviation. This is consistent with the ATCO baseline, which favors larger turns when the heading error is substantial.",
+    "metrics": {
+      "ttcp": 10.86,
+      "separation_distance": 25.14
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

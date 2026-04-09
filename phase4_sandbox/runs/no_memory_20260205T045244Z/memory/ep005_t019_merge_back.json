@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep005_t019_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 19,
+    "fileinfo": [
+      "170321set3_1_KL220.csv",
+      "170321set3_1_PR221.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T045244Z/memory/ep005_t019_merge_back.prompt.txt",
+    "sha1": "40d9770eb6fe70476255e13b0756735839a734cd"
+  },
+  "observation_before": {
+    "step": 19,
+    "sep_oi": 7.1804876699019085,
+    "dist_o_dest": 41.60059949477022,
+    "dist_i_dest": 34.40948535036861,
+    "ttcp": 3.0954914667170117,
+    "own_heading_deg": -131.87078577262696,
+    "path_heading_deg": -98.03613483703487,
+    "heading_err_path_deg": 33.83465093559212
+  },
+  "answer": {
+    "scenario_summary": "Merging back into the ATCO path while avoiding the intruder.",
+    "technical_summary": "With a bearing error to intruder of +38.4\u00b0 and heading error to path of +33.8\u00b0, ownship must turn left to align with the ATCO path and reduce signed cross-track error.",
+    "rationale": "Recent trends indicate closing in on intruder; need to prioritize safety by reducing separation and TTCP. Aided by the baseline hints, I will start a turn in the direction that immediately reduces |signed_cross_track_to_path| (left) and shrinks heading_error_to_path.",
+    "metrics": {
+      "ttcp": 3.0954914667170117,
+      "separation_distance": 7.1804876699019085
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -20,
+      "hold_steps": 1
+    }
+  },
+  "apply_log": {
+    "applied_step": 19,
+    "heading_before_apply_deg": -131.870785772627,
+    "heading_after_apply_deg": -106.80388223565346,
+    "delta_heading_deg": 25.06690353697354,
+    "turn_commanded_deg": 25.0
+  }
+}

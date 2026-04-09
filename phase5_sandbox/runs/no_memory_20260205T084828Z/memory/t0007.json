@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0007",
+    "run_id": "memory",
+    "step": 7,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 7,
+    "sep_oi": 24.938311414976848,
+    "dist_o_dest": 64.35373775293112,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 7.864483949074695,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -154.63125131560045,
+    "heading_err_path_deg": -2.7069427133946817,
+    "signed_cross_track_to_path": -0.011957895782145806
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path. The heading error to the path is small but negative, indicating a slight deviation to the left. The separation to the intruder is decreasing, but remains well above minimums. The goal is to correct the path deviation while maintaining safe separation.",
+    "technical_summary": "Ownship's current position is x=75.5, y=62.6, with a heading of -151.9\u00b0. The ATCO path has a heading of -154.6\u00b0, resulting in a heading error of -2.7\u00b0. Cross-track error is minimal (-0.01). The separation to the intruder is decreasing at a rate of -1.307 per step. Kinematic analysis shows a relative speed of 6.000, and a TTCP of 7.86 steps. The deviation from the ATCO path is minor, but requires correction to maintain adherence.",
+    "rationale": "The primary goal is to reduce the heading error to the ATCO path. Given the small heading error and the fact that the path trigger is active, a small correction is appropriate. Given that the path trigger is active, a moderate turn is appropriate to correct the path deviation.",
+    "metrics": {
+      "ttcp": 7.86,
+      "separation_distance": 24.94
+    },
+    "maneuver": {
+      "heading_change_deg": -15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

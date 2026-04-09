@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0023",
+    "run_id": "memory",
+    "step": 23,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 23,
+    "sep_oi": 8.229252930065602,
+    "dist_o_dest": 17.401303020894026,
+    "dist_i_dest": 18.20174637975161,
+    "ttcp": 0.0,
+    "own_heading_deg": -62.84845657928246,
+    "path_heading_deg": -64.88785273484899,
+    "heading_err_path_deg": -2.0393961555665214,
+    "signed_cross_track_to_path": -1.9548431821978647
+  },
+  "answer": {
+    "scenario_summary": "Ownship is tracking slightly right of the ATCO path, with a small heading error. The intruder is ahead and slightly to the left. Separation is decreasing, but at a slow rate. The goal is to correct the heading error and maintain safe separation.",
+    "technical_summary": "Ownship's cross-track error is -1.95 units, indicating a slight deviation to the left of the ATCO path. The heading error to the path is -2.0\u00b0, meaning the path lies to the right. The TTCP to the intruder is very short. The separation trend is slightly positive, but decreasing. The heading error to the destination is -5.5\u00b0, indicating the destination is to the right. The situation requires a course correction to align with the ATCO path.",
+    "rationale": "The primary goal is to reduce the heading error to the ATCO path. A moderate turn to the right is necessary to correct the current heading error.  Given the safety trigger, a larger turn is preferred to quickly reduce the error. The ATCO baseline suggests a larger turn is appropriate in this situation.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

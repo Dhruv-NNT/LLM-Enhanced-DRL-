@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0035",
+    "run_id": "memory",
+    "step": 35,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 35,
+    "sep_oi": 9.337181176522437,
+    "dist_o_dest": 18.049517942555806,
+    "dist_i_dest": 9.797760203789451,
+    "ttcp": 0.0,
+    "own_heading_deg": -156.9376893096004,
+    "path_heading_deg": -166.86962945552875,
+    "heading_err_path_deg": -9.931940145928365,
+    "signed_cross_track_to_path": 8.002438779021386
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and approaching an intruder. The situation requires immediate action due to the emergency status. The intruder is positioned ahead and to the left of ownship, and the separation is decreasing.",
+    "technical_summary": "Ownship is experiencing a significant heading error and cross-track deviation from the ATCO path. The intruder is rapidly approaching from the left, with a decreasing separation. The TTCP is currently at zero, indicating a potential collision risk. Given the emergency state, the controller must prioritize a turn to avoid a collision, choosing from the provided candidate list.",
+    "rationale": "Due to the emergency status, standard path adherence rules are suspended. The emergency candidate list dictates that a turn is mandatory to avoid a potential collision with the intruder. The smallest eligible turn is chosen to minimize deviation from the desired path while ensuring safety.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 0,
+    "hold_steps": 0
+  }
+}

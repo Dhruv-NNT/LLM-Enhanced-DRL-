@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0008",
+    "run_id": "memory",
+    "step": 8,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 8,
+    "sep_oi": 19.6751657622995,
+    "dist_o_dest": 54.58035670479235,
+    "dist_i_dest": 60.20120899009128,
+    "ttcp": 5.598737773377292,
+    "own_heading_deg": -163.11607072717646,
+    "path_heading_deg": -134.39264699518824,
+    "heading_err_path_deg": 28.723423731988248,
+    "signed_cross_track_to_path": 0.40275288178851265
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and is closing on the intruder. The current heading error to the path is significant, and the situation is exacerbated by the emergency mode.",
+    "technical_summary": "Ownship's heading error to the ATCO path is 28.7\u00b0, with a positive cross-track error of 0.40. The distance to the destination is 54.58, and the TTCP to CPA with the intruder is 5.60 steps.  The closing rate between ownship and intruder is -3.28 per step, indicating a concerning trend. The emergency state dictates a limited set of corrective actions.",
+    "rationale": "Given the emergency mode and the significant heading error to the ATCO path, a corrective turn is required. The allowed bins are limited by the emergency state, and the smallest eligible turn is selected to reduce the path error. The current situation demands a decisive correction to ensure safety and adherence to the ATCO path.",
+    "metrics": {
+      "ttcp": 5.6,
+      "separation_distance": 19.68
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

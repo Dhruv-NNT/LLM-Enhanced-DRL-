@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0010",
+    "run_id": "memory",
+    "step": 10,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 10,
+    "sep_oi": 22.810567037128,
+    "dist_o_dest": 58.2409477404411,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 6.013909529399256,
+    "own_heading_deg": -146.91092789481107,
+    "path_heading_deg": -154.2564776128804,
+    "heading_err_path_deg": -7.345549718069321,
+    "signed_cross_track_to_path": -0.7880251623114384
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and is currently closing on the intruder. The situation is complicated by the emergency mode, requiring a turn towards the intruder.",
+    "technical_summary": "Ownship is experiencing a heading error of -7.3\u00b0 relative to the ATCO path and a cross-track error of -0.79. The TTCP to the intruder is 6.01 steps, and the separation is decreasing. Given the emergency mode, the decision must prioritize a turn toward the intruder from the provided candidate list.",
+    "rationale": "Due to the emergency mode, the HARD RULES are suspended and a turn towards the intruder is required. The smallest eligible turn is selected to minimize the impact on the current trajectory.",
+    "metrics": {
+      "ttcp": 6.01,
+      "separation_distance": 22.81
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

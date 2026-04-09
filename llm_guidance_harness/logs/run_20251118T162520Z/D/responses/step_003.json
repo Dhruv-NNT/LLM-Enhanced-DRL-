@@ -1,0 +1,15 @@
+{
+  "guidance": {
+    "heading_deg": -10,
+    "hold_steps": 2,
+    "phase": "EXECUTE_TURN",
+    "source": "heuristic",
+    "issued_step": 2,
+    "note": "LLM response missing JSON, using heuristic result.",
+    "raw_text": "Here is my cautious ATCO helper response:\n\n{\n\"answer\": {\n\"scenario_summary\": \"Ownship is currently at step index 2, with a separation of 27.94 units from the intruder. The intruder is closing in on ownship, and the current heading error to destination is +31.1\u00b0.\",\n\"technical_summary\": \"The situation calls for careful maneuvering to maintain a safe distance from the intruder. The bearing error to intruder is -36.0\u00b0, indicating that it is ahead of ownship. The separation trend is negative, indicating closure.\",\n\"rationale\": \"Based on the observation and derived signals, I will execute a turn to increase the separation distance and avoid potential hazards. A past case informed my decision, as the baseline data suggests that turns are more likely to occur between steps 2-5.\",\n\"metrics\": {\n\"ttcp\": null,\n\"separation_distance\": null\n},\n\"maneuver\": {\n\"phase\": \"EXECUTE_TURN\",\n\"heading_change_deg\": -20,\n\"hold_steps\": 1\n}\n}\nPlease note that the heading change is -20\u00b0, which is a moderate turn to the right. The hold steps are set to 1 to maintain this heading for a brief period before reassessing the situation."
+  },
+  "used_source": "cached",
+  "new_call": false,
+  "hold_remaining": 1,
+  "cached_from_step": 2
+}

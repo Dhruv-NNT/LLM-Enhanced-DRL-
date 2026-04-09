@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0018",
+    "run_id": "memory",
+    "step": 18,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 18,
+    "sep_oi": 7.762339934653706,
+    "dist_o_dest": 43.27643733163682,
+    "dist_i_dest": 34.40948535036861,
+    "ttcp": 2.520381077568636,
+    "own_heading_deg": -121.84402435783754,
+    "path_heading_deg": -126.9399658248564,
+    "heading_err_path_deg": -5.095941467018861,
+    "signed_cross_track_to_path": -0.3985544108731251
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and is approaching its destination. The intruder is also moving towards the destination, with a decreasing separation. The current heading error to the path is small, but the signed cross-track error indicates a slight deviation to the left of the path.",
+    "technical_summary": "Ownship's current position is x=57.7, y=50.7, with a heading of -121.8\u00b0. The ATCO path has a heading of -126.9\u00b0, resulting in a heading error of -5.1\u00b0. The signed cross-track error is -0.40, indicating a slight deviation to the left of the ATCO path. The separation between ownship and the intruder is decreasing, and the TTCP is 2.52 steps. The signed cross-track error is small, but the trend suggests a need for correction.",
+    "rationale": "The primary goal is to correct the deviation from the ATCO path. Given the small heading error and signed cross-track error, a small correction is sufficient. A turn to the right (positive heading change) is needed to align with the ATCO path. The ATCO path is slightly to the right. The provided bins allow for a turn up to 30 degrees, but a smaller turn is preferred given the minimal deviation.",
+    "metrics": {
+      "ttcp": 2.52,
+      "separation_distance": 7.76
+    },
+    "maneuver": {
+      "heading_change_deg": 5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

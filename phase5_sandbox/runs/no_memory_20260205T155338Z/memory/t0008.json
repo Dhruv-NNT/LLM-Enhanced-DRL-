@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0008",
+    "run_id": "memory",
+    "step": 8,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 8,
+    "sep_oi": 24.21012324310118,
+    "dist_o_dest": 62.063629650627384,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 5.224642147781733,
+    "own_heading_deg": -161.9510700169952,
+    "path_heading_deg": -154.25647761287593,
+    "heading_err_path_deg": 7.694592404119248,
+    "signed_cross_track_to_path": -0.27080090973814
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path. The heading error is positive, indicating a need to turn right. The cross-track error is slightly negative, suggesting a minor correction is needed to align with the path.  The separation with the intruder is decreasing.",
+    "technical_summary": "Ownship is currently 7.7\u00b0 off the ATCO path to the left, with a cross-track error of -0.27. The heading error is trending positively, and the cross-track error is slightly negative.  Kinematically, ownship is closing on the intruder at a rate of 0.928 units per step. The TTCP to CPA is 5.22 steps. The last five steps show a decreasing separation and a worsening heading error to the destination.",
+    "rationale": "The primary goal is to correct the heading error and align with the ATCO path.  Given the positive heading error, a right turn is necessary.  A turn of -15\u00b0 will reduce both the heading error and the cross-track error. The previous steps showed a trend of worsening alignment, so a more decisive correction is warranted.",
+    "metrics": {
+      "ttcp": 5.22,
+      "separation_distance": 24.21
+    },
+    "maneuver": {
+      "heading_change_deg": -15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -15,
+    "hold_steps": 0
+  }
+}

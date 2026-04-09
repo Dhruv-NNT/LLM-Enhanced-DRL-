@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0011",
+    "run_id": "memory",
+    "step": 11,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 11,
+    "sep_oi": 20.392163180009437,
+    "dist_o_dest": 56.36222871625377,
+    "dist_i_dest": 48.40918203676818,
+    "ttcp": 12.805900654869706,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -154.66049489042607,
+    "heading_err_path_deg": -2.7361862882202956,
+    "signed_cross_track_to_path": -0.026750923080371254
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating slightly from the ATCO path. The intruder is closing distance. The situation requires a course correction to maintain path adherence and separation.",
+    "technical_summary": "Ownship's heading error to the ATCO path is -2.7\u00b0, and the signed cross-track error is -0.03. The intruder is closing at a rate of -1.588 units per step. The current heading error to the destination is 1.6\u00b0.  The negative heading error to the path indicates a need to turn to the left. Given the small heading error, a moderate turn is appropriate.",
+    "rationale": "The primary goal is to correct the deviation from the ATCO path. A moderate left turn (15\u00b0) will reduce the heading error and cross-track error. This aligns with the ATCO baseline, favoring moderate turns to correct path deviations.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": -15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

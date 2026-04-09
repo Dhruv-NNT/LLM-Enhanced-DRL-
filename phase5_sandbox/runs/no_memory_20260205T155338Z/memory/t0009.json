@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0009",
+    "run_id": "memory",
+    "step": 9,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 9,
+    "sep_oi": 23.925577209139686,
+    "dist_o_dest": 60.22856325859267,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 1.2121028319554605,
+    "own_heading_deg": -176.9912121391793,
+    "path_heading_deg": -154.25647761287578,
+    "heading_err_path_deg": 22.734734526303498,
+    "signed_cross_track_to_path": -1.0437313964330912
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, exhibiting a significant heading error and a negative cross-track error. The TTCP to the intruder is decreasing, indicating a potential conflict. Emergency mode is active, necessitating a corrective maneuver.",
+    "technical_summary": "The aircraft is currently 22.7\u00b0 off the ATCO path to the right and 1.04 units left of the path. The TTCP to the intruder is 1.21 steps, with a decreasing trend. Kinematic analysis shows a closing rate of 2.00 units per step, and a worsening alignment with the destination. Emergency mode is active, restricting maneuver options to the provided candidate list.",
+    "rationale": "Due to the emergency active state, the normal HARD RULES are suspended. The largest turn (+30\u00b0) provides the greatest reduction in TTCP and is selected from the emergency candidate list. This turn is chosen to rapidly correct the heading error and mitigate the risk of a conflict with the intruder.",
+    "metrics": {
+      "ttcp": 1.21,
+      "separation_distance": 23.93
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

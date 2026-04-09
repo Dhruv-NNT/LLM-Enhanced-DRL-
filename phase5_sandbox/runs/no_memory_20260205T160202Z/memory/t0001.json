@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0001",
+    "run_id": "memory",
+    "step": 1,
+    "trigger_reason": "none"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 33.69581517414292,
+    "dist_o_dest": 76.39093972823268,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.9243086022121,
+    "heading_err_path_deg": -6.338041202980094e-12,
+    "signed_cross_track_to_path": 0.0
+  },
+  "answer": {
+    "scenario_summary": "Ownship is tracking along the ATCO path, but is slightly off course. The ATCO path and ownship heading are aligned. A minor correction is needed to maintain path adherence.",
+    "technical_summary": "The current observation indicates that ownship is tracking close to the ATCO path. The heading error to the path is 0.0\u00b0, and the signed cross-track error is 0.00. The ATCO path and ownship heading are aligned. Given the negligible path error, a small correction is required to maintain the path.",
+    "rationale": "The heading error to the path is negligible, and the signed cross-track error is zero. Therefore, a very small correction is needed. Following the hard rules, a heading change of 0 is the appropriate response.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 0,
+    "hold_steps": 0
+  }
+}

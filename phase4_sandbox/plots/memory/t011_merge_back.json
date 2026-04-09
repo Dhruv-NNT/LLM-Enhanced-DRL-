@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "plots_seed123",
+    "tag": "t011_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 11,
+    "fileinfo": [
+      "100621set1_1_3K251.csv",
+      "100621set1_1_SQ250.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/plots/memory/t011_merge_back.prompt.txt",
+    "sha1": "07472cea573fec395a242c02ccff3cd8468222d6"
+  },
+  "observation_before": {
+    "step": 11,
+    "sep_oi": 18.566394477089684,
+    "dist_o_dest": 48.73987795671094,
+    "dist_i_dest": 57.78619486952727,
+    "ttcp": 15.198750397663856,
+    "own_heading_deg": -161.9510700169952,
+    "path_heading_deg": -176.34440469750606,
+    "heading_err_path_deg": -14.39333468051089
+  },
+  "answer": {
+    "scenario_summary": "Merging with the ATCO path while considering the intruder's position and our own heading.",
+    "technical_summary": "The current situation calls for a merge with the ATCO path, with the intruder on the right side and our heading deviating from the path by 14.4° to the right.",
+    "rationale": "This decision is informed by past cases where merging with the ATCO path while avoiding an intruder required a slight correction in heading.",
+    "metrics": {
+      "ttcp": 15.198750397663856,
+      "separation_distance": 18.566394477089684
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -15,
+      "hold_steps": 2
+    }
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 14.327608335492968,
+    "ttcp_end": 9.50609022884582,
+    "dist_o_dest_end": 42.73993395907487,
+    "deltas": {
+      "sep_oi": -4.238786141596716,
+      "ttcp": -5.692660168818037,
+      "dist_o_dest": -5.999943997636073
+    }
+  },
+  "observation_after": {
+    "step": 14,
+    "sep_oi": 14.327608335492968,
+    "dist_o_dest": 42.73993395907487,
+    "dist_i_dest": 51.78631832297612,
+    "ttcp": 9.50609022884582,
+    "own_heading_deg": -176.9912121391793,
+    "path_heading_deg": 144.271849004626,
+    "heading_err_path_deg": -38.73693885619468
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "evaluator disabled",
+    "delta_action": null
+  }
+}

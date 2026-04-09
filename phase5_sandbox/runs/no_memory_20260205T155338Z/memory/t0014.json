@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0014",
+    "run_id": "memory",
+    "step": 14,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 14,
+    "sep_oi": 14.779218282666008,
+    "dist_o_dest": 51.326206383771364,
+    "dist_i_dest": 44.40929724158249,
+    "ttcp": 7.612460560714356,
+    "own_heading_deg": -141.89754718741636,
+    "path_heading_deg": -154.32545972845924,
+    "heading_err_path_deg": -12.427912541042872,
+    "signed_cross_track_to_path": 2.6466034245429397
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off the ATCO path, exhibiting a heading error and cross-track deviation. The goal is to re-align with the ATCO path while maintaining separation from the intruder.  The situation requires a course correction to minimize path error.",
+    "technical_summary": "The current observation indicates a heading error of -12.4\u00b0 and a positive cross-track deviation of 2.65.  The heading error is increasing, and the cross-track deviation is also significant. Kinematic analysis reveals a decreasing separation from the intruder and a worsening alignment with the destination. The trend indicates a need for a corrective maneuver to reduce both path error and cross-track deviation.",
+    "rationale": "The current situation demands a turn to the right to correct the heading error and reduce the cross-track deviation. Given the magnitude of the errors, a larger turn is required to achieve a rapid re-alignment with the ATCO path. A smaller turn would be insufficient to effectively reduce the errors and could exacerbate the situation.",
+    "metrics": {
+      "ttcp": 13,
+      "separation_distance": 15
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

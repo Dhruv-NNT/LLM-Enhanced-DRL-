@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0012",
+    "run_id": "memory",
+    "step": 12,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 12,
+    "sep_oi": 19.17347716608524,
+    "dist_o_dest": 54.697934214785676,
+    "dist_i_dest": 48.40918203676818,
+    "ttcp": 10.003290130642656,
+    "own_heading_deg": -141.89754718741636,
+    "path_heading_deg": -154.64896197728726,
+    "heading_err_path_deg": -12.751414789870893,
+    "signed_cross_track_to_path": 0.8643556713179786
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, with a significant heading error and a slight cross-track deviation. The intruder is ahead and to the left. We are in emergency mode and must choose a turn from the provided candidate list to correct the path deviation.",
+    "technical_summary": "Ownship is currently 12.8\u00b0 off the ATCO path and 0.86 units left of the path. The TTCP to the intruder is 10 steps. The closing rate is -1.894 units per step.  Given the emergency mode, we must select a turn from the provided list to mitigate the path deviation.",
+    "rationale": "Due to the emergency mode, we must choose from the provided candidate turns to correct the path deviation. The largest turn (+30\u00b0) offers the greatest immediate reduction in TTCP, and is therefore the preferred option.",
+    "metrics": {
+      "ttcp": 10.0,
+      "separation_distance": 19.17
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

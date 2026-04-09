@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0002",
+    "run_id": "memory",
+    "step": 2,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 2,
+    "sep_oi": 31.973492837590733,
+    "dist_o_dest": 74.40447063496747,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 13.637964501816867,
+    "own_heading_deg": -146.91092789481107,
+    "path_heading_deg": -152.33860474569408,
+    "heading_err_path_deg": -5.427676850883017,
+    "signed_cross_track_to_path": 0.1796720871310048
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is deviating from the ATCO path. The heading error is small, but the cross-track error is slightly positive, indicating a minor deviation to the left of the path. The aircraft is approaching its destination, and the intruder is also moving towards the destination.",
+    "technical_summary": "The aircraft's heading error to the ATCO path is -5.4 degrees, and the signed cross-track error is +0.18. The aircraft is currently tracking slightly left of the path. The TTCP to the intruder is 13.64 steps, and the separation is decreasing at a rate of -1.722 units per step. The current kinematic state indicates a relatively stable situation, although the decreasing separation warrants attention.",
+    "rationale": "The aircraft is slightly off the ATCO path. The alignment checklist dictates that when aligned, the heading change should be zero. However, the aircraft is not perfectly aligned. To correct this, a small turn to the right is required. A turn of -10 degrees is chosen to reduce both the heading error and the cross-track error. This turn aligns the aircraft back towards the ATCO path.",
+    "metrics": {
+      "ttcp": 13.64,
+      "separation_distance": 31.97
+    },
+    "maneuver": {
+      "heading_change_deg": -10,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -10,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "guidance": {
+    "heading_deg": -20,
+    "hold_steps": 2,
+    "phase": "EXECUTE_TURN",
+    "source": "llm",
+    "issued_step": 12,
+    "raw_text": "Here is my output in strict JSON format:\n\n{\n\"answer\": {\n\"scenario_summary\": \"Ownship and intruder are closing, with a bearing error of -21.8\u00b0. We need to start turning away from the intruder.\",\n\"technical_summary\": \"The separation trend is negative (-1.745 per step), indicating we're getting closer. The heading error to destination is +30.6\u00b0, which means we still have some distance to cover before reaching our destination.\",\n\"rationale\": \"Given the closing scenario and bearing error, I've chosen a turn away from the intruder with a heading change of -20\u00b0. This will increase separation and open up more space between us. A small hold step is necessary to maintain this new heading.\",\n\"metrics\": {\n\"ttcp\": null,\n\"separation_distance\": null\n},\n\"maneuver\": {\n\"phase\": \"EXECUTE_TURN\",\n\"heading_change_deg\": -20,\n\"hold_steps\": 2\n}\n}\n}",
+    "parsed": {
+      "answer": {
+        "scenario_summary": "Ownship and intruder are closing, with a bearing error of -21.8\u00b0. We need to start turning away from the intruder.",
+        "technical_summary": "The separation trend is negative (-1.745 per step), indicating we're getting closer. The heading error to destination is +30.6\u00b0, which means we still have some distance to cover before reaching our destination.",
+        "rationale": "Given the closing scenario and bearing error, I've chosen a turn away from the intruder with a heading change of -20\u00b0. This will increase separation and open up more space between us. A small hold step is necessary to maintain this new heading.",
+        "metrics": {
+          "ttcp": null,
+          "separation_distance": null
+        },
+        "maneuver": {
+          "phase": "EXECUTE_TURN",
+          "heading_change_deg": -20,
+          "hold_steps": 2
+        }
+      }
+    }
+  },
+  "used_source": "llm",
+  "new_call": true,
+  "hold_remaining": 2
+}

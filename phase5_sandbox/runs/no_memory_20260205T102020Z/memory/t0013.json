@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0013",
+    "run_id": "memory",
+    "step": 13,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 13,
+    "sep_oi": 6.935022337341974,
+    "dist_o_dest": 47.23543465081718,
+    "dist_i_dest": 50.20133796059018,
+    "ttcp": 1.406251680194159,
+    "own_heading_deg": -133.03578648280828,
+    "path_heading_deg": -130.28897584193342,
+    "heading_err_path_deg": 2.7468106408748554,
+    "signed_cross_track_to_path": -2.7602789937743117
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and closing on an intruder. Emergency protocols are active, mandating a turn to avoid collision. The intruder is ahead and slightly to the left.",
+    "technical_summary": "The aircraft is currently experiencing a heading error of +2.7\u00b0 relative to the ATCO path and a cross-track error of -2.76. The TTCP to the intruder is 1.41 steps, indicating a potential collision risk. The separation distance is decreasing rapidly. Emergency protocols require a turn to avoid collision. The emergency candidate list prioritizes turns to the left, with +30\u00b0 offering the best TTCP improvement.",
+    "rationale": "Due to the emergency situation, we must adhere to the provided candidate list for turns. The +30\u00b0 turn offers the most significant improvement in TTCP, reducing the risk of collision. While the smallest eligible turn would be preferable in normal circumstances, the emergency protocols dictate prioritizing TTCP reduction.",
+    "metrics": {
+      "ttcp": 1.41,
+      "separation_distance": 6.94
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

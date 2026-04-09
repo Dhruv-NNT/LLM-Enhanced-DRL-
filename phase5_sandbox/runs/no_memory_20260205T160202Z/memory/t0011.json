@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0011",
+    "run_id": "memory",
+    "step": 11,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 11,
+    "sep_oi": 14.894604136675479,
+    "dist_o_dest": 50.18119717168871,
+    "dist_i_dest": 57.79570084189554,
+    "ttcp": 72.02942182536279,
+    "own_heading_deg": -131.8707857726269,
+    "path_heading_deg": -176.3444046975053,
+    "heading_err_path_deg": -44.473618924878366,
+    "signed_cross_track_to_path": -3.2470938917653953
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, exhibiting a significant heading error and cross-track error. The aircraft is closing on the intruder, requiring a corrective maneuver to return to the path and maintain separation.",
+    "technical_summary": "Ownship's current position is x=68.0, y=66.6, and the ATCO path is at -176.3\u00b0.  A substantial heading error of -44.5\u00b0 indicates a significant deviation from the desired course. The cross-track error of -3.25 suggests ownship is left of the path. The TTCP to the intruder is 72.03 steps. The aircraft is closing on the intruder at a rate of -0.151 units per step. The trend of the heading error is worsening, and the cross-track error is negative, indicating a leftward deviation. Kinematic analysis reveals a relative speed of 0.177, indicating a slow closing rate.",
+    "rationale": "The primary goal is to return to the ATCO path. Given the significant heading error and negative cross-track error, a left turn is necessary to correct the course. The magnitude of the turn will be chosen to reduce both errors effectively, prioritizing a return to the path.",
+    "metrics": {
+      "ttcp": 72.03,
+      "separation_distance": 14.89
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

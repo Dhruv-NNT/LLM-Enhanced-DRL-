@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0008",
+    "run_id": "memory",
+    "step": 8,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 8,
+    "sep_oi": 22.77211971737216,
+    "dist_o_dest": 55.71533014693324,
+    "dist_i_dest": 63.62068252393344,
+    "ttcp": 8.501743210662966,
+    "own_heading_deg": -202.05811567615282,
+    "path_heading_deg": -176.40137209065713,
+    "heading_err_path_deg": 25.65674358549566,
+    "signed_cross_track_to_path": -0.6232826855525512
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is deviating from the ATCO path, exhibiting a significant heading error and a slight cross-track deviation. The separation between ownship and the intruder is decreasing, requiring a corrective maneuver to maintain safe separation and return to the ATCO path.",
+    "technical_summary": "The aircraft is currently 25.7\u00b0 off the ATCO path to the left, with a cross-track error of -0.62. The heading error is trending worse, and the separation to the intruder is decreasing at a rate of -2.678 units per step. Kinematic analysis confirms a decreasing separation rate and a relative speed of 2.678. The aircraft is currently positioned 73.8x and 64.3y, with a destination at 18.3x and 60.2y. The current trajectory deviates significantly from the direct path to the destination.",
+    "rationale": "Given the significant heading error and decreasing separation, a corrective maneuver is necessary to return to the ATCO path and maintain safe separation from the intruder. The ATCO baseline suggests a preference for larger turns when the geometry is challenging. A turn of -30 degrees is chosen to correct the heading error and begin the return to the ATCO path. This aligns with the typical ATCO response in similar situations.",
+    "metrics": {
+      "ttcp": 8.5,
+      "separation_distance": 22.77
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

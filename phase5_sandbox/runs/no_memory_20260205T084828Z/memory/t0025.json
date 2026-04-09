@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0025",
+    "run_id": "memory",
+    "step": 25,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 25,
+    "sep_oi": 8.470861281496033,
+    "dist_o_dest": 13.412165736238885,
+    "dist_i_dest": 14.201800263001774,
+    "ttcp": 0.0,
+    "own_heading_deg": -62.84845657928246,
+    "path_heading_deg": -64.88785273486211,
+    "heading_err_path_deg": -2.0393961555796523,
+    "signed_cross_track_to_path": -1.987647089380397
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and is currently tracking slightly to the left of the desired route. The intruder is ahead and slightly to the left, with a closing separation. The goal is to correct the path deviation while maintaining separation from the intruder.",
+    "technical_summary": "Ownship's cross-track error is -1.99, indicating a deviation to the left of the ATCO path. The heading error to the path is -2.0\u00b0, further confirming the leftward deviation. The separation between ownship and the intruder is increasing, and the TTCP is near zero. Kinematic analysis reveals a closing relative velocity, requiring a corrective maneuver. Recent trends show a worsening alignment with the destination and a shift in the intruder's position from behind to ahead.",
+    "rationale": "The primary objective is to reduce the cross-track error and heading error to the ATCO path. Given the current heading error of -2.0 degrees and a negative cross-track error, a right turn is necessary to correct the path deviation. A 15-degree turn is chosen to provide a significant correction while avoiding excessively large maneuvers.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0007",
+    "run_id": "memory",
+    "step": 7,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 7,
+    "sep_oi": 27.05832055707321,
+    "dist_o_dest": 65.21704948763539,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 0.0,
+    "own_heading_deg": -202.05811567615277,
+    "path_heading_deg": -154.25647761287752,
+    "heading_err_path_deg": 47.80163806327525,
+    "signed_cross_track_to_path": -2.090967863302268
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, with a significant heading error and a negative cross-track error. The separation with the intruder is decreasing, and TTCP is approaching zero.  The ATCO path is to the left of ownship's heading.",
+    "technical_summary": "Ownship's current heading (-202.1\u00b0) is significantly different from the ATCO path heading (-154.3\u00b0), resulting in a heading error of +47.8\u00b0.  The cross-track error is -2.09, indicating ownship is slightly to the left of the path.  The TTCP is approaching zero, suggesting a potential collision risk.  Kinematic analysis reveals a decreasing separation between ownship and the intruder, demanding corrective action.  The large heading error and negative cross-track error necessitate a substantial course correction to realign with the ATCO path.",
+    "rationale": "The current situation requires a significant course correction to return to the ATCO path and avoid a potential conflict with the intruder. The large heading error and negative cross-track error indicate that a substantial turn is necessary. Given the proximity of the intruder and the decreasing separation, a smaller turn would not be sufficient to realign with the ATCO path quickly enough. The ATCO baseline suggests a preference for larger turns in this scenario.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 27.06
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

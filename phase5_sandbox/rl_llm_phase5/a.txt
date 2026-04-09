@@ -1,0 +1,13 @@
+2026-02-04T15:16:03.604642+00:00 step=1 phase=WAIT_TURN reason=_can_advance_true sep=27.89 dist_path=0.00 head_err_path=-0.00 ttcp=None safe_to_merge=False bearing_err=None
+2026-02-04T15:16:41.196925+00:00 step=1 phase=WAIT_TURN reason=_can_advance_true sep=29.33 dist_path=0.00 head_err_path=+0.00 ttcp=None safe_to_merge=False bearing_err=None
+2026-02-04T15:16:56.075127+00:00 step=1 phase=WAIT_TURN reason=_can_advance_true sep=27.90 dist_path=0.00 head_err_path=+0.00 ttcp=None safe_to_merge=False bearing_err=None
+2026-02-04T15:17:36.908825+00:00 step=1 phase=WAIT_TURN reason=_can_advance_true sep=29.33 dist_path=0.00 head_err_path=-0.00 ttcp=None safe_to_merge=False bearing_err=None
+2026-02-04T15:35:25.444880+00:00 step=1 phase=WAIT_TURN reason=_can_advance_true sep=27.89 dist_path=0.00 head_err_path=-0.00 ttcp=None safe_to_merge=False bearing_err=None
+2026-02-05T03:02:10.279673+00:00 step=1 phase=WAIT_TURN reason=_can_advance_true sep=29.33 dist_path=0.00 head_err_path=+0.00 ttcp=None safe_to_merge=False bearing_err=None
+2026-02-05T03:03:36.753081+00:00 step=1 phase=WAIT_TURN reason=_can_advance_true sep=33.70 dist_path=0.00 head_err_path=-0.00 ttcp=None safe_to_merge=False bearing_err=None
+2026-02-05T04:24:02.838029+00:00 step=1 phase=WAIT_TURN reason=_can_advance_true sep=27.90 dist_path=0.00 head_err_path=+0.00 ttcp=None safe_to_merge=False bearing_err=None
+2026-02-05T04:24:53.166015+00:00 step=1 phase=WAIT_TURN reason=_can_advance_true sep=33.70 dist_path=0.00 head_err_path=-0.00 ttcp=None safe_to_merge=False bearing_err=None
+2026-02-05T04:25:27.793649+00:00 step=1 phase=WAIT_TURN reason=_can_advance_true sep=27.90 dist_path=0.00 head_err_path=+0.00 ttcp=None safe_to_merge=False bearing_err=None
+2026-02-05T04:25:49.941004+00:00 step=1 phase=WAIT_TURN reason=_can_advance_true sep=27.89 dist_path=0.00 head_err_path=-0.00 ttcp=None safe_to_merge=False bearing_err=None
+2026-02-05T04:26:42.210520+00:00 step=1 phase=WAIT_TURN reason=_can_advance_true sep=33.70 dist_path=0.00 head_err_path=+0.00 ttcp=None safe_to_merge=False bearing_err=None
+2026-02-05T04:55:17.645504+00:00 step=1 phase=WAIT_TURN reason=_can_advance_true sep=27.90 dist_path=0.00 head_err_path=+0.00 ttcp=None safe_to_merge=False bearing_err=None

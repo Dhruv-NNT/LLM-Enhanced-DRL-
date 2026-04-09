@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0031",
+    "run_id": "memory",
+    "step": 31,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 31,
+    "sep_oi": 13.55955236762916,
+    "dist_o_dest": 21.96817053674447,
+    "dist_i_dest": 9.087434514568214,
+    "ttcp": 0.0,
+    "own_heading_deg": -148.07592860499236,
+    "path_heading_deg": -145.39292243455372,
+    "heading_err_path_deg": 2.683006170438631,
+    "signed_cross_track_to_path": 1.0640957154415833
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, exhibiting a positive heading error and a slight cross-track error. The separation between ownship and the intruder is increasing, and the intruder is moving further away from ownship's nose. The situation requires a corrective maneuver to return to the ATCO path and maintain safe separation.",
+    "technical_summary": "Ownship's current heading (-148.1\u00b0) is slightly right of the ATCO path heading (-145.4\u00b0), resulting in a positive heading error of +2.7\u00b0. The cross-track error is positive (+1.06), indicating ownship is to the left of the ATCO path. Kinematic analysis reveals an increasing separation between ownship and the intruder, and the intruder's position is increasingly off ownship's nose. TTCP is near zero, indicating a potential for close proximity. The separation trend is positive, suggesting the distance is increasing.",
+    "rationale": "The primary goal is to reduce both the heading error and cross-track error. Given the positive heading error, a left turn is necessary. A moderate turn bin is selected to efficiently reduce the error without excessive cross-track deviation. The ATCO baseline suggests a preference for larger turns in this scenario.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

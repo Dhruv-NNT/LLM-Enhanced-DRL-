@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep006_t011_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 11,
+    "fileinfo": [
+      "170321set1_1_QR181.csv",
+      "170321set1_1_3K180.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T045244Z/memory/ep006_t011_merge_back.prompt.txt",
+    "sha1": "4219acbd1e6795bdf8519016d31ec6e5b7d561dc"
+  },
+  "observation_before": {
+    "step": 11,
+    "sep_oi": 8.450152008465649,
+    "dist_o_dest": 48.47698076272268,
+    "dist_i_dest": 52.20129854021035,
+    "ttcp": 3.2357093649947894,
+    "own_heading_deg": -128.0224057754136,
+    "path_heading_deg": -147.66472870396768,
+    "heading_err_path_deg": -19.64232292855408
+  },
+  "answer": {
+    "scenario_summary": "",
+    "technical_summary": "",
+    "rationale": "",
+    "metrics": {
+      "ttcp": 3.2357093649947894,
+      "separation_distance": 8.450152008465649
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  },
+  "apply_log": {
+    "applied_step": 11,
+    "heading_before_apply_deg": -128.0224057754136,
+    "heading_after_apply_deg": -148.0759286049924,
+    "delta_heading_deg": -20.05352282957881,
+    "turn_commanded_deg": -20.0
+  }
+}

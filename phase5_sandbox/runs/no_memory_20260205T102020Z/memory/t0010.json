@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0010",
+    "run_id": "memory",
+    "step": 10,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 10,
+    "sep_oi": 13.444714678543727,
+    "dist_o_dest": 51.830225591024295,
+    "dist_i_dest": 56.20126300385346,
+    "ttcp": 3.5134090934324735,
+    "own_heading_deg": -163.11607072717646,
+    "path_heading_deg": -155.3597181117165,
+    "heading_err_path_deg": 7.756352615460003,
+    "signed_cross_track_to_path": -1.4083690839284608
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and closing on an intruder. The situation is complicated by the emergency mode, requiring a turn to avoid collision. The current heading error to the path is positive, indicating a need to turn right.",
+    "technical_summary": "Ownship is currently 7.8\u00b0 off the ATCO path with a negative cross-track error of -1.41. The TTCP to the intruder is 3.51 steps, and the separation is decreasing. The emergency mode dictates a turn to the right, and the provided candidate list restricts the available options. The kinematic analysis reveals a closing rate of 3.375 units per step.",
+    "rationale": "Due to the emergency mode, a turn is mandatory to avoid collision. The emergency candidate list restricts the available turns to the right. The smallest eligible turn is preferred to minimize deviation from the intended path while ensuring safety.",
+    "metrics": {
+      "ttcp": 3.51,
+      "separation_distance": 13.44
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

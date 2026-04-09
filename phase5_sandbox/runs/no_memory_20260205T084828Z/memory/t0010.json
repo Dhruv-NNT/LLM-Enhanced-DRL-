@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0010",
+    "run_id": "memory",
+    "step": 10,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 10,
+    "sep_oi": 21.9800229227741,
+    "dist_o_dest": 58.36145557890836,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 3.9926310595057473,
+    "own_heading_deg": -156.93768930960047,
+    "path_heading_deg": -154.25647761287632,
+    "heading_err_path_deg": 2.681211696724148,
+    "signed_cross_track_to_path": -0.1097594221638864
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating slightly from the ATCO path and is closing on an intruder. The intruder is ahead and to the left.  The goal is to correct the path deviation while maintaining separation.",
+    "technical_summary": "Ownship's heading error to the ATCO path is 2.7 degrees, with a slight cross-track deviation of -0.11 units. The separation distance to the intruder is decreasing, with a TTCP of approximately 4 steps. The heading error to the destination is 3.4 degrees, indicating a similar misalignment.  Kinematic analysis shows a closing rate of 2.0 units per step between ownship and the intruder.",
+    "rationale": "The primary objective is to correct the path deviation.  Given the slight misalignment, a moderate turn is appropriate. A turn of -15 degrees aligns with the ATCO baseline, favoring larger turns for path correction. A smaller turn would not adequately address the path deviation.",
+    "metrics": {
+      "ttcp": 3.99,
+      "separation_distance": 21.98
+    },
+    "maneuver": {
+      "heading_change_deg": -15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

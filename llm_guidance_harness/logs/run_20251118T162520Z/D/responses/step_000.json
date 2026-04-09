@@ -1,0 +1,14 @@
+{
+  "guidance": {
+    "heading_deg": 0,
+    "hold_steps": 1,
+    "phase": "WAIT_TURN",
+    "source": "heuristic",
+    "issued_step": 0,
+    "note": "LLM response missing JSON, using heuristic result.",
+    "raw_text": "Here is my response in the strict JSON format:\n\n{\n\"answer\": {\n  \"scenario_summary\": \"Waiting for a safe opportunity to start turning away from the intruder, as it's currently closing in.\",\n  \"technical_summary\": \"With the intruder ahead and to our right (-43.5\u00b0 bearing error), we need to prioritize increasing separation and heading away from the danger zone. Since the current phase is WAIT_TURN, we'll hold for now and assess the situation further.\",\n  \"rationale\": \"Past cases have shown that starting turns too early can lead to increased risk, so we're playing it safe for now. We'll reassess when the intruder's bearing error changes or our ownship distance from the destination improves.\",\n  \"metrics\": {\n    \"ttcp\": null,\n    \"separation_distance\": null\n  },\n  \"maneuver\": {\n    \"phase\": \"WAIT_TURN\",\n    \"heading_change_deg\": 0,\n    \"hold_steps\": 2\n  }\n}\n"
+  },
+  "used_source": "heuristic",
+  "new_call": true,
+  "hold_remaining": 1
+}

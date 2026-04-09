@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep003_t019_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 19,
+    "fileinfo": [
+      "050421set2_1_TR200.csv",
+      "050421set2_1_TR201.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T045244Z/memory/ep003_t019_merge_back.prompt.txt",
+    "sha1": "b6db0b16ea4301c644efea1141c7036846a83383"
+  },
+  "observation_before": {
+    "step": 19,
+    "sep_oi": 7.1804876699019085,
+    "dist_o_dest": 40.93492741814175,
+    "dist_i_dest": 34.40948535036861,
+    "ttcp": 3.0954914667170117,
+    "own_heading_deg": -131.87078577262696,
+    "path_heading_deg": -114.34542861652409,
+    "heading_err_path_deg": 17.5253571561029
+  },
+  "answer": {
+    "scenario_summary": "Merging situation with intruder closing in on ownship.",
+    "technical_summary": "Given the current situation, I will start a turn to immediately reduce |signed_cross_track_to_path| (left) and shrink heading_error_to_path. This decision is guided by recent trends indicating closing in on the intruder, prioritizing safety by reducing separation and TTCP.",
+    "rationale": "Recent trends indicate closing in on the intruder; need to prioritize safety by reducing separation and TTCP. Aided by the baseline hints, I will follow the PAST CASE ep002_t011_merge_back for guidance.",
+    "metrics": {
+      "ttcp": 3.0954914667170117,
+      "separation_distance": 7.1804876699019085
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -20,
+      "hold_steps": 2
+    }
+  },
+  "apply_log": {
+    "applied_step": 19,
+    "heading_before_apply_deg": -131.870785772627,
+    "heading_after_apply_deg": -111.81726294304815,
+    "delta_heading_deg": 20.05352282957884,
+    "turn_commanded_deg": 20.0
+  }
+}

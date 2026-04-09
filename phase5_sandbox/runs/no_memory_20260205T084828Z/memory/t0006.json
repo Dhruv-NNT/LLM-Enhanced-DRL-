@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0006",
+    "run_id": "memory",
+    "step": 6,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 6,
+    "sep_oi": 26.245671030152035,
+    "dist_o_dest": 66.3528524124429,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 7.984979693106262,
+    "own_heading_deg": -156.93768930960047,
+    "path_heading_deg": -154.2564776128856,
+    "heading_err_path_deg": 2.6812116967148825,
+    "signed_cross_track_to_path": -0.09410186891729984
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, exhibiting a slight heading error and cross-track deviation. The intruder is ahead and slightly to the left, with a decreasing separation. The goal is to correct the path deviation while maintaining safe separation.",
+    "technical_summary": "The current observation indicates a heading error of +2.7\u00b0 and a cross-track deviation of -0.09. The heading error is small, but the separation with the intruder is decreasing at a rate of -1.263 per step. Kinematic analysis shows a relative speed of 3.000, leading to a TTCP of 7.98 steps. The path trigger is active, indicating a need to correct the course deviation.",
+    "rationale": "The path trigger is active, and the current heading error and cross-track deviation require correction. Given the small heading error, a moderate turn is appropriate. The baseline indicates a preference for larger turns (30\u00b0), but a smaller turn is acceptable given the relatively mild geometry.  A turn to the left (positive bin) will reduce both the heading error and cross-track deviation.",
+    "metrics": {
+      "ttcp": 7.98,
+      "separation_distance": 26.25
+    },
+    "maneuver": {
+      "heading_change_deg": 10,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

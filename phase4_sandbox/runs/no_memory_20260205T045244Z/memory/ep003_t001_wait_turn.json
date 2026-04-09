@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep003_t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "050421set2_1_TR200.csv",
+      "050421set2_1_TR201.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T045244Z/memory/ep003_t001_wait_turn.prompt.txt",
+    "sha1": "a733941aa620876bb2ec44ca3645f7dcb75be04a"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 33.69581517414292,
+    "dist_o_dest": 75.68706620189461,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.92430860220378,
+    "heading_err_path_deg": 1.9895196601282805e-12
+  },
+  "answer": {
+    "scenario_summary": "Ownship at step index 1, with ownship heading -151.9° and deviation from path +0.00.",
+    "technical_summary": "Current situation shows ownship position x=86.1, y=68.0, intruder position x=70.7, y=38.1, separation 33.70, distances ownship→dest=75.69, intruder→dest=50.41, deviation cross-track-to-original=0.00, distance-to-ATCO-path=0.00.",
+    "rationale": "Given the proximity of the intruder and the need for safety, I will execute a turn towards the intruder side per sign rule.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 33.69581517414292
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 2
+    }
+  },
+  "apply_log": {
+    "applied_step": 1,
+    "heading_before_apply_deg": -151.92430860220577,
+    "heading_after_apply_deg": -151.92430860220577,
+    "delta_heading_deg": 0.0,
+    "turn_commanded_deg": 0.0
+  },
+  "hold_effect": {
+    "n_steps": 1,
+    "min_sep_during_hold": 32.0715435402507,
+    "ttcp_end": 12.853006899475494,
+    "dist_o_dest_end": 73.68835410315764,
+    "deltas": {
+      "sep_oi": -1.6242716338922207,
+      "ttcp": null,
+      "dist_o_dest": -1.9987120987369735
+    }
+  },
+  "observation_after": {
+    "step": 2,
+    "sep_oi": 32.0715435402507,
+    "dist_o_dest": 73.68835410315764,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 12.853006899475494,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -152.33860474568755,
+    "heading_err_path_deg": -0.4142961434817778
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0004",
+    "run_id": "memory",
+    "step": 4,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 4,
+    "sep_oi": 28.975858080388438,
+    "dist_o_dest": 70.34863161327236,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 11.657063646111668,
+    "own_heading_deg": -146.91092789481107,
+    "path_heading_deg": -151.92430860221353,
+    "heading_err_path_deg": -5.013380707402462,
+    "signed_cross_track_to_path": 0.01926666663686083
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path. The intruder is ahead and to the left. The separation is decreasing, but remains safe.",
+    "technical_summary": "Ownship is currently 0.02 units left of the ATCO path, with a heading error of -5.0 degrees. The signed cross-track error is slightly positive, indicating a minor deviation to the left. The TTCP to the intruder is 11.66 steps, and the separation is decreasing at a rate of -1.632 units per step. The path trigger is active, requiring a correction to the ATCO path.",
+    "rationale": "The path trigger is active, indicating a deviation from the ATCO path. A turn to the right is necessary to correct this deviation. Given the relatively mild deviation and the need to align with the ATCO path, a moderate turn is appropriate. The ATCO baseline suggests a preference for larger turns when on path.",
+    "metrics": {
+      "ttcp": 11.66,
+      "separation_distance": 28.98
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

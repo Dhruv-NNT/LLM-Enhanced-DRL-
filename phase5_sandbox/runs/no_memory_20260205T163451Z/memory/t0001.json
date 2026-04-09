@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0001",
+    "run_id": "memory",
+    "step": 1,
+    "trigger_reason": "none"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 27.89993469526396,
+    "dist_o_dest": 68.31215913409926,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.9243086022005,
+    "heading_err_path_deg": 5.258016244624741e-12,
+    "signed_cross_track_to_path": 0.0
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is tracking along the ATCO path. The aircraft is slightly to the left of the path, but within acceptable tolerances. The destination is to the right of the current heading.",
+    "technical_summary": "The aircraft is currently tracking at a heading of -151.9\u00b0, which matches the ATCO path heading. The heading error to the path is 0.0\u00b0, and the cross-track error is 0.00. The aircraft's position is x=86.1, y=68.0. The aircraft's destination is located at x=18.3, y=60.2. The current separation distance to the intruder is 27.90 units.",
+    "rationale": "The aircraft is aligned with the ATCO path. Per Alignment Checklist, no turn is required. Staying on the path is the priority.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 27.9
+    },
+    "maneuver": {
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 0,
+    "hold_steps": 0
+  }
+}

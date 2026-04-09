@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0015",
+    "run_id": "memory",
+    "step": 15,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 15,
+    "sep_oi": 14.371835253012488,
+    "dist_o_dest": 48.370995909003014,
+    "dist_i_dest": 40.409351792680084,
+    "ttcp": 9.017226952638994,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -124.08101067463933,
+    "heading_err_path_deg": 27.843297927566425,
+    "signed_cross_track_to_path": -0.45574581553994004
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path. The intruder is ahead and to the left.  The separation is decreasing, requiring a course correction to maintain safe separation and return to the ATCO path.",
+    "technical_summary": "Ownship is currently 0.46 units left of the ATCO path, with a heading error of +27.8 degrees. The signed cross-track error is negative, indicating a left deviation. The decreasing separation (14.37 units) and TTCP (9.02 steps) necessitate a course correction. The intruder is ahead and slightly left of ownship, influencing the choice of maneuver. The positive heading error to the path indicates that a turn to the left (negative heading change) is required to align with the ATCO path.",
+    "rationale": "The primary goal is to reduce both the cross-track error and the heading error to the ATCO path while maintaining safe separation from the intruder. A left turn (-30 degrees) is chosen because it directly addresses the positive heading error and will begin to reduce the cross-track deviation. The ATCO path is to the left, so a left turn is the correct maneuver.  Given the current geometry, a larger turn is needed to begin the correction.  The baseline suggests a preference for larger turns in this situation.",
+    "metrics": {
+      "ttcp": 10.0,
+      "separation_distance": 14.37
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

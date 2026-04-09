@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep003_t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "050421set2_1_TR200.csv",
+      "050421set2_1_TR201.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/memory/ep003_t001_wait_turn.prompt.txt",
+    "sha1": "a9d03c2bdd7e7c3c9eda217db77dde7b03289cfe"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 33.69581517414292,
+    "dist_o_dest": 75.68706620189461,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.92430860220378,
+    "heading_err_path_deg": 1.9895196601282805e-12
+  },
+  "answer": {
+    "scenario_summary": "Ownship is approaching its destination while being followed by an intruder. The ownship is currently left of the ATCO path.",
+    "technical_summary": "The current situation indicates a heading error to destination of -2.0° and a bearing error to intruder of +34.7°, with the intruder ahead and to the left.",
+    "rationale": "Given the proximity to the destination and the intruder's position ahead, I will choose a small turn to the right (5°) to increase separation and maintain a safe distance while still progressing toward my destination.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 33.69581517414292
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 1
+    }
+  },
+  "apply_log": {
+    "applied_step": 1,
+    "heading_before_apply_deg": -151.92430860220577,
+    "heading_after_apply_deg": -151.92430860220577,
+    "delta_heading_deg": 0.0,
+    "turn_commanded_deg": 0.0
+  },
+  "hold_effect": {
+    "n_steps": 1,
+    "min_sep_during_hold": 32.0715435402507,
+    "ttcp_end": 12.853006899475494,
+    "dist_o_dest_end": 73.68835410315764,
+    "deltas": {
+      "sep_oi": -1.6242716338922207,
+      "ttcp": null,
+      "dist_o_dest": -1.9987120987369735
+    }
+  },
+  "observation_after": {
+    "step": 2,
+    "sep_oi": 32.0715435402507,
+    "dist_o_dest": 73.68835410315764,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 12.853006899475494,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -152.33860474568755,
+    "heading_err_path_deg": -0.4142961434817778
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

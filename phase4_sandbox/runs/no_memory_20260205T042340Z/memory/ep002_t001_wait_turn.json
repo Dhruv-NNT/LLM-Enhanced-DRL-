@@ -1,0 +1,47 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep002_t001_wait_turn",
+    "phase": "WAIT_TURN",
+    "step": 1,
+    "fileinfo": [
+      "050421set1_1_GA61.csv",
+      "050421set1_1_GA60.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/memory/ep002_t001_wait_turn.prompt.txt",
+    "sha1": "d9ec150d6910fb8fb5a9bf171e3f59c07d07639f"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 27.89993469526396,
+    "dist_o_dest": 68.31215913409926,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.9243086022005,
+    "heading_err_path_deg": 5.258016244624741e-12
+  },
+  "answer": {
+    "scenario_summary": "",
+    "technical_summary": "",
+    "rationale": "",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 27.89993469526396
+    },
+    "maneuver": {
+      "phase": "WAIT_TURN",
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  },
+  "apply_log": {
+    "applied_step": 1,
+    "heading_before_apply_deg": -151.92430860220577,
+    "heading_after_apply_deg": -151.92430860220577,
+    "delta_heading_deg": 0.0,
+    "turn_commanded_deg": 0.0
+  }
+}

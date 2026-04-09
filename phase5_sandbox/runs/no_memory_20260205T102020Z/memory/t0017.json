@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0017",
+    "run_id": "memory",
+    "step": 17,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 17,
+    "sep_oi": 5.449526192651867,
+    "dist_o_dest": 40.64079073463787,
+    "dist_i_dest": 42.20141869260518,
+    "ttcp": 0.0,
+    "own_heading_deg": -72.87521799407185,
+    "path_heading_deg": -127.42384510431067,
+    "heading_err_path_deg": -54.548627110238826,
+    "signed_cross_track_to_path": 0.3331913820004207
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and is in emergency mode. The intruder is ahead and slightly to the left.  The TTCP to CPA is near zero, indicating a potential collision risk if no corrective action is taken.",
+    "technical_summary": "Ownship is significantly off the ATCO path, with a heading error of -54.5\u00b0 and a cross-track error of +0.33.  The TTCP to CPA is near zero, and the separation distance is decreasing. Given the emergency mode, the priority is to avoid a collision, and the available turn bins are limited. The kinematics indicate a closing rate of 0.880 units per step.  The most recent trend shows separation increasing slightly, but the overall trend is still converging.",
+    "rationale": "In emergency mode, the priority is to avoid a collision. The emergency candidate table provides a list of allowed turns.  The +30\u00b0 turn is the smallest eligible turn, and it provides the greatest separation in the immediate future. The TTCP values for +30\u00b0 are all zero, which is the best outcome.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 25,
+    "hold_steps": 0
+  }
+}

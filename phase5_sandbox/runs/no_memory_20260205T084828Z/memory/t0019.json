@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0019",
+    "run_id": "memory",
+    "step": 19,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 19,
+    "sep_oi": 5.9322777789231536,
+    "dist_o_dest": 41.56556718942748,
+    "dist_i_dest": 32.40949174458294,
+    "ttcp": 1.743785485423749,
+    "own_heading_deg": -126.85740506523224,
+    "path_heading_deg": -158.157441583988,
+    "heading_err_path_deg": -31.300036518755746,
+    "signed_cross_track_to_path": 0.11236472720610113
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and closing on an intruder. The heading error to the path is significant, and the separation distance is decreasing. A course correction is needed to realign with the path and maintain separation.",
+    "technical_summary": "The current observation reveals a substantial heading error to the ATCO path (-31.3\u00b0), resulting in a slight cross-track deviation (0.11). The decreasing separation between ownship and the intruder (currently 5.93 units) and the decreasing trend (-1.83 per step) warrant a corrective maneuver. Kinematic analysis indicates a closing relative speed of 2.363, with a TTCP of 1.74 steps. The last five steps show a worsening alignment with the destination and a decreasing separation distance.",
+    "rationale": "The primary objective is to reduce both the heading error to the ATCO path and the decreasing separation from the intruder. A larger turn is needed to correct the significant heading error, given the current geometry. A turn of -30\u00b0 will effectively reduce the heading error and begin to realign ownship with the ATCO path, while also creating distance between ownship and the intruder.",
+    "metrics": {
+      "ttcp": 1.74,
+      "separation_distance": 5.93
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

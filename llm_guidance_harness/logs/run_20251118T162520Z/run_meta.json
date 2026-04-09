@@ -1,0 +1,32 @@
+{
+  "created_at": "20251118T162520Z",
+  "call_llm": true,
+  "history_length": 5,
+  "wait_turn_steps": 2,
+  "scenarios": [
+    {
+      "label": "A",
+      "seed": 101,
+      "steps": 18,
+      "description": "Head-on closing encounter with both at cruise speed."
+    },
+    {
+      "label": "B",
+      "seed": 202,
+      "steps": 22,
+      "description": "Intruder crosses from right-to-left with mild offset."
+    },
+    {
+      "label": "C",
+      "seed": 303,
+      "steps": 20,
+      "description": "Ownship starts late and must chase intruder already turning."
+    },
+    {
+      "label": "D",
+      "seed": 404,
+      "steps": 25,
+      "description": "Diverging track but dangerously low separation at spawn."
+    }
+  ]
+}

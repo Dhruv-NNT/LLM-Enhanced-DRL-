@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0006",
+    "run_id": "memory",
+    "step": 6,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 6,
+    "sep_oi": 28.81016374671457,
+    "dist_o_dest": 66.72324777226876,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 0.0,
+    "own_heading_deg": -207.0714963835475,
+    "path_heading_deg": -153.27978121442428,
+    "heading_err_path_deg": 53.79171516912322,
+    "signed_cross_track_to_path": -2.6183166674944647
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is deviating from the ATCO path, exhibiting a significant heading error and a slight cross-track error. The separation from the intruder is opening, requiring attention. The aircraft is approaching a potential conflict with the intruder.",
+    "technical_summary": "The aircraft is currently at position (77.0, 66.2), with a heading of -207.1\u00b0. The ATCO path heading is -153.3\u00b0, resulting in a significant heading error of +53.8\u00b0.  The aircraft is slightly left of the path (cross-track error of -2.62). The separation from the intruder is opening at a rate of +0.433 units per step, with a TTCP of 0.00 steps.  The aircraft is moving at 2.000 units/step. The current cross-track error and heading error indicate a need for corrective action to return to the ATCO path and maintain adequate separation from the intruder.",
+    "rationale": "The aircraft is significantly off the ATCO path and the separation from the intruder is decreasing. A turn is required to correct the deviation and mitigate the risk. Given the magnitude of the heading error, a larger turn is warranted to efficiently realign the aircraft with the ATCO path. The allowed bins are considered.",
+    "metrics": {
+      "ttcp": 0.0,
+      "separation_distance": 28.81
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

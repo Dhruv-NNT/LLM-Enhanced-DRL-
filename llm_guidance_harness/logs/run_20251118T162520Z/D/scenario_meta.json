@@ -1,0 +1,9 @@
+{
+  "scenario": {
+    "label": "D",
+    "seed": 404,
+    "steps": 25,
+    "description": "Diverging track but dangerously low separation at spawn."
+  },
+  "created_at": "2025-11-18T16:26:38Z"
+}

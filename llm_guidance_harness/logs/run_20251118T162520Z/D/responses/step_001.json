@@ -1,0 +1,14 @@
+{
+  "guidance": {
+    "heading_deg": 0,
+    "hold_steps": 1,
+    "phase": "WAIT_TURN",
+    "source": "heuristic",
+    "issued_step": 1,
+    "note": "LLM response missing JSON, using heuristic result.",
+    "raw_text": "Here is my output in JSON format:\n\n{\n\"answer\": {\n\"scenario_summary\": \"Ownship at x=68.1, y=89.3, closing with intruder at x=41.6, y=78.5.\",\n\"technical_summary\": \"Current situation: ownship heading -118.0\u00b0, distance to destination 50.62, and deviating from ATCO path by +0.01 cross-track-to-original. Intruder is ahead and to the right with a bearing error of -39.9\u00b0.\",\n\"rationale\": \"Given the current separation of 28.58 and closing trend, I will prioritize safety by maintaining distance from the intruder. Since the ownship is not yet aligned with the destination, I will hold for now and monitor the situation.\",\n\"metrics\": {\n\"ttcp\": null,\n\"separation_distance\": null\n},\n\"maneuver\": {\n\"phase\": \"WAIT_TURN\",\n\"heading_change_deg\": 0,\n\"hold_steps\": 1\n}\n}\n\nNote that since we are in the WAIT_TURN phase, I have set the heading change to 0 and chosen a small hold step of 1."
+  },
+  "used_source": "heuristic",
+  "new_call": true,
+  "hold_remaining": 1
+}

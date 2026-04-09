@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0009",
+    "run_id": "memory",
+    "step": 9,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 9,
+    "sep_oi": 16.498670728663082,
+    "dist_o_dest": 53.553619057163914,
+    "dist_i_dest": 58.20122262880133,
+    "ttcp": 3.4318217743137938,
+    "own_heading_deg": -193.1963549715447,
+    "path_heading_deg": -148.76906778654794,
+    "heading_err_path_deg": 44.42728718499677,
+    "signed_cross_track_to_path": -1.109110428520573
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off the ATCO path, heading left of the desired track, and closing rapidly on the intruder. Emergency procedures are in effect, requiring a turn to avoid collision.",
+    "technical_summary": "Ownship is experiencing a significant heading error to the ATCO path (+44.4\u00b0) and a slight cross-track error (-1.11).  The closing rate between ownship and the intruder is -3.176 units per step, indicating a rapidly decreasing separation. The TTCP to CPA is 3.43 steps. Kinematic analysis shows a relative speed of 3.823 units, and the intruder is currently bearing 20.2\u00b0 to the left and slightly ahead. Emergency protocols dictate a turn to avoid collision, with a limited set of candidate headings provided.",
+    "rationale": "Given the emergency situation and the closing distance to the intruder, a turn is mandatory. The provided candidate list dictates the options. The smallest eligible turn is preferred to minimize disruption and potential overshoot, while ensuring a safe separation from the intruder. The provided TTCP values for each turn candidate show the potential future separation, with the +15\u00b0 turn showing the best TTCP values.",
+    "metrics": {
+      "ttcp": 3.43,
+      "separation_distance": 16.5
+    },
+    "maneuver": {
+      "heading_change_deg": 15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "run_id": "plots_seed123",
+    "tag": "t002_execute_turn",
+    "phase": "EXECUTE_TURN",
+    "step": 2,
+    "fileinfo": [
+      "100621set1_1_3K251.csv",
+      "100621set1_1_SQ250.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/plots/memory/t002_execute_turn.prompt.txt",
+    "sha1": "48ea0a7d93c4a8642d6db97ede8729f2d4ce50a0"
+  },
+  "observation_before": {
+    "step": 2,
+    "sep_oi": 27.532644247340745,
+    "dist_o_dest": 66.33494544989054,
+    "dist_i_dest": 67.4884894352363,
+    "ttcp": 1.9665909139835591,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -152.33860474568985,
+    "heading_err_path_deg": -0.41429614348407995
+  },
+  "answer": {
+    "scenario_summary": "Executing turn to maintain safety and progress towards destination.",
+    "technical_summary": "Given the current situation, I will execute a turn towards the intruder side per sign rule to increase separation and reduce TTCP. The chosen heading change is -20°, which should improve safety while maintaining progress towards the destination.",
+    "rationale": "I am in the EXECUTE_TURN phase, so I must choose a turn based on the sign rule. Since the bearing error to intruder is negative, I will turn right (negative) by 20° to increase separation and reduce TTCP.",
+    "metrics": {
+      "ttcp": 1.9665909139835591,
+      "separation_distance": 27.532644247340745
+    },
+    "maneuver": {
+      "phase": "EXECUTE_TURN",
+      "heading_change_deg": -20,
+      "hold_steps": 1
+    }
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 25.250369679836556,
+    "ttcp_end": 3.519388761759002,
+    "dist_o_dest_end": 60.33918197299608,
+    "deltas": {
+      "sep_oi": -2.2822745675041887,
+      "ttcp": 1.5527978477754427,
+      "dist_o_dest": -5.99576347689446
+    }
+  },
+  "observation_after": {
+    "step": 5,
+    "sep_oi": 25.250369679836556,
+    "dist_o_dest": 60.33918197299608,
+    "dist_i_dest": 67.4884894352363,
+    "ttcp": 3.519388761759002,
+    "own_heading_deg": -171.9778314317846,
+    "path_heading_deg": -151.9339225615591,
+    "heading_err_path_deg": 20.043908870225494
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "evaluator disabled",
+    "delta_action": null
+  }
+}

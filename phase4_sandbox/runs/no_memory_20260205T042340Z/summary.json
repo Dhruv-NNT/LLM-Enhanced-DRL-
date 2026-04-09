@@ -1,0 +1,8 @@
+{
+  "episodes": 10,
+  "safe_count": 2,
+  "safe_rate": 0.2,
+  "mean_min_sep": 5.17953513316632,
+  "mean_min_ttcp": 1.3319310969603293,
+  "mean_return": -16.769150403582003
+}

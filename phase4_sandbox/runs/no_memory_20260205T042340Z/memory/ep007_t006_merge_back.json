@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep007_t006_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 6,
+    "fileinfo": [
+      "170321set3_1_PR231.csv",
+      "170321set3_1_KL230.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/memory/ep007_t006_merge_back.prompt.txt",
+    "sha1": "3c065b80f29440302f3b10aec35987c3eaa7a814"
+  },
+  "observation_before": {
+    "step": 6,
+    "sep_oi": 25.472303708659172,
+    "dist_o_dest": 57.903152151563056,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": 1.433223127479997,
+    "own_heading_deg": -166.9644507243899,
+    "path_heading_deg": -176.36811202277246,
+    "heading_err_path_deg": -9.403661298382588
+  },
+  "answer": {
+    "scenario_summary": "Ownship at step 6, merging back with ATCO path.",
+    "technical_summary": "Due to the low separation (25.47 units) and closing rate (-0.302 per step), a safety-oriented maneuver is required. The intruder is ahead and to the right (bearing error: -83.5°).",
+    "rationale": "The past cases suggest that in similar situations, turns towards the path centerline are effective. In this case, I will turn left by 15° to reduce the signed cross-track distance and heading error.",
+    "metrics": {
+      "ttcp": 1.433223127479997,
+      "separation_distance": 25.472303708659172
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -15,
+      "hold_steps": 1
+    }
+  },
+  "apply_log": {
+    "applied_step": 6,
+    "heading_before_apply_deg": -166.96445072438988,
+    "heading_after_apply_deg": -156.9376893096005,
+    "delta_heading_deg": 10.026761414789377,
+    "turn_commanded_deg": 10.0
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 21.86311525930586,
+    "ttcp_end": 14.591452399361156,
+    "dist_o_dest_end": 52.23143802564059,
+    "deltas": {
+      "sep_oi": -3.6091884493533115,
+      "ttcp": 13.15822927188116,
+      "dist_o_dest": -5.671714125922463
+    }
+  },
+  "observation_after": {
+    "step": 9,
+    "sep_oi": 21.86311525930586,
+    "dist_o_dest": 52.23143802564059,
+    "dist_i_dest": 61.696244853798724,
+    "ttcp": 14.591452399361156,
+    "own_heading_deg": -156.9376893096005,
+    "path_heading_deg": -176.3444046975091,
+    "heading_err_path_deg": -19.406715387908605
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

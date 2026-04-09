@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0002",
+    "run_id": "memory",
+    "step": 2,
+    "trigger_reason": "none"
+  },
+  "observation_before": {
+    "step": 2,
+    "sep_oi": 32.0715435402507,
+    "dist_o_dest": 74.3917082557758,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 12.853006899475494,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -152.33860474568934,
+    "heading_err_path_deg": -0.41429614348356836,
+    "signed_cross_track_to_path": 0.004955203290408459
+  },
+  "answer": {
+    "scenario_summary": "Ownship is tracking slightly off the ATCO path, but maintaining adequate separation from the intruder. The heading error is small, and the cross-track error is minimal. Ownship is approaching its destination.",
+    "technical_summary": "Ownship's current position is x=84.4, y=67.1, and it is tracking towards destination x=17.8, y=34.0. The heading error to the ATCO path is -0.4\u00b0, and the signed cross-track error is +0.00. The TTCP to the intruder is 12.85 steps, indicating a relatively long time before closest approach. The current heading is -151.9\u00b0, close to the ATCO path heading of -152.3\u00b0. The small heading error and minimal cross-track error suggest a minor course correction is needed.",
+    "rationale": "The heading error is small and the cross-track error is near zero. Hard rule A dictates a heading change of 0\u00b0 if these conditions are met. However, the path error needs to be corrected. A small turn to the right will reduce the heading error and keep ownship on the ATCO path.",
+    "metrics": {
+      "ttcp": 12.85,
+      "separation_distance": 32.07
+    },
+    "maneuver": {
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 0,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0017",
+    "run_id": "memory",
+    "step": 17,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 17,
+    "sep_oi": 6.520725160918454,
+    "dist_o_dest": 44.589142756761916,
+    "dist_i_dest": 45.79593032063609,
+    "ttcp": 0.0,
+    "own_heading_deg": -192.0313542613633,
+    "path_heading_deg": -170.92524197899058,
+    "heading_err_path_deg": 21.10611228237272,
+    "signed_cross_track_to_path": -10.001071710645203
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off the ATCO path and approaching the intruder. The situation requires an immediate turn to avoid collision, as dictated by the emergency mode. The intruder is ahead and to the left.",
+    "technical_summary": "The current situation indicates a significant deviation from the ATCO path with a substantial heading error and negative cross-track error. The TTCP is critically low, necessitating immediate corrective action. Kinematic analysis reveals a closing distance to the intruder. Emergency mode is active, overriding normal path-following rules.",
+    "rationale": "Due to the emergency status, I am prioritizing collision avoidance. The candidate list provides a set of turns, and I must choose one. Since 0\u00b0 is disallowed, I must select a turn from the list, prioritizing the smallest eligible turn to minimize deviation from the desired path after the immediate corrective maneuver.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0004",
+    "run_id": "memory",
+    "step": 4,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 4,
+    "sep_oi": 26.971143660030165,
+    "dist_o_dest": 46.84308121682389,
+    "dist_i_dest": 76.13942350878405,
+    "ttcp": 0.0,
+    "own_heading_deg": -133.03578648280828,
+    "path_heading_deg": -117.95660579630851,
+    "heading_err_path_deg": 15.079180686499768,
+    "signed_cross_track_to_path": -0.676225905584158
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is deviating from the ATCO path, exhibiting a positive heading error and a slight cross-track deviation. The separation to the intruder is adequate but opening slightly. A safety trigger has fired.",
+    "technical_summary": "The aircraft's heading is 15.1\u00b0 off from the ATCO path, and it is 0.68 units left of the path. The heading error and cross-track error are both positive, indicating a need to turn to the right. The TTCP is nearing zero, indicating a potential collision risk. The aircraft's speed is 2.000 units/step, while the intruder is stationary. The safety trigger fired due to the decreasing TTCP.",
+    "rationale": "The safety trigger fired, indicating a need to correct the aircraft's trajectory. The aircraft is slightly off the path and the TTCP is near zero. A small correction to the right is necessary to reduce both the heading error and the cross-track error. No past cases directly informed this decision, as the situation is relatively mild.",
+    "metrics": {
+      "ttcp": 0.0,
+      "separation_distance": 26.97
+    },
+    "maneuver": {
+      "heading_change_deg": -25,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -25,
+    "hold_steps": 0
+  }
+}

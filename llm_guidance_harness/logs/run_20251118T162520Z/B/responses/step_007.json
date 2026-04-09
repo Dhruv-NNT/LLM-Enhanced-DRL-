@@ -1,0 +1,14 @@
+{
+  "guidance": {
+    "heading_deg": 25,
+    "hold_steps": 3,
+    "phase": "EXECUTE_TURN",
+    "source": "heuristic",
+    "issued_step": 7,
+    "note": "LLM response missing JSON, using heuristic result.",
+    "raw_text": "Here's my output:\n\n{\n\"answer\": {\n  \"scenario_summary\": \"The intruder is closing in, and ownship needs to make a turn away from it. The current separation is below the safety threshold.\",\n  \"technical_summary\": \"Based on the current situation, the heading error to destination is high, and the bearing error to intruder indicates that it's ahead and closing. The kinematics show that ownship speed is consistent, while the relative speed with the intruder is increasing.\",\n  \"rationale\": \"This decision is based on the safety priority. Since the separation is below the threshold, we need to increase it by making a turn away from the intruder. We'll choose the smallest bin that opens up more space.\",\n  \"metrics\": {\n    \"ttcp\": null,\n    \"separation_distance\": null\n  },\n  \"maneuver\": {\n    \"phase\": \"EXECUTE_TURN\",\n    \"heading_change_deg\": -20,\n    \"hold_steps\": 2\n  }\n}\nNote that I've chosen a heading change of -20\u00b0, which is the smallest bin that opens up more space and keeps ownship away from the intruder. The hold steps are set to 2, allowing for a brief period of stabilization before re-evaluating the situation."
+  },
+  "used_source": "heuristic",
+  "new_call": true,
+  "hold_remaining": 3
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0008",
+    "run_id": "memory",
+    "step": 8,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 8,
+    "sep_oi": 16.601280523986617,
+    "dist_o_dest": 39.17622628115367,
+    "dist_i_dest": 68.14271034149033,
+    "ttcp": 8.82424735247729,
+    "own_heading_deg": -97.94212153104537,
+    "path_heading_deg": -73.5140101150536,
+    "heading_err_path_deg": 24.428111415991765,
+    "signed_cross_track_to_path": 3.127456047322449
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating to the right of the ATCO path. The heading error is significant and cross-track error is also present.  The intruder is ahead and slightly to the left. We need to correct the course back towards the ATCO path.",
+    "technical_summary": "The current heading error to the ATCO path is +24.4\u00b0, indicating a significant deviation to the right. The cross-track error is +3.13, further confirming the rightward deviation.  Kinematic analysis shows a closing separation rate of -1.757 per step. The TTCP to CPA is 8.82 steps. The trend of the heading error to the destination is improving, but the overall course correction is needed.",
+    "rationale": "The heading error and cross-track error are both substantial, requiring a course correction. A turn of -30\u00b0 will aggressively reduce the heading error while also reducing the cross-track error. Given the size of the errors, a larger turn is appropriate to quickly bring the aircraft back onto the ATCO path.  This aligns with the baseline decision hints to start turns inside the typical window and prefer larger bins when geometry is mild.",
+    "metrics": {
+      "ttcp": 8.82,
+      "separation_distance": 16.6
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

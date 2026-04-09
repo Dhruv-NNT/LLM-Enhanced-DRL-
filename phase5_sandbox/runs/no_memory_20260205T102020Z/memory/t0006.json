@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0006",
+    "run_id": "memory",
+    "step": 6,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 6,
+    "sep_oi": 24.4343440184664,
+    "dist_o_dest": 58.350771903311596,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 4.019111571366448,
+    "own_heading_deg": -107.96888294583475,
+    "path_heading_deg": -134.39980111722284,
+    "heading_err_path_deg": -26.430918171388072,
+    "signed_cross_track_to_path": 1.4911237798956671
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off the ATCO path, requiring a corrective heading change. The situation is complicated by an emergency procedure which restricts available turn options. The intruder is ahead and slightly to the right.",
+    "technical_summary": "Ownship is currently 1.49 units off the ATCO path with a cross-track error of +1.49 units (left of path). The heading error to the path is -26.4\u00b0.  The TTCP to the intruder is 4.02 steps, and the separation is decreasing.  Given the emergency procedure, the available turn options are limited to a range of negative heading changes. The kinematics indicate a relative speed of 2.000 units per step, and the separation is decreasing at a rate of -0.729 units per step.",
+    "rationale": "The emergency procedure dictates that we must choose from the provided candidate list. We need to reduce the cross-track error and heading error to the path. Given the emergency, we must choose a turn from the candidate list.  The smallest available turn is -5\u00b0, which is selected to reduce the path error while complying with the emergency procedure.",
+    "metrics": {
+      "ttcp": 4.02,
+      "separation_distance": 24.43
+    },
+    "maneuver": {
+      "heading_change_deg": -5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0001",
+    "run_id": "memory",
+    "step": 1,
+    "trigger_reason": "none"
+  },
+  "observation_before": {
+    "step": 1,
+    "sep_oi": 33.69581517414292,
+    "dist_o_dest": 76.3308264108446,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": null,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -151.92430860220432,
+    "heading_err_path_deg": 1.4495071809506044e-12,
+    "signed_cross_track_to_path": 0.0
+  },
+  "answer": {
+    "scenario_summary": "Ownship is tracking along the ATCO path. The intruder is to the left and slightly ahead. The goal is to maintain separation and proceed toward the destination while adhering to the ATCO path.",
+    "technical_summary": "Ownship is currently aligned with the ATCO path (heading_error_to_path_deg = 0.0\u00b0). Cross-track error is also zero, indicating perfect alignment. The intruder is positioned to the left and slightly ahead of ownship. The ATCO path heading matches the ownship heading, suggesting a direct path. No trends are available due to the single observation.",
+    "rationale": "The current situation requires a slight correction to the left to maintain alignment with the ATCO path. Given the zero heading error, a small correction is sufficient. No past cases are relevant as the situation is currently aligned with the ATCO path.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 33.7
+    },
+    "maneuver": {
+      "heading_change_deg": -5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -5,
+    "hold_steps": 0
+  }
+}

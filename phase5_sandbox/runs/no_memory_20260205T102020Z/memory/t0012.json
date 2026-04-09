@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0012",
+    "run_id": "memory",
+    "step": 12,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 12,
+    "sep_oi": 8.714488211910806,
+    "dist_o_dest": 49.22981225514205,
+    "dist_i_dest": 52.20129854021035,
+    "ttcp": 1.4210327655393502,
+    "own_heading_deg": -163.11607072717646,
+    "path_heading_deg": -137.24373924786315,
+    "heading_err_path_deg": 25.872331479313345,
+    "signed_cross_track_to_path": -2.9233339917019334
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and approaching an intruder. The situation requires a corrective maneuver to maintain separation and return to the intended route. Emergency procedures are active, limiting maneuver choices to a predefined list.",
+    "technical_summary": "Ownship is currently 25.9\u00b0 off the ATCO path, with a cross-track error of -2.92. The TTCP to the intruder is 1.42 steps, indicating a potential collision risk. Kinematic analysis shows a closing relative speed of 3.386 units per step. Given the emergency state, the maneuver must be selected from the provided candidate list, prioritizing the safest option within the constraints.",
+    "rationale": "Due to the emergency state, a turn is mandatory. The list of candidate turns is provided, and the smallest eligible turn must be selected to minimize deviation from the ATCO path while ensuring separation from the intruder. The provided list prioritizes turns to the left.  The candidate list is based on TTCP values and provides a clear hierarchy for selection.",
+    "metrics": {
+      "ttcp": 1.42,
+      "separation_distance": 8.71
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

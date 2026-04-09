@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0007",
+    "run_id": "memory",
+    "step": 7,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 7,
+    "sep_oi": 19.51464228413505,
+    "dist_o_dest": 58.01968976838236,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 7.048444748583543,
+    "own_heading_deg": -208.23649709372881,
+    "path_heading_deg": -134.39980111721874,
+    "heading_err_path_deg": 73.83669597651004,
+    "signed_cross_track_to_path": -5.810161662882699
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is deviating from the ATCO path and is currently to the left of the desired trajectory. The intruder is also to the left, slightly ahead. The separation is decreasing, and the aircraft is getting worse aligned with the destination.",
+    "technical_summary": "The aircraft's heading error to the ATCO path is +73.8\u00b0, and the signed cross-track error is -5.81. The aircraft is closing on the intruder with a TTCP of 7.05 steps. The aircraft's heading error to the destination is +79.4\u00b0. The kinematics indicate a closing rate of 2.000 units per step. The recent trend shows worsening alignment with the destination and decreasing separation.",
+    "rationale": "The aircraft is significantly off the ATCO path. The priority is to correct the cross-track error and reduce the heading error to the path. A moderate turn to the right is necessary to bring the aircraft back on track. I will choose a bin that reduces both heading and cross-track error. No past cases are directly applicable, but a moderate turn is typical for this level of deviation.",
+    "metrics": {
+      "ttcp": 7.05,
+      "separation_distance": 19.51
+    },
+    "maneuver": {
+      "heading_change_deg": -25,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -25,
+    "hold_steps": 0
+  }
+}

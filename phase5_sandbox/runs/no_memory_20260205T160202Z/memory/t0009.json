@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0009",
+    "run_id": "memory",
+    "step": 9,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 9,
+    "sep_oi": 15.77180465656215,
+    "dist_o_dest": 37.70510539767139,
+    "dist_i_dest": 66.143832559858,
+    "ttcp": 19.013866464664392,
+    "own_heading_deg": -128.02240577541357,
+    "path_heading_deg": -74.0009822253229,
+    "heading_err_path_deg": 54.021423550090674,
+    "signed_cross_track_to_path": 1.4990548450568808
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off the ATCO path, heading left of the desired trajectory. The aircraft is approaching its destination, but needs a course correction to return to the ATCO path. The intruder is also generally moving towards the destination.",
+    "technical_summary": "Ownship's heading error to the ATCO path is +54.0\u00b0, indicating a significant left deviation. The signed cross-track error is +1.50, further confirming the leftward offset.  The current separation distance of 15.77 units is decreasing at a rate of -0.829 units per step. The heading error to the destination is +43.7\u00b0. The aircraft's speed is 2.000, and the relative speed to the intruder is 0.829.  The TTCP to CPA is 19.01 steps. The most recent trend shows a continued decrease in separation distance, requiring a corrective action.",
+    "rationale": "The aircraft is significantly off the ATCO path, and the current heading is not correcting the error effectively. A turn is required to align the aircraft back onto the ATCO path. A larger turn of -30\u00b0 is chosen to rapidly reduce the heading error and cross-track error. This aligns with the ATCO baseline, where larger turns are common when the aircraft is significantly off course.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "guidance": {
+    "heading_deg": -15,
+    "hold_steps": 2,
+    "phase": "EXECUTE_TURN",
+    "source": "llm",
+    "issued_step": 10,
+    "raw_text": "Here's my cautious ATCO helper response:\n\n{\n  \"answer\": {\n    \"scenario_summary\": \"Ownship and intruder are closing, with a separation of 11.13 units and TTCP of 9.74 steps (~19.5 min).\",\n    \"technical_summary\": \"Given the current situation, I'll focus on increasing separation and avoiding the intruder. The deviation from the original path is 7.39 units cross-track-to-original, and the ownship heading is -167.0\u00b0.\",\n    \"rationale\": \"Based on the baseline decision hints, I'll prefer a smaller turn to start with, as geometry is mild. Additionally, considering the recent history and trends, I'll choose the direction that opens separation fastest.\",\n    \"metrics\": {\n      \"ttcp\": null,\n      \"separation_distance\": null\n    },\n    \"maneuver\": {\n      \"phase\": \"EXECUTE_TURN\",\n      \"heading_change_deg\": -15,\n      \"hold_steps\": 2\n    }\n  }\n}\n\nPlease note that I've chosen a heading change of -15\u00b0, which is the smallest bin in the allowed_bins list that opens separation and turns away from the intruder.",
+    "parsed": {
+      "answer": {
+        "scenario_summary": "Ownship and intruder are closing, with a separation of 11.13 units and TTCP of 9.74 steps (~19.5 min).",
+        "technical_summary": "Given the current situation, I'll focus on increasing separation and avoiding the intruder. The deviation from the original path is 7.39 units cross-track-to-original, and the ownship heading is -167.0\u00b0.",
+        "rationale": "Based on the baseline decision hints, I'll prefer a smaller turn to start with, as geometry is mild. Additionally, considering the recent history and trends, I'll choose the direction that opens separation fastest.",
+        "metrics": {
+          "ttcp": null,
+          "separation_distance": null
+        },
+        "maneuver": {
+          "phase": "EXECUTE_TURN",
+          "heading_change_deg": -15,
+          "hold_steps": 2
+        }
+      }
+    }
+  },
+  "used_source": "llm",
+  "new_call": true,
+  "hold_remaining": 2
+}

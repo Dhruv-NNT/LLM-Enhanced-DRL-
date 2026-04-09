@@ -100,10 +100,20 @@ def _print_step_log(step_index: int, ctl: LLMThreeCallEpisodeController, turn_de
         f"safe_streak={ctl.safe_streak_steps} "
         f"hold_remaining={ctl.hold_remaining} "
         f"call={call_text} "
-        f"turn={turn_deg:+d}"
+        f"turn={turn_deg:+d} "
+        f"merge_back_mode={ctl.last_merge_back_mode} "
+        f"merge_back_count={ctl.merge_back_count}"
     )
     if ctl.last_event:
         print(f"[THREE-CALL] event={ctl.last_event}")
+    if ctl.last_call_name in {"EXECUTE_TURN", "EMERGENCY_MANEUVER", "MERGE_BACK"}:
+        print(
+            "[THREE-CALL] "
+            f"chosen_turn={turn_deg:+d} "
+            f"chosen_hold={ctl.last_applied_hold_steps} "
+            f"intruder_side={ctl.last_intruder_side} "
+            f"allowed_turn_bins={ctl.last_allowed_turn_bins}"
+        )
 
 
 def main() -> None:

@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep006_t007_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 7,
+    "fileinfo": [
+      "170321set1_1_QR181.csv",
+      "170321set1_1_3K180.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T045244Z/memory/ep006_t007_merge_back.prompt.txt",
+    "sha1": "25a686eafe8133a7767ad4cd80db1a63925db69c"
+  },
+  "observation_before": {
+    "step": 7,
+    "sep_oi": 18.736361382288617,
+    "dist_o_dest": 56.44264149142948,
+    "dist_i_dest": 60.20120899009128,
+    "ttcp": 6.516655850569829,
+    "own_heading_deg": -138.049167190203,
+    "path_heading_deg": -134.39264699519714,
+    "heading_err_path_deg": 3.656520195005868
+  },
+  "answer": {
+    "scenario_summary": "Merging with ATCO path while closing in on the intruder, prioritizing safety and reducing separation.",
+    "technical_summary": "Given the current situation, I will turn -15° to immediately reduce |signed_cross_track_to_path| (left) and shrink heading_error_to_path, aligning with the ATCO path and destination.",
+    "rationale": "Based on recent trends and the baseline hints, I prioritize safety by reducing separation and TTCP. The past case ep003_t011_merge_back informed my decision to take a smaller turn (-10°) instead of a larger one (-20° or -30°) to avoid overshooting the path.",
+    "metrics": {
+      "ttcp": 6.516655850569829,
+      "separation_distance": 18.736361382288617
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -15,
+      "hold_steps": 1
+    }
+  },
+  "apply_log": {
+    "applied_step": 7,
+    "heading_before_apply_deg": -138.049167190203,
+    "heading_after_apply_deg": -128.0224057754136,
+    "delta_heading_deg": 10.026761414789405,
+    "turn_commanded_deg": 10.0
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 11.017451596357443,
+    "ttcp_end": 4.233438279103875,
+    "dist_o_dest_end": 50.46737750799568,
+    "deltas": {
+      "sep_oi": -7.718909785931174,
+      "ttcp": -2.283217571465954,
+      "dist_o_dest": -5.975263983433798
+    }
+  },
+  "observation_after": {
+    "step": 10,
+    "sep_oi": 11.017451596357443,
+    "dist_o_dest": 50.46737750799568,
+    "dist_i_dest": 54.201284317460455,
+    "ttcp": 4.233438279103875,
+    "own_heading_deg": -128.0224057754136,
+    "path_heading_deg": -155.7226415156736,
+    "heading_err_path_deg": -27.700235740259984
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "guidance": {
+    "heading_deg": 10,
+    "hold_steps": 2,
+    "phase": "EXECUTE_TURN",
+    "source": "heuristic",
+    "issued_step": 14,
+    "note": "LLM response missing JSON, using heuristic result.",
+    "raw_text": "Here's my cautious ATCO helper response:\n\n{\n\"answer\": {\n  \"scenario_summary\": \"Intruder closing, heading away from destination.\",\n  \"technical_summary\": \"Ownship position: x=62.3, y=74.4; Intruder position: x=56.0, y=73.6; Separation trend (\u0394sep): -0.068 per step (closing).\",\n  \"rationale\": \"Started a small turn away from the intruder to increase separation and maintain a safe distance.\",\n  \"metrics\": {\n    \"ttcp\": null,\n    \"separation_distance\": null\n  },\n  \"maneuver\": {\n    \"phase\": \"EXECUTE_TURN\",\n    \"heading_change_deg\": -15,\n    \"hold_steps\": 2\n  }\n}\n"
+  },
+  "used_source": "heuristic",
+  "new_call": true,
+  "hold_remaining": 2
+}

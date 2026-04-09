@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep010_t031_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 31,
+    "fileinfo": [
+      "170621set2_1_SQ260.csv",
+      "170621set2_1_QR261.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T045244Z/memory/ep010_t031_merge_back.prompt.txt",
+    "sha1": "396ab98107a066fac4819aed80f4ba2878118710"
+  },
+  "observation_before": {
+    "step": 31,
+    "sep_oi": 20.715707900631287,
+    "dist_o_dest": 23.165343788202698,
+    "dist_i_dest": 8.409794486314802,
+    "ttcp": 0.0,
+    "own_heading_deg": -156.9376893096005,
+    "path_heading_deg": -163.62984909991712,
+    "heading_err_path_deg": -6.692159790316623
+  },
+  "answer": {
+    "scenario_summary": "",
+    "technical_summary": "",
+    "rationale": "",
+    "metrics": {
+      "ttcp": 0.0,
+      "separation_distance": 20.715707900631287
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": 0,
+      "hold_steps": 0
+    }
+  },
+  "apply_log": {
+    "applied_step": 31,
+    "heading_before_apply_deg": -156.9376893096005,
+    "heading_after_apply_deg": -166.96445072438988,
+    "delta_heading_deg": -10.026761414789377,
+    "turn_commanded_deg": -10.0
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 21.665149197618074,
+    "ttcp_end": 0.0,
+    "dist_o_dest_end": 17.402262907861054,
+    "deltas": {
+      "sep_oi": 2.8867945892177573,
+      "ttcp": 0.0,
+      "dist_o_dest": -5.763080880341644
+    }
+  },
+  "observation_after": {
+    "step": 34,
+    "sep_oi": 23.602502489849044,
+    "dist_o_dest": 17.402262907861054,
+    "dist_i_dest": 2.4101594432432845,
+    "ttcp": 0.0,
+    "own_heading_deg": -166.9644507243899,
+    "path_heading_deg": -154.29588617222888,
+    "heading_err_path_deg": 12.668564552161001
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

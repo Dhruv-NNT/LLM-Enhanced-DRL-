@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0024",
+    "run_id": "memory",
+    "step": 24,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 24,
+    "sep_oi": 8.359369278940102,
+    "dist_o_dest": 15.401381670442836,
+    "dist_i_dest": 16.201762339885054,
+    "ttcp": 0.0,
+    "own_heading_deg": -67.86183728667716,
+    "path_heading_deg": -64.883821101596,
+    "heading_err_path_deg": 2.9780161850811737,
+    "signed_cross_track_to_path": -2.0586935825475194
+  },
+  "answer": {
+    "scenario_summary": "Ownship is tracking slightly left of the ATCO path, with a small heading error. The intruder is ahead and slightly to the left. Separation is decreasing, but not critically.",
+    "technical_summary": "Ownship's cross-track error is 3.47, and the heading error to the ATCO path is +3.0\u00b0. The signed cross-track error indicates a slight deviation to the left of the path.  The TTCP is very short, indicating a potential collision risk if no action is taken. The separation trend is positive, meaning the distance between ownship and intruder is decreasing. Kinematic analysis shows ownship and intruder have similar speeds, with a relative speed of 0.709 units/step. The intruder's position relative to ownship has shifted significantly, moving from a position slightly ahead to a position directly ahead.",
+    "rationale": "The primary goal is to reduce the heading error and cross-track error. Given the positive separation trend, a small turn to the right is preferred to correct the path deviation. The safety trigger indicates a need for corrective action, but a large turn is not warranted at this stage.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": -10,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

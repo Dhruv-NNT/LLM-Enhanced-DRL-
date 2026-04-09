@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0021",
+    "run_id": "memory",
+    "step": 21,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 21,
+    "sep_oi": 8.575624817073923,
+    "dist_o_dest": 37.02140728766061,
+    "dist_i_dest": 37.79611288592294,
+    "ttcp": 0.0,
+    "own_heading_deg": -151.92430860220568,
+    "path_heading_deg": -166.97923269437067,
+    "heading_err_path_deg": -15.054924092164981,
+    "signed_cross_track_to_path": -8.001087238071028
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, with a significant heading error and cross-track deviation. An intruder is nearby, and a collision avoidance maneuver is required. Emergency mode is active, necessitating a turn towards the intruder.",
+    "technical_summary": "The current situation indicates a substantial deviation from the ATCO path, characterized by a -15.1\u00b0 heading error and a -8.00 cross-track deviation. The TTCP to the intruder is near zero, indicating an imminent collision risk. Kinematic analysis reveals a closing rate between ownship and the intruder, necessitating a corrective maneuver. Emergency mode is active, requiring a turn towards the intruder.",
+    "rationale": "Due to emergency mode, I am prioritizing collision avoidance and must select a turn from the provided candidate list. The smallest eligible turn is chosen to minimize the deviation from the ATCO path while ensuring intruder separation. The +15\u00b0 turn results in a TTCP of 0.00, indicating the most immediate separation.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": null
+    },
+    "maneuver": {
+      "heading_change_deg": 15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 15,
+    "hold_steps": 0
+  }
+}

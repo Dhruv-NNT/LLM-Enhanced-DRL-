@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0018",
+    "run_id": "memory",
+    "step": 18,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 18,
+    "sep_oi": 5.450313290763015,
+    "dist_o_dest": 40.529650348585584,
+    "dist_i_dest": 40.201458971383005,
+    "ttcp": 0.0,
+    "own_heading_deg": -47.80831445709833,
+    "path_heading_deg": -127.42384510431067,
+    "heading_err_path_deg": -79.61553064721235,
+    "signed_cross_track_to_path": 2.3004321147333826
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and approaching the intruder. The situation is critical due to the emergency mode and the need to avoid collision. The current heading error and cross-track error require a corrective maneuver.",
+    "technical_summary": "Ownship is currently experiencing a significant heading error of -79.6\u00b0 relative to the ATCO path and a positive cross-track error of +2.30. The separation with the intruder is decreasing, although the last step showed a slight increase. Kinematic analysis reveals a closing relative velocity.  The emergency mode necessitates immediate corrective action, prioritizing avoidance of collision while adhering to the candidate turn list.",
+    "rationale": "Due to the emergency mode, I am constrained to the provided candidate list. The smallest eligible turn is -5\u00b0, which will help reduce the cross-track error and heading error while respecting the emergency constraints. The TTCP trend is not favorable, requiring a course correction.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 5.45
+    },
+    "maneuver": {
+      "heading_change_deg": -5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

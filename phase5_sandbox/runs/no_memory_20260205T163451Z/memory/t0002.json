@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0002",
+    "run_id": "memory",
+    "step": 2,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 2,
+    "sep_oi": 27.544534781069206,
+    "dist_o_dest": 66.45510097697176,
+    "dist_i_dest": 67.48867332791852,
+    "ttcp": 1.9631199618077817,
+    "own_heading_deg": -151.92430860220577,
+    "path_heading_deg": -152.33860474569497,
+    "heading_err_path_deg": -0.41429614348919586,
+    "signed_cross_track_to_path": 0.004955203290408459
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is slightly off the ATCO path, with a minor heading error and no cross-track deviation. The intruder is ahead and slightly to the right. The TTCP is decreasing, indicating a potential conflict.",
+    "technical_summary": "The aircraft is currently at position (84.4, 67.1), heading -151.9\u00b0. The ATCO path heading is -152.3\u00b0, resulting in a minor heading error of -0.4\u00b0. The signed cross-track error is 0.00, indicating alignment with the path. The TTCP is decreasing at a rate of -0.355 units per step. The current situation requires a minor correction to maintain path adherence.",
+    "rationale": "The aircraft is slightly off the ATCO path. The alignment checklist dictates that a heading change is needed to correct this deviation. Given the minor heading error, a small correction is sufficient.",
+    "metrics": {
+      "ttcp": 1.96,
+      "separation_distance": 27.54
+    },
+    "maneuver": {
+      "heading_change_deg": 5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep010_t023_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 23,
+    "fileinfo": [
+      "170621set2_1_SQ260.csv",
+      "170621set2_1_QR261.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T045244Z/memory/ep010_t023_merge_back.prompt.txt",
+    "sha1": "e34c2db4de4ddfd67f497660267016db58c5d133"
+  },
+  "observation_before": {
+    "step": 23,
+    "sep_oi": 8.452733263560477,
+    "dist_o_dest": 36.9086693592935,
+    "dist_i_dest": 24.409520253310216,
+    "ttcp": 0.0,
+    "own_heading_deg": -106.80388223565346,
+    "path_heading_deg": -163.57669374066174,
+    "heading_err_path_deg": -56.77281150500828
+  },
+  "answer": {
+    "scenario_summary": "Merging back into ATCO path; reducing separation and TTCP",
+    "technical_summary": "Analyzing recent trends, observing intruder closing in on ownship; prioritizing safety by turning -20° to reduce |signed_cross_track_to_path| and heading_error_to_path.",
+    "rationale": "Recent trends indicate closing in on intruder; need to prioritize safety by reducing separation and TTCP. Aided by the baseline hints, I will follow the PAST CASE ep002_t011_merge_back for guidance.",
+    "metrics": {
+      "ttcp": 0.0,
+      "separation_distance": 8.452733263560477
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -20,
+      "hold_steps": 2
+    }
+  },
+  "apply_log": {
+    "applied_step": 23,
+    "heading_before_apply_deg": -106.80388223565346,
+    "heading_after_apply_deg": -131.870785772627,
+    "delta_heading_deg": -25.06690353697354,
+    "turn_commanded_deg": -25.0
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 10.050072795980672,
+    "ttcp_end": 0.0,
+    "dist_o_dest_end": 32.141087213507774,
+    "deltas": {
+      "sep_oi": 5.3196873992570985,
+      "ttcp": 0.0,
+      "dist_o_dest": -4.767582145785724
+    }
+  },
+  "observation_after": {
+    "step": 26,
+    "sep_oi": 13.772420662817575,
+    "dist_o_dest": 32.141087213507774,
+    "dist_i_dest": 18.409557251391437,
+    "ttcp": 0.0,
+    "own_heading_deg": -131.87078577262696,
+    "path_heading_deg": -163.3223012015718,
+    "heading_err_path_deg": -31.451515428944816
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0030",
+    "run_id": "memory",
+    "step": 30,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 30,
+    "sep_oi": 8.81362763605167,
+    "dist_o_dest": 24.680954346007354,
+    "dist_i_dest": 19.796642345666726,
+    "ttcp": 4.975944095101879,
+    "own_heading_deg": -136.88416648002158,
+    "path_heading_deg": -167.1358026743595,
+    "heading_err_path_deg": -30.25163619433792,
+    "signed_cross_track_to_path": 4.209231919833142
+  },
+  "answer": {
+    "scenario_summary": "Ownship is off the ATCO path, exhibiting a significant heading error and cross-track deviation. The goal is to re-align with the ATCO path while maintaining separation from the intruder. The aircraft is in post-emergency mode, prioritizing path re-alignment.",
+    "technical_summary": "Ownship is currently 30.3\u00b0 off the ATCO path heading, with a positive cross-track error of 4.21. The heading error is trending slightly better, but the cross-track error remains significant. Kinematics indicate a relatively slow closing rate with the intruder. The aircraft is in post-emergency mode, and the primary objective is to re-align with the ATCO path, which necessitates a course correction.",
+    "rationale": "The current heading error and cross-track deviation are substantial. Given the aircraft is in post-emergency mode and the priority is to re-align with the ATCO path, a larger turn is warranted to quickly reduce the error. A turn of -30\u00b0 is chosen to aggressively correct the heading and cross-track error. The baseline ATCO guidance suggests larger turns (\u226520\u00b0) are appropriate in this situation.",
+    "metrics": {
+      "ttcp": 3,
+      "separation_distance": 8
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

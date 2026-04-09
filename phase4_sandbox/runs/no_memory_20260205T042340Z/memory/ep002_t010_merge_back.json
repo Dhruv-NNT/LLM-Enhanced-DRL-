@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "run_id": "memory",
+    "tag": "ep002_t010_merge_back",
+    "phase": "MERGE_BACK",
+    "step": 10,
+    "fileinfo": [
+      "050421set1_1_GA61.csv",
+      "050421set1_1_GA60.csv"
+    ]
+  },
+  "prompt_ref": {
+    "path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/phase4_sandbox/runs/no_memory_20260205T042340Z/memory/ep002_t010_merge_back.prompt.txt",
+    "sha1": "6e09b926410a83065a525e6ad7e6d2e905355b36"
+  },
+  "observation_before": {
+    "step": 10,
+    "sep_oi": 20.684816830336665,
+    "dist_o_dest": 50.9788381493529,
+    "dist_i_dest": 59.77676817383691,
+    "ttcp": 13.591452399361158,
+    "own_heading_deg": -156.9376893096005,
+    "path_heading_deg": -176.40137209065784,
+    "heading_err_path_deg": -19.463682781057344
+  },
+  "answer": {
+    "scenario_summary": "Merging back into ATCO path, reducing signed cross-track and heading errors.",
+    "technical_summary": "Based on current situation and trends, I will turn -20° to reduce signed cross-track error and align with ATCO path.",
+    "rationale": "The intruder is closing in, and the merge target is nearby. A moderate turn of -20° should be sufficient to get back on track while maintaining a safe distance.",
+    "metrics": {
+      "ttcp": 13.591452399361158,
+      "separation_distance": 20.684816830336665
+    },
+    "maneuver": {
+      "phase": "MERGE_BACK",
+      "heading_change_deg": -20,
+      "hold_steps": 1
+    }
+  },
+  "apply_log": {
+    "applied_step": 10,
+    "heading_before_apply_deg": -156.9376893096005,
+    "heading_after_apply_deg": -176.9912121391793,
+    "delta_heading_deg": -20.05352282957881,
+    "turn_commanded_deg": -20.0
+  },
+  "hold_effect": {
+    "n_steps": 3,
+    "min_sep_during_hold": 16.217991905185496,
+    "ttcp_end": 10.858645524647489,
+    "dist_o_dest_end": 44.979496560585936,
+    "deltas": {
+      "sep_oi": -4.466824925151169,
+      "ttcp": -2.7328068747136687,
+      "dist_o_dest": -5.999341588766967
+    }
+  },
+  "observation_after": {
+    "step": 13,
+    "sep_oi": 16.217991905185496,
+    "dist_o_dest": 44.979496560585936,
+    "dist_i_dest": 53.795779747111034,
+    "ttcp": 10.858645524647489,
+    "own_heading_deg": -176.9912121391793,
+    "path_heading_deg": -176.3444046975053,
+    "heading_err_path_deg": 0.6468074416740137
+  },
+  "eval": {
+    "ok": false,
+    "score": 0.0,
+    "comment": "disabled",
+    "delta_action": null
+  }
+}

@@ -26,14 +26,17 @@ class ThreeCallGuidanceConfig:
     allowed_turn_bins: tuple[int, ...] = (-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30)
     safe_r: float = 5.0
     conflict_lookahead_steps: int = 8
+    turn_preview_steps: int = 5
     safe_streak_required: int = 5
     execute_allow_zero: bool = True
     emergency_allow_zero: bool = False
     default_execute_hold_bounds: tuple[int, int] = (0, 3)
     default_emergency_hold_bounds: tuple[int, int] = (1, 3)
+    merge_back_alignment_hold_bounds: tuple[int, int] = (0, 1)
     merge_back_min_hold: int = 1
     merge_back_max_hold: int = 60
     merge_back_distance_buffer: float = 2.0
+    merge_back_repeat_error_deg: float = 30.0
     heading_alignment_tolerance_deg: float = 2.5
     hold_speed_fallback: float = 1.0
     model: str = "llama3:8b"
@@ -282,6 +285,7 @@ class ThreeCallPromptBuilder:
             self._current_observation_text(snap),
             self._derived_signals_text(snap, prev),
             self._kinematics_text(snap, prev),
+            self._turn_preview_text(guidance_state),
             self._guidance_state_text(call_name, guidance_state),
         ]
         return "\n\n".join(part for part in parts if part)
@@ -292,27 +296,36 @@ class ThreeCallPromptBuilder:
         if isinstance(hold_bounds, tuple):
             hold_text = f"{hold_bounds[0]}..{hold_bounds[1]}"
         else:
-            hold_text = "controller-computed"
+            hold_text = str(hold_bounds)
 
         if call_name == "EXECUTE_TURN":
             stage_text = (
                 f"STAGE: EXECUTE_TURN. Ownship has just entered the sector polygon.\n"
-                f"GOAL: Choose a turn and hold that preserves safe separation and avoids unnecessary deviation from the destination heading.\n"
-                f"ZERO-TURN RULE: Return 0 deg only if no loss of safe separation is predicted within the next {cfg.conflict_lookahead_steps} steps.\n"
+                "GOAL: Turn on the same side as the intruder while keeping safe separation.\n"
+                "- Intruder on left -> choose a left turn.\n"
+                "- Intruder on right -> choose a right turn.\n"
+                f"- Use the {cfg.turn_preview_steps}-step angle table below.\n"
+                f"- Return 0 deg only if no conflict is predicted within the next {cfg.turn_preview_steps} steps.\n"
+                "- Choose hold_steps from the allowed range. Keep the hold only as long as needed before merge-back can recover later.\n"
                 f"HOLD RANGE: {hold_text}.\n"
             )
         elif call_name == "EMERGENCY_MANEUVER":
             stage_text = (
                 f"STAGE: EMERGENCY_MANEUVER. A previous execute/emergency hold has finished, but conflict is still predicted within the next {cfg.conflict_lookahead_steps} steps.\n"
-                "GOAL: Choose a non-zero avoidance turn and short hold that improves safety immediately while limiting destination deviation.\n"
-                "ZERO-TURN RULE: 0 deg is NOT allowed in this stage.\n"
+                "GOAL: Choose a non-zero turn on the same side as the intruder and a short hold that restores safety.\n"
+                "- Intruder on left -> choose a left turn.\n"
+                "- Intruder on right -> choose a right turn.\n"
+                f"- Use the {cfg.turn_preview_steps}-step angle table below.\n"
+                "- ZERO-TURN RULE: 0 deg is NOT allowed in this stage.\n"
                 f"HOLD RANGE: {hold_text}.\n"
             )
         elif call_name == "MERGE_BACK":
             stage_text = (
                 f"STAGE: MERGE_BACK. Safe separation has been maintained for {cfg.safe_streak_required} observed steps after avoidance.\n"
-                "GOAL: Align ownship back toward its destination heading.\n"
-                "HOLD RULE: The controller computes the straight-flight hold length after your turn decision. You may leave hold_steps as 0.\n"
+                "GOAL: Turn toward the ownship destination and then keep flying straight.\n"
+                f"- If |heading error to destination| is greater than {cfg.merge_back_repeat_error_deg:.0f} deg, this is ALIGNMENT MODE. Use a destination-side turn and a short hold only; MERGE_BACK may be called again.\n"
+                f"- If |heading error to destination| is at most {cfg.merge_back_repeat_error_deg:.0f} deg, this is DESTINATION MODE. Use a destination-side turn and choose a longer hold that keeps ownship flying toward the destination.\n"
+                f"HOLD RANGE: {hold_text}.\n"
             )
         else:
             raise ValueError(f"Unsupported call name: {call_name}")
@@ -449,6 +462,24 @@ class ThreeCallPromptBuilder:
         ]
         return "\n".join(lines)
 
+    def _turn_preview_text(self, guidance_state: Dict[str, Any]) -> str:
+        rows = guidance_state.get("turn_preview_rows") or []
+        if not rows:
+            return ""
+
+        lines = [
+            f"{guidance_state.get('turn_preview_steps')}-step angle preview table (choose only from these rows):",
+        ]
+        for row in rows:
+            lines.append(
+                "- "
+                f"turn={int(row['heading_change_deg']):+d} | "
+                f"safe_over_preview={int(bool(row['safe_preserved_over_preview']))} | "
+                f"predicted_loss_step={row['predicted_loss_step']} | "
+                f"merge_back_turn_after_preview={int(row['merge_back_turn_deg_after_preview']):+d}"
+            )
+        return "\n".join(lines)
+
     def _guidance_state_text(self, call_name: str, guidance_state: Dict[str, Any]) -> str:
         lines = ["Controller-supplied guidance state:"]
         lines.append(f"- call_name: {call_name}")
@@ -458,12 +489,20 @@ class ThreeCallPromptBuilder:
         lines.append(f"- sector_entry_step: {guidance_state.get('sector_entry_step')}")
         lines.append(f"- predicted_loss_step: {guidance_state.get('predicted_loss_step')}")
         lines.append(f"- conflict_within_lookahead: {guidance_state.get('conflict_within_lookahead')}")
+        lines.append(f"- immediate_predicted_loss_step: {guidance_state.get('execute_predicted_loss_step')}")
+        lines.append(f"- immediate_conflict_within_preview: {guidance_state.get('execute_conflict_within_preview')}")
+        lines.append(f"- heading_error_to_destination_deg: {guidance_state.get('heading_error_to_destination_deg')}")
+        lines.append(f"- intruder_side: {guidance_state.get('intruder_side')}")
+        lines.append(f"- allowed_turn_bins: {guidance_state.get('allowed_turn_bins')}")
+        lines.append(f"- merge_back_mode: {guidance_state.get('merge_back_mode')}")
         lines.append(f"- current_ttcp_steps: {guidance_state.get('current_ttcp_steps')}")
         lines.append(f"- safe_streak_steps: {guidance_state.get('safe_streak_steps')}")
         lines.append(f"- last_turn_deg: {guidance_state.get('last_turn_deg')}")
         lines.append(f"- emergency_count: {guidance_state.get('emergency_count')}")
+        lines.append(f"- merge_back_count: {guidance_state.get('merge_back_count')}")
         lines.append(f"- zero_turn_allowed: {guidance_state.get('zero_turn_allowed')}")
         lines.append(f"- hold_bounds: {guidance_state.get('hold_bounds')}")
+        lines.append(f"- turn_preview_steps: {guidance_state.get('turn_preview_steps')}")
         return "\n".join(lines)
 
 
@@ -510,6 +549,12 @@ class LLMThreeCallEpisodeController:
         self.last_predicted_ttcp_steps: Optional[float] = None
         self.last_predicted_loss_step: Optional[int] = None
         self.last_conflict_within_lookahead = False
+        self.last_execute_predicted_loss_step: Optional[int] = None
+        self.last_execute_conflict_within_preview = False
+        self.last_turn_preview_rows: List[Dict[str, Any]] = []
+        self.last_allowed_turn_bins: List[int] = []
+        self.last_intruder_side = "centerline"
+        self.last_merge_back_mode = "ALIGNMENT"
         self.last_applied_hold_steps = 0
         self.has_called_execute_turn = False
         self.emergency_count = 0
@@ -619,6 +664,58 @@ class LLMThreeCallEpisodeController:
             return 0
         return int(_snap_to_allowed_bin(err, ALLOWED_BINS))
 
+    def _intruder_side_sign(self, cur: ObsSnapshot) -> int:
+        bearing_err = _bearing_error_to_intruder_deg(cur)
+        if bearing_err > 0:
+            return 1
+        if bearing_err < 0:
+            return -1
+        return 0
+
+    def _intruder_side_label(self, cur: ObsSnapshot) -> str:
+        return _side_word(_bearing_error_to_intruder_deg(cur))
+
+    def _merge_back_mode(self, cur: ObsSnapshot) -> str:
+        return (
+            "ALIGNMENT"
+            if abs(_heading_error_to_dest_deg(cur)) > self.config.merge_back_repeat_error_deg
+            else "DESTINATION"
+        )
+
+    def _merge_back_hold_bounds(self, cur: ObsSnapshot) -> tuple[int, int]:
+        if self._merge_back_mode(cur) == "ALIGNMENT":
+            return self.config.merge_back_alignment_hold_bounds
+        return (self.config.merge_back_min_hold, self.config.merge_back_max_hold)
+
+    def _allowed_turn_bins_for_call(self, call_name: str, cur: ObsSnapshot) -> List[int]:
+        if call_name == "MERGE_BACK":
+            err = _heading_error_to_dest_deg(cur)
+            if abs(err) <= self.config.heading_alignment_tolerance_deg:
+                return [0]
+            if err > 0:
+                return [turn_deg for turn_deg in ALLOWED_BINS if turn_deg > 0]
+            return [turn_deg for turn_deg in ALLOWED_BINS if turn_deg < 0]
+
+        if call_name not in {"EXECUTE_TURN", "EMERGENCY_MANEUVER"}:
+            return list(ALLOWED_BINS)
+
+        side = self._intruder_side_sign(cur)
+        if side > 0:
+            bins = [turn_deg for turn_deg in ALLOWED_BINS if turn_deg > 0]
+        elif side < 0:
+            bins = [turn_deg for turn_deg in ALLOWED_BINS if turn_deg < 0]
+        else:
+            bins = [turn_deg for turn_deg in ALLOWED_BINS if turn_deg != 0]
+
+        allow_zero = (
+            call_name == "EXECUTE_TURN"
+            and self.config.execute_allow_zero
+            and not self.last_execute_conflict_within_preview
+        )
+        if allow_zero:
+            bins = [0] + bins
+        return bins
+
     def _guidance_state(
         self,
         cur: ObsSnapshot,
@@ -635,16 +732,55 @@ class LLMThreeCallEpisodeController:
             "sector_entry_step": self.sector_entry_step,
             "predicted_loss_step": self.last_predicted_loss_step,
             "conflict_within_lookahead": self.last_conflict_within_lookahead,
+            "execute_predicted_loss_step": self.last_execute_predicted_loss_step,
+            "execute_conflict_within_preview": self.last_execute_conflict_within_preview,
+            "heading_error_to_destination_deg": round(_heading_error_to_dest_deg(cur), 3),
+            "intruder_side": self.last_intruder_side,
+            "allowed_turn_bins": self.last_allowed_turn_bins,
+            "merge_back_mode": self.last_merge_back_mode,
             "current_ttcp_steps": None
             if self.last_predicted_ttcp_steps is None
             else round(self.last_predicted_ttcp_steps, 3),
             "safe_streak_steps": self.safe_streak_steps,
             "last_turn_deg": self.last_turn_deg,
             "emergency_count": self.emergency_count,
+            "merge_back_count": self.merge_back_count,
             "zero_turn_allowed": zero_turn_allowed,
             "hold_bounds": hold_bounds,
+            "turn_preview_steps": self.config.turn_preview_steps,
+            "turn_preview_rows": self.last_turn_preview_rows,
             "step": cur.step,
         }
+
+    def _make_preview_snapshot(
+        self,
+        base: ObsSnapshot,
+        *,
+        own_x: float,
+        own_y: float,
+        intr_x: float,
+        intr_y: float,
+        own_heading_rad: float,
+        step: Optional[int] = None,
+    ) -> ObsSnapshot:
+        return ObsSnapshot(
+            own_x=float(own_x),
+            own_y=float(own_y),
+            intr_x=float(intr_x),
+            intr_y=float(intr_y),
+            dest_x=float(base.dest_x),
+            dest_y=float(base.dest_y),
+            sep_oi=float(math.hypot(intr_x - own_x, intr_y - own_y)),
+            dist_o_dest=float(math.hypot(base.dest_x - own_x, base.dest_y - own_y)),
+            dist_i_dest=float(base.dist_i_dest),
+            ctd_dist=float(base.ctd_dist),
+            dist_to_atco_path=float(base.dist_to_atco_path),
+            own_heading_rad=float(own_heading_rad),
+            path_heading_deg=base.path_heading_deg,
+            heading_error_to_path_deg=base.heading_error_to_path_deg,
+            signed_cross_track_to_path=base.signed_cross_track_to_path,
+            step=step,
+        )
 
     def _simulate_turn_candidate(
         self,
@@ -698,6 +834,16 @@ class LLMThreeCallEpisodeController:
         else:
             end_ttcp = None
 
+        preview_snapshot = self._make_preview_snapshot(
+            cur,
+            own_x=own_x,
+            own_y=own_y,
+            intr_x=intr_x,
+            intr_y=intr_y,
+            own_heading_rad=heading_rad,
+            step=(cur.step + preview_steps) if cur.step is not None else None,
+        )
+
         return {
             "turn_deg": int(turn_deg),
             "loss_step": loss_step,
@@ -705,19 +851,25 @@ class LLMThreeCallEpisodeController:
             "end_ttcp_steps": end_ttcp,
             "end_dist_to_dest": float(end_dist_to_dest),
             "end_heading_error_to_dest_deg": float(abs(end_heading_err_deg)),
+            "safe_preserved_over_preview": loss_step is None,
+            "merge_back_turn_deg_after_preview": int(self._deterministic_merge_back_turn(preview_snapshot)),
         }
 
-    def _best_preview_turn(self, cur: ObsSnapshot, prev: Optional[ObsSnapshot], *, allow_zero: bool) -> int:
-        candidates = []
-        for turn_deg in ALLOWED_BINS:
-            if not allow_zero and turn_deg == 0:
-                continue
-            candidates.append(self._simulate_turn_candidate(cur, prev, turn_deg=turn_deg))
+    def _best_turn_from_bins(
+        self,
+        cur: ObsSnapshot,
+        prev: Optional[ObsSnapshot],
+        candidate_bins: List[int],
+        *,
+        horizon_steps: Optional[int] = None,
+    ) -> int:
+        candidates = [self._simulate_turn_candidate(cur, prev, turn_deg=turn_deg, horizon_steps=horizon_steps) for turn_deg in candidate_bins]
+        preview_steps = self.config.conflict_lookahead_steps if horizon_steps is None else int(horizon_steps)
 
         candidates.sort(
             key=lambda item: (
                 item["loss_step"] is not None,
-                -(item["loss_step"] or (self.config.conflict_lookahead_steps + 1)),
+                -(item["loss_step"] or (preview_steps + 1)),
                 -item["min_sep"],
                 -(item["end_ttcp_steps"] if item["end_ttcp_steps"] is not None else -1.0),
                 item["end_dist_to_dest"],
@@ -726,6 +878,11 @@ class LLMThreeCallEpisodeController:
             )
         )
         return int(candidates[0]["turn_deg"]) if candidates else 0
+
+    def _best_same_side_turn(self, call_name: str, cur: ObsSnapshot, prev: Optional[ObsSnapshot]) -> int:
+        candidate_bins = [turn_deg for turn_deg in self._allowed_turn_bins_for_call(call_name, cur) if turn_deg != 0]
+        horizon_steps = self.config.turn_preview_steps if call_name == "EXECUTE_TURN" else self.config.conflict_lookahead_steps
+        return self._best_turn_from_bins(cur, prev, candidate_bins, horizon_steps=horizon_steps)
 
     def _deterministic_merge_back_turn(self, cur: ObsSnapshot) -> int:
         err = _heading_error_to_dest_deg(cur)
@@ -740,15 +897,72 @@ class LLMThreeCallEpisodeController:
         if own_speed <= 0.0:
             own_speed = cfg.hold_speed_fallback
 
-        remaining_dist = max(0.0, float(cur.dist_o_dest) - cfg.merge_back_distance_buffer)
+        return self._compute_merge_back_hold_steps_from_state(cur.dist_o_dest, own_speed)
+
+    def _compute_merge_back_hold_steps_from_state(self, dist_to_dest: float, own_speed: float) -> int:
+        cfg = self.config
+
+        remaining_dist = max(0.0, float(dist_to_dest) - cfg.merge_back_distance_buffer)
         raw_steps = int(math.ceil(remaining_dist / max(1e-6, own_speed)))
         raw_steps = max(cfg.merge_back_min_hold, raw_steps)
-        remaining_budget = max(0, cfg.merge_back_max_hold - int(step))
-        if remaining_budget <= 0:
-            return 0
-        return int(min(raw_steps, remaining_budget))
+        return int(min(raw_steps, cfg.merge_back_max_hold))
 
-    def _build_fallback_answer(self, cur: ObsSnapshot) -> Dict[str, Any]:
+    def _build_turn_preview(self, call_name: str, cur: ObsSnapshot, prev: Optional[ObsSnapshot]) -> None:
+        if call_name not in {"EXECUTE_TURN", "EMERGENCY_MANEUVER"}:
+            self.last_turn_preview_rows = []
+            return
+
+        rows: List[Dict[str, Any]] = []
+        for turn_deg in self._allowed_turn_bins_for_call(call_name, cur):
+            candidate = self._simulate_turn_candidate(
+                cur,
+                prev,
+                turn_deg=turn_deg,
+                horizon_steps=self.config.turn_preview_steps,
+            )
+            rows.append(
+                {
+                    "heading_change_deg": int(turn_deg),
+                    "safe_preserved_over_preview": bool(candidate["safe_preserved_over_preview"]),
+                    "predicted_loss_step": candidate["loss_step"],
+                    "merge_back_turn_deg_after_preview": int(candidate["merge_back_turn_deg_after_preview"]),
+                }
+            )
+        self.last_turn_preview_rows = rows
+
+    def _should_repeat_merge_back(self, cur: ObsSnapshot) -> bool:
+        return abs(_heading_error_to_dest_deg(cur)) > self.config.merge_back_repeat_error_deg
+
+    def _build_fallback_answer(
+        self,
+        call_name: str,
+        cur: ObsSnapshot,
+        prev: Optional[ObsSnapshot],
+    ) -> Dict[str, Any]:
+        if call_name == "EXECUTE_TURN":
+            if self.last_execute_conflict_within_preview:
+                fallback_turn = self._best_same_side_turn(call_name, cur, prev)
+            else:
+                fallback_turn = 0 if 0 in self._allowed_turn_bins_for_call(call_name, cur) else self._best_same_side_turn(call_name, cur, prev)
+        elif call_name == "EMERGENCY_MANEUVER":
+            fallback_turn = self._best_same_side_turn(call_name, cur, prev)
+        elif call_name == "MERGE_BACK":
+            fallback_turn = self._deterministic_merge_back_turn(cur)
+        else:
+            fallback_turn = 0
+        if call_name == "EXECUTE_TURN":
+            fallback_hold = self.config.default_execute_hold_bounds[0]
+        elif call_name == "EMERGENCY_MANEUVER":
+            fallback_hold = self.config.default_emergency_hold_bounds[0]
+        elif call_name == "MERGE_BACK":
+            fallback_hold = (
+                self.config.merge_back_alignment_hold_bounds[1]
+                if self._merge_back_mode(cur) == "ALIGNMENT"
+                else self._compute_merge_back_hold_steps(cur, prev, step=int(cur.step or 0))
+            )
+        else:
+            fallback_hold = 0
+
         return {
             "answer": {
                 "scenario_summary": "",
@@ -759,8 +973,8 @@ class LLMThreeCallEpisodeController:
                     "separation_distance": cur.sep_oi,
                 },
                 "maneuver": {
-                    "heading_change_deg": 0,
-                    "hold_steps": 0,
+                    "heading_change_deg": int(fallback_turn),
+                    "hold_steps": int(fallback_hold),
                 },
             }
         }
@@ -775,16 +989,28 @@ class LLMThreeCallEpisodeController:
         requested_turn = int(_snap_to_allowed_bin(requested_turn, ALLOWED_BINS))
 
         if call_name == "EXECUTE_TURN":
-            if not self.last_conflict_within_lookahead:
+            allowed_bins = self._allowed_turn_bins_for_call(call_name, cur)
+            if requested_turn in allowed_bins:
+                return requested_turn
+            if requested_turn == 0 and 0 in allowed_bins:
                 return 0
-            if requested_turn == 0:
-                return self._best_preview_turn(cur, prev, allow_zero=False)
-            return requested_turn
+            side = self._intruder_side_sign(cur)
+            if side > 0:
+                return int(_snap_to_allowed_bin(abs(requested_turn), allowed_bins))
+            if side < 0:
+                return int(_snap_to_allowed_bin(-abs(requested_turn), allowed_bins))
+            return self._best_same_side_turn(call_name, cur, prev)
 
         if call_name == "EMERGENCY_MANEUVER":
-            if requested_turn == 0:
-                return self._best_preview_turn(cur, prev, allow_zero=False)
-            return requested_turn
+            allowed_bins = self._allowed_turn_bins_for_call(call_name, cur)
+            if requested_turn in allowed_bins and requested_turn != 0:
+                return requested_turn
+            side = self._intruder_side_sign(cur)
+            if side > 0:
+                return int(_snap_to_allowed_bin(max(5, abs(requested_turn)), allowed_bins))
+            if side < 0:
+                return int(_snap_to_allowed_bin(-max(5, abs(requested_turn)), allowed_bins))
+            return self._best_same_side_turn(call_name, cur, prev)
 
         if call_name == "MERGE_BACK":
             desired_turn = self._deterministic_merge_back_turn(cur)
@@ -816,7 +1042,8 @@ class LLMThreeCallEpisodeController:
             hold_min, hold_max = self.config.default_emergency_hold_bounds
             return int(max(hold_min, min(hold_max, requested_hold)))
         if call_name == "MERGE_BACK":
-            return self._compute_merge_back_hold_steps(cur, prev, step=step)
+            hold_min, hold_max = self._merge_back_hold_bounds(cur)
+            return int(max(hold_min, min(hold_max, requested_hold)))
         raise ValueError(f"Unsupported call name: {call_name}")
 
     def _call_llm_for_stage(
@@ -827,24 +1054,28 @@ class LLMThreeCallEpisodeController:
         cur: ObsSnapshot,
     ) -> int:
         prev = ObsSnapshot.from_vector(self._prev_obs, step=self._prev_step) if self._prev_obs is not None else None
+        self.last_intruder_side = self._intruder_side_label(cur)
+        self.last_allowed_turn_bins = self._allowed_turn_bins_for_call(call_name, cur)
+        self.last_merge_back_mode = self._merge_back_mode(cur)
+        self._build_turn_preview(call_name, cur, prev)
 
         if call_name == "EXECUTE_TURN":
             hold_bounds: Any = self.config.default_execute_hold_bounds
-            zero_turn_allowed = self.config.execute_allow_zero
+            zero_turn_allowed = 0 in self.last_allowed_turn_bins
             tag_suffix = "execute_turn"
             self.stage = "EXECUTE_TURN"
             self.last_event = f"execute_turn@{step}"
             self.last_annotations.append(self.config.annotation_execute_turn)
         elif call_name == "EMERGENCY_MANEUVER":
             hold_bounds = self.config.default_emergency_hold_bounds
-            zero_turn_allowed = self.config.emergency_allow_zero
+            zero_turn_allowed = False
             tag_suffix = f"emergency_maneuver_{self.emergency_count + 1:02d}"
             self.stage = "EMERGENCY_MANEUVER"
             self.last_event = f"emergency_maneuver@{step}"
             self.last_annotations.append(self.config.annotation_emergency)
         elif call_name == "MERGE_BACK":
-            hold_bounds = "controller_computed"
-            zero_turn_allowed = True
+            hold_bounds = self._merge_back_hold_bounds(cur)
+            zero_turn_allowed = abs(_heading_error_to_dest_deg(cur)) <= self.config.heading_alignment_tolerance_deg
             tag_suffix = f"merge_back_{self.merge_back_count + 1:02d}"
             self.stage = "MERGE_BACK"
             self.last_event = f"merge_back@{step}"
@@ -877,7 +1108,7 @@ class LLMThreeCallEpisodeController:
             parsed = _extract_json(raw_text)
             normalized = _validate_and_normalize(parsed, ALLOWED_BINS)
         except Exception:
-            normalized = self._build_fallback_answer(cur)
+            normalized = self._build_fallback_answer(call_name, cur, prev)
 
         maneuver = normalized["answer"]["maneuver"]
         requested_turn = int(maneuver.get("heading_change_deg", 0))
@@ -887,6 +1118,13 @@ class LLMThreeCallEpisodeController:
 
         maneuver["heading_change_deg"] = int(applied_turn)
         maneuver["hold_steps"] = int(applied_hold)
+        normalized["controller_debug"] = {
+            "intruder_side": self.last_intruder_side,
+            "allowed_turn_bins": self.last_allowed_turn_bins,
+            "turn_preview_rows": self.last_turn_preview_rows,
+            "merge_back_mode": self.last_merge_back_mode,
+            "chosen_hold_steps": int(applied_hold),
+        }
 
         self.did_call_llm = True
         self.last_call_name = call_name
@@ -939,6 +1177,16 @@ class LLMThreeCallEpisodeController:
         preview_heading = self._preview_heading_rad(cur)
         self.last_predicted_loss_step = self._predict_loss_step(cur, prev, heading_rad=preview_heading)
         self.last_conflict_within_lookahead = self.last_predicted_loss_step is not None
+        self.last_execute_predicted_loss_step = self._predict_loss_step(
+            cur,
+            prev,
+            heading_rad=preview_heading,
+            horizon_steps=self.config.turn_preview_steps,
+        )
+        self.last_execute_conflict_within_preview = self.last_execute_predicted_loss_step is not None
+        self.last_intruder_side = self._intruder_side_label(cur)
+        self.last_merge_back_mode = self._merge_back_mode(cur)
+        self.last_allowed_turn_bins = []
 
         self._update_safe_streak(cur)
         self._advance_post_call_stage()
@@ -984,7 +1232,11 @@ class LLMThreeCallEpisodeController:
             else:
                 if self.hold_remaining > 0:
                     self.hold_remaining -= 1
-                turn_now = 0
+                    turn_now = 0
+                elif self._should_repeat_merge_back(cur) and step >= self.start_llm_at_step:
+                    turn_now = self._call_llm_for_stage("MERGE_BACK", obs_vec, step, cur)
+                else:
+                    turn_now = 0
         elif self.stage == "FOLLOW_LINESTRING":
             turn_now = self._follow_linestring_turn_deg(cur, step)
         else:

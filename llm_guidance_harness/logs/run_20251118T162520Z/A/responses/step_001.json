@@ -1,0 +1,14 @@
+{
+  "guidance": {
+    "heading_deg": 0,
+    "hold_steps": 1,
+    "phase": "WAIT_TURN",
+    "source": "heuristic",
+    "issued_step": 1,
+    "note": "LLM response missing JSON, using heuristic result.",
+    "raw_text": "Here is my output in JSON format:\n\n{\n\"answer\": {\n\"scenario_summary\": \"Ownship is currently at position (67.1, 87.5) and heading -118.0\u00b0. The intruder is approaching from the left with a bearing of +72.3\u00b0.\",\n\"technical_summary\": \"The ownship is closing on the intruder at a rate of -0.674 units per step. The TTCP to CPA is 4.14 steps, indicating a moderate risk.\",\n\"rationale\": \"Given the current situation, I will prioritize safety by increasing separation and avoiding a collision.\",\n\"metrics\": {\n\"ttcp\": null,\n\"separation_distance\": null\n},\n\"maneuver\": {\n\"phase\": \"EXECUTE_TURN\",\n\"heading_change_deg\": 5,\n\"hold_steps\": 1\n}\n}\n\nNote: The phase is set to EXECUTE_TURN since we are not in a WAIT_TURN state, and the heading change is chosen based on the sign rule (since the intruder is on the left). A small turn of 5\u00b0 is recommended to increase separation."
+  },
+  "used_source": "heuristic",
+  "new_call": true,
+  "hold_remaining": 1
+}

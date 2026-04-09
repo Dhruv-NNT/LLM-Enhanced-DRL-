@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0006",
+    "run_id": "memory",
+    "step": 6,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 6,
+    "sep_oi": 21.00497135124017,
+    "dist_o_dest": 58.419796824024566,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 9.52360949218585,
+    "own_heading_deg": -193.1963549715447,
+    "path_heading_deg": -129.04182664558195,
+    "heading_err_path_deg": 64.15452832596276,
+    "signed_cross_track_to_path": -3.8796299530188727
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is off the ATCO path, with a significant heading error and a slight cross-track deviation. The intruder is ahead and slightly to the left.  The TTCP is relatively long, but the separation is decreasing.",
+    "technical_summary": "The aircraft is currently positioned at x=60.8, y=84.3, exhibiting a heading error of +64.2\u00b0 relative to the ATCO path and a slight cross-track deviation of -3.88. The current heading is -193.2\u00b0, significantly different from the ATCO path's heading of -129.0\u00b0. The aircraft is closing on the intruder with a TTCP of 9.52 steps. The aircraft's kinematics show a speed of 2.000 units per step. The situation requires a course correction to realign with the ATCO path.",
+    "rationale": "The aircraft is significantly off the ATCO path. The most direct way to correct this is to turn to the right, reducing both the heading error and cross-track deviation. Given the magnitude of the heading error, a moderate turn is required. The ATCO baseline favors larger turns in this scenario, but a smaller turn is preferred initially to avoid overcorrection.",
+    "metrics": {
+      "ttcp": 9.52,
+      "separation_distance": 21.0
+    },
+    "maneuver": {
+      "heading_change_deg": -15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -15,
+    "hold_steps": 0
+  }
+}

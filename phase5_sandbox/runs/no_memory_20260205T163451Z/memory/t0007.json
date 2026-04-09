@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0007",
+    "run_id": "memory",
+    "step": 7,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 7,
+    "sep_oi": 19.521086563127145,
+    "dist_o_dest": 56.422124441518314,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 9.103744711835576,
+    "own_heading_deg": -193.1963549715447,
+    "path_heading_deg": -134.39980111721445,
+    "heading_err_path_deg": 58.796553854330256,
+    "signed_cross_track_to_path": -3.6670636039513997
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is off the ATCO path, exhibiting a significant heading error and cross-track error. The aircraft is closing on the intruder. The aircraft is not yet aligned with the ATCO path.",
+    "technical_summary": "The aircraft is currently 3.67 units left of the ATCO path, with a heading error of +58.8 degrees. The aircraft is closing on the intruder at a rate of 1.878 units per step. The current heading error to the destination is +62.4 degrees. Kinematic analysis reveals a closing rate of 2.000 units per step, and a TTCP of 9.10 steps. The aircraft's heading is significantly different from the ATCO path heading.",
+    "rationale": "The aircraft is significantly off the ATCO path. The path trigger is active, indicating a need to correct the deviation. Given the magnitude of the error, a turn of -30 degrees is appropriate to begin correcting the deviation while remaining within the allowed bins. This maneuver aims to reduce both the heading error and the cross-track error.",
+    "metrics": {
+      "ttcp": 9.1,
+      "separation_distance": 19.52
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

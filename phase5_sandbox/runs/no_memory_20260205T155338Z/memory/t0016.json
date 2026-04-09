@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0016",
+    "run_id": "memory",
+    "step": 16,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 16,
+    "sep_oi": 6.20062846656276,
+    "dist_o_dest": 46.28744039614299,
+    "dist_i_dest": 47.7958804975107,
+    "ttcp": 0.0,
+    "own_heading_deg": -197.044734968758,
+    "path_heading_deg": 152.0783383742572,
+    "heading_err_path_deg": -10.876926656984779,
+    "signed_cross_track_to_path": -10.531655932378714
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, approaching the intruder. The situation requires an immediate corrective maneuver due to emergency mode. TTCP is nearing zero, indicating a high risk of collision.",
+    "technical_summary": "Ownship is experiencing a significant heading error (-10.9\u00b0) and cross-track error (-10.53) relative to the ATCO path. Kinematic analysis reveals a decreasing separation between ownship and the intruder, with a rapidly approaching TTCP. The current heading (-197.0\u00b0) is significantly off the ATCO path heading (+152.1\u00b0). Emergency mode is active, requiring immediate action.",
+    "rationale": "Due to the emergency status, the standard ATCO path rules are suspended. The goal is to immediately reduce the risk of collision. The candidate table provides a set of possible turns, and the smallest eligible turn (+5\u00b0) is chosen to quickly alter course.",
+    "metrics": {
+      "ttcp": null,
+      "separation_distance": 6.2
+    },
+    "maneuver": {
+      "heading_change_deg": 5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

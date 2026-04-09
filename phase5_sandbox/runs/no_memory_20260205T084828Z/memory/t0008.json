@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0008",
+    "run_id": "memory",
+    "step": 8,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 8,
+    "sep_oi": 23.87485985759741,
+    "dist_o_dest": 62.357123616662754,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 5.988805376306004,
+    "own_heading_deg": -156.93768930960047,
+    "path_heading_deg": -154.25647761287632,
+    "heading_err_path_deg": 2.681211696724148,
+    "signed_cross_track_to_path": -0.09758721128471493
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating slightly from the ATCO path, with a small heading error and cross-track error. The intruder is ahead and to the left. Separation is decreasing, though still substantial.",
+    "technical_summary": "Ownship's heading error to the ATCO path is +2.7\u00b0, and the cross-track error is -0.10. The separation between ownship and the intruder is decreasing at a rate of -1.063 units per step. The heading error to the destination is +3.4\u00b0, indicating a slight deviation from the direct route. Kinematic analysis shows a relative speed of 2.0 units per step, with a TTCP of 5.99 steps to the CPA.",
+    "rationale": "The path trigger is active, indicating a need to correct the deviation from the ATCO path. Given the small errors, a moderate turn is appropriate to reduce both the heading and cross-track errors. Following the ATCO baseline, a turn magnitude of 15\u00b0 is selected to efficiently realign ownship with the path.",
+    "metrics": {
+      "ttcp": 5.99,
+      "separation_distance": 23.87
+    },
+    "maneuver": {
+      "heading_change_deg": 15,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 5,
+    "hold_steps": 0
+  }
+}

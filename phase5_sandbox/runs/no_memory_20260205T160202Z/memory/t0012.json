@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0012",
+    "run_id": "memory",
+    "step": 12,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 12,
+    "sep_oi": 13.968608179922448,
+    "dist_o_dest": 48.21748706902614,
+    "dist_i_dest": 55.795738880337304,
+    "ttcp": 14.318758357829022,
+    "own_heading_deg": -161.95107001699515,
+    "path_heading_deg": -176.40137209065784,
+    "heading_err_path_deg": -14.450302073662698,
+    "signed_cross_track_to_path": -2.749742996624776
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path and is closing on the intruder. The heading error to the path is significant, and the cross-track error is also notable.  The goal is to correct the course while maintaining separation from the intruder.",
+    "technical_summary": "Ownship's current heading (-162.0\u00b0) is 14.5\u00b0 off from the ATCO path heading (-176.4\u00b0), resulting in a heading error of -14.5\u00b0. The signed cross-track error is -2.75, indicating a deviation to the left of the path. The TTCP to the intruder is 14.32 steps, and the separation is decreasing at a rate of 0.926 per step. The kinematic analysis shows a decreasing separation and a slight improvement in alignment with the destination, but a persistent deviation from the ATCO path.",
+    "rationale": "The current situation requires a significant course correction to realign ownship with the ATCO path. Given the magnitude of the heading error and cross-track error, a larger turn is necessary to effectively reduce both errors. A turn of -30 degrees is selected to quickly bring ownship back on track, prioritizing path adherence over minor adjustments.",
+    "metrics": {
+      "ttcp": 5.0,
+      "separation_distance": 2.0
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

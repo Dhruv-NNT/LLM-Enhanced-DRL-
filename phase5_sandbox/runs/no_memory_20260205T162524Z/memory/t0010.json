@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0010",
+    "run_id": "memory",
+    "step": 10,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 10,
+    "sep_oi": 16.449812669396692,
+    "dist_o_dest": 54.6090930981457,
+    "dist_i_dest": 59.77676817383691,
+    "ttcp": 3.341583643511899,
+    "own_heading_deg": -262.2186841648893,
+    "path_heading_deg": -176.3444046975053,
+    "heading_err_path_deg": 85.87427946738399,
+    "signed_cross_track_to_path": -4.27110683019177
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is deviating from the ATCO path and is closing on the intruder. The aircraft is significantly off the path with a large heading error and a negative cross-track error, indicating it is to the left of the path. The TTCP with the intruder is decreasing.",
+    "technical_summary": "The aircraft is currently positioned at x=72.3, y=67.9, with an intruder at x=64.3, y=82.3. The separation is 16.45, and decreasing at a rate of 3.093 per step. The aircraft's heading error to the ATCO path is +85.9\u00b0, and the signed cross-track error is -4.27, indicating a significant deviation to the left of the path. The TTCP is 3.34 steps. The aircraft is closing on the intruder at a decreasing rate.",
+    "rationale": "The aircraft is significantly off the ATCO path and the separation is decreasing. A turn to the right is necessary to correct the heading error and reduce the cross-track error. The allowed bins are all to the right, so the strongest possible turn is selected. Given the current separation, a smaller turn is preferred to avoid overcorrection.",
+    "metrics": {
+      "ttcp": 3.34,
+      "separation_distance": 16.45
+    },
+    "maneuver": {
+      "heading_change_deg": -30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -30,
+    "hold_steps": 0
+  }
+}

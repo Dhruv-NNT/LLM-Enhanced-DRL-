@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0005",
+    "run_id": "memory",
+    "step": 5,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 5,
+    "sep_oi": 28.377590216779943,
+    "dist_o_dest": 67.8864571679236,
+    "dist_i_dest": 50.40916375087462,
+    "ttcp": 4.748790028503496,
+    "own_heading_deg": -176.9912121391793,
+    "path_heading_deg": -151.93392256155798,
+    "heading_err_path_deg": 25.057289577621304,
+    "signed_cross_track_to_path": -1.0013298757488764
+  },
+  "answer": {
+    "scenario_summary": "Ownship is deviating from the ATCO path, with a heading error to the path of +25.1\u00b0 and a cross-track error of -1.00.  The intruder is ahead and to the left. The TTCP is 4.75 steps.",
+    "technical_summary": "The current observation shows a significant heading error to the ATCO path, indicating a need for a corrective maneuver. The cross-track error is negative, suggesting ownship is to the left of the path. Kinematic analysis reveals a closing separation rate with the intruder. The heading error is larger than 2 degrees, and the cross-track error is greater than 0.2, so a turn is required.  The ATCO baseline suggests a preference for larger turns in this situation.",
+    "rationale": "The heading error is significant, and the cross-track error is non-zero.  Following HARD RULE B, a turn is required to reduce both errors. The ATCO baseline suggests a preference for larger turns, and a turn of 30\u00b0 will make the greatest reduction in both errors.",
+    "metrics": {
+      "ttcp": 4.75,
+      "separation_distance": 28.38
+    },
+    "maneuver": {
+      "heading_change_deg": 30,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

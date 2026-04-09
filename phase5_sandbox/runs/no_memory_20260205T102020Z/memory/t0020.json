@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0020",
+    "run_id": "memory",
+    "step": 20,
+    "trigger_reason": "safety"
+  },
+  "observation_before": {
+    "step": 20,
+    "sep_oi": 5.706026482238117,
+    "dist_o_dest": 39.58524731714408,
+    "dist_i_dest": 36.20150389589952,
+    "ttcp": 0.0,
+    "own_heading_deg": -47.80831445709833,
+    "path_heading_deg": -126.79607320410649,
+    "heading_err_path_deg": -78.98775874700817,
+    "signed_cross_track_to_path": 5.779853351085538
+  },
+  "answer": {
+    "scenario_summary": "Ownship is significantly off the ATCO path and approaching the intruder. Emergency protocols are active, limiting turn options to right turns. The immediate priority is to avoid collision with the intruder while adhering to emergency procedures.",
+    "technical_summary": "Ownship is experiencing a large heading error (-79.0\u00b0) and a positive cross-track error (+5.78), indicating a significant deviation to the left of the ATCO path. The separation distance is increasing slightly, and the TTCP is critically low (0.00 steps). The intruder is currently dead ahead. Emergency protocols are in effect, restricting turn options to the right, with the smallest eligible turn prioritized. Kinematic analysis confirms a closing relative speed, highlighting the urgency of the situation.",
+    "rationale": "Due to the emergency situation and the intruder's position, the smallest eligible turn is selected to begin correcting the deviation from the ATCO path. The available options are restricted to right turns, and the smallest turn (+5\u00b0) is chosen to initiate the correction while minimizing further deviation. This aligns with the emergency protocol of prioritizing the smallest eligible turn unless instructed otherwise.",
+    "metrics": {
+      "ttcp": 0.0,
+      "separation_distance": 5.71
+    },
+    "maneuver": {
+      "heading_change_deg": 5,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": 30,
+    "hold_steps": 0
+  }
+}

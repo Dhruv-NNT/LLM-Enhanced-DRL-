@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "tag": "t0003",
+    "run_id": "memory",
+    "step": 3,
+    "trigger_reason": "path"
+  },
+  "observation_before": {
+    "step": 3,
+    "sep_oi": 26.44878761660458,
+    "dist_o_dest": 63.09990811049138,
+    "dist_i_dest": 62.201196228448836,
+    "ttcp": 9.481954723786455,
+    "own_heading_deg": -123.00902506801889,
+    "path_heading_deg": -117.99113624855447,
+    "heading_err_path_deg": 5.017888819464417,
+    "signed_cross_track_to_path": -0.15719582952220426
+  },
+  "answer": {
+    "scenario_summary": "The aircraft is currently off the ATCO path, exhibiting a heading error and cross-track deviation. The aircraft is approaching the intruder, but with a reasonable TTCP. The path trigger is active, indicating a need to correct the aircraft's position relative to the ATCO path.",
+    "technical_summary": "The aircraft is positioned at x=66.0, y=85.9, exhibiting a heading error of +5.0\u00b0 relative to the ATCO path heading of -118.0\u00b0.  The signed cross-track error is -0.16, indicating a slight deviation to the left of the path. The heading error to the destination is -10.4\u00b0, suggesting a need to adjust course. The TTCP to the intruder is 9.48 steps, and the separation is decreasing at a rate of -1.469 units per step. The current step is 3, which falls within the typical window for initiating course corrections.",
+    "rationale": "The aircraft is off the ATCO path. The `path_trigger` is active, and the current step (3) is within the typical window for initiating a course correction. The ATCO path heading is -118.0\u00b0 and the aircraft's heading is -123.0\u00b0, resulting in a heading error of +5.0\u00b0. A small correction is needed to return to the path.  Given the mild geometry, a smaller turn is preferred.",
+    "metrics": {
+      "ttcp": 9.48,
+      "separation_distance": 26.45
+    },
+    "maneuver": {
+      "heading_change_deg": -10,
+      "hold_steps": 0
+    }
+  },
+  "maneuver": {
+    "heading_change_deg": -10,
+    "hold_steps": 0
+  }
+}
