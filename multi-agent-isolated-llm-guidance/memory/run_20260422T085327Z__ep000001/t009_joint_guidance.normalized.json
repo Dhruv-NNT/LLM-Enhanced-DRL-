@@ -1,0 +1,130 @@
+{
+  "answer": {
+    "global_summary": "A1, A2, and A3 are safely merging back to their destinations.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "No turn needed for A1 to maintain safe separation.",
+        "technical_summary": "A1 is already heading towards its destination with sufficient separation from other aircraft.",
+        "rationale": "Maintaining the current heading ensures a safe and efficient approach."
+      },
+      {
+        "agent_id": "A2",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "A2 needs to adjust its heading slightly to maintain safe separation.",
+        "technical_summary": "A2's current heading is not aligned with its destination, so a small turn is necessary.",
+        "rationale": "The small turn helps A2 recover from its current heading and maintain a safe distance from other aircraft."
+      },
+      {
+        "agent_id": "A3",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "A3 needs to adjust its heading more significantly to maintain safe separation.",
+        "technical_summary": "A3's current heading is not aligned with its destination, and a larger turn is necessary to recover.",
+        "rationale": "The larger turn helps A3 recover from its current heading and maintain a safe distance from other aircraft."
+      },
+      {
+        "agent_id": "A4",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "",
+        "technical_summary": "",
+        "rationale": ""
+      }
+    ]
+  },
+  "preview_rows": {
+    "A1": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": false,
+        "min_sep_any": 4.932120334126769,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 0.6261973076856577,
+        "cumulative_reward": -4.470682718904726
+      }
+    ],
+    "A2": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": false,
+        "min_sep_any": 4.932120334126769,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 0.02350873985585622,
+        "cumulative_reward": -4.470682718904726
+      }
+    ],
+    "A3": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": false,
+        "min_sep_any": 4.932120334126769,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 36.03907398629835,
+        "cumulative_reward": -4.470682718904726
+      },
+      {
+        "heading_change_deg": 5,
+        "safe_over_preview": false,
+        "min_sep_any": 4.550795550730616,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 30.22179895719941,
+        "cumulative_reward": -4.4213894624818755
+      },
+      {
+        "heading_change_deg": 10,
+        "safe_over_preview": false,
+        "min_sep_any": 4.236774027609703,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 24.34695624676465,
+        "cumulative_reward": -4.379733388675801
+      },
+      {
+        "heading_change_deg": 15,
+        "safe_over_preview": false,
+        "min_sep_any": 4.008535193097318,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 18.423842586357296,
+        "cumulative_reward": -4.346218234788989
+      },
+      {
+        "heading_change_deg": 20,
+        "safe_over_preview": false,
+        "min_sep_any": 3.883086818230105,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 12.4630209377695,
+        "cumulative_reward": -4.321257030796406
+      },
+      {
+        "heading_change_deg": 25,
+        "safe_over_preview": false,
+        "min_sep_any": 3.871409965676364,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 6.476092321317196,
+        "cumulative_reward": -4.305160552213598
+      },
+      {
+        "heading_change_deg": 30,
+        "safe_over_preview": false,
+        "min_sep_any": 3.974594214937107,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 0.4754020148287452,
+        "cumulative_reward": -4.298128294952298
+      }
+    ],
+    "A4": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": false,
+        "min_sep_any": 4.932120334126769,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 0.008735746043925019,
+        "cumulative_reward": -4.470682718904726
+      }
+    ]
+  },
+  "ghost_compare": null
+}

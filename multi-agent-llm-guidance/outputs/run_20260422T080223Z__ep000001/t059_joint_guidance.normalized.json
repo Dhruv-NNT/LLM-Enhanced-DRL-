@@ -1,0 +1,140 @@
+{
+  "answer": {
+    "global_summary": "Both A1 and A2 are in emergency maneuver mode due to predicted conflicts.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "EMERGENCY_MANEUVER",
+        "heading_change_deg": -5,
+        "scenario_summary": "A1 is executing an emergency turn to avoid a predicted conflict with A2.",
+        "technical_summary": "The smallest safe turn available for A1 is -30 degrees, which will improve safety and recovery.",
+        "rationale": "This turn helps A1 to reduce its heading error to destination and maintain a safe distance from A2."
+      },
+      {
+        "agent_id": "A2",
+        "call_name": "EMERGENCY_MANEUVER",
+        "heading_change_deg": 5,
+        "scenario_summary": "",
+        "technical_summary": "",
+        "rationale": ""
+      }
+    ]
+  },
+  "preview_rows": {
+    "A1": [
+      {
+        "heading_change_deg": -30,
+        "safe_over_preview": true,
+        "min_sep_any": 5.257065609522476,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 89.70637853155318,
+        "cumulative_reward": -1.1634131121356202
+      },
+      {
+        "heading_change_deg": -25,
+        "safe_over_preview": true,
+        "min_sep_any": 5.261335791417869,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 94.68544286087399,
+        "cumulative_reward": -1.1634710484208188
+      },
+      {
+        "heading_change_deg": -20,
+        "safe_over_preview": true,
+        "min_sep_any": 5.272913359118369,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 99.62896675083385,
+        "cumulative_reward": -1.1636355539954868
+      },
+      {
+        "heading_change_deg": -15,
+        "safe_over_preview": true,
+        "min_sep_any": 5.2918677207558344,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 104.53738301126396,
+        "cumulative_reward": -1.1639278082943094
+      },
+      {
+        "heading_change_deg": -10,
+        "safe_over_preview": true,
+        "min_sep_any": 5.3183023543632775,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 109.41139414326426,
+        "cumulative_reward": -1.1643813803252185
+      },
+      {
+        "heading_change_deg": -5,
+        "safe_over_preview": true,
+        "min_sep_any": 5.352341555033169,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 114.25196780423079,
+        "cumulative_reward": -1.1650408797923983
+      }
+    ],
+    "A2": [
+      {
+        "heading_change_deg": 5,
+        "safe_over_preview": true,
+        "min_sep_any": 5.2520538964176255,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 131.40765582595935,
+        "cumulative_reward": -1.1024115343490335
+      },
+      {
+        "heading_change_deg": 10,
+        "safe_over_preview": true,
+        "min_sep_any": 5.121736653279126,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 126.52401594639406,
+        "cumulative_reward": -1.033903213515868
+      },
+      {
+        "heading_change_deg": 15,
+        "safe_over_preview": true,
+        "min_sep_any": 5.005106959488443,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 121.62795870649245,
+        "cumulative_reward": -0.9609211282701154
+      },
+      {
+        "heading_change_deg": 20,
+        "safe_over_preview": false,
+        "min_sep_any": 4.904058210825382,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 116.71863846895963,
+        "cumulative_reward": -10.883986900948317
+      },
+      {
+        "heading_change_deg": 25,
+        "safe_over_preview": false,
+        "min_sep_any": 4.820361053634814,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 111.79528628363926,
+        "cumulative_reward": -10.803654867554744
+      },
+      {
+        "heading_change_deg": 30,
+        "safe_over_preview": false,
+        "min_sep_any": 4.7555831661975585,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 106.85721756213525,
+        "cumulative_reward": -10.720508808342146
+      }
+    ]
+  },
+  "ghost_compare": {
+    "llm_turns": {
+      "A1": -5,
+      "A2": 5
+    },
+    "ppo_turns": {
+      "A1": -30,
+      "A2": -30
+    },
+    "horizon_steps": 5,
+    "llm_reward": -1.1014922662808562,
+    "ppo_reward": -1.4184461764089877,
+    "llm_min_sep_any": 5.2116445245725025,
+    "ppo_min_sep_any": 6.2398482922985945
+  }
+}

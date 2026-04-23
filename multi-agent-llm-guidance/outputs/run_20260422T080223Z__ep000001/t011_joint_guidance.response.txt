@@ -1,0 +1,17 @@
+Here is the output in JSON format:
+
+{
+  "answer": {
+    "global_summary": "Both A1 and A2 are executing Merge Back maneuvers to ensure safe separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is merging back towards the destination while maintaining a safe distance from A2.",
+        "technical_summary": "A1's heading change of -20 degrees will help reduce its heading error to destination and maintain a minimum separation of 11.19 units from A2.",
+        "rationale": "This turn helps A1 recover from its current position and ensures a safe distance from A2."
+      }
+    ]
+  }
+}

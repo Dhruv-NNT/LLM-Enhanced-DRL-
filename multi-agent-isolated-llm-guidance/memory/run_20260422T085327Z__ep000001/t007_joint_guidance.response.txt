@@ -1,0 +1,35 @@
+Here is the JSON output:
+
+{
+  "answer": {
+    "global_summary": "A1, A2, and A3 are merging back to their destinations while maintaining pairwise separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is recovering from its heading error by turning left 20 degrees.",
+        "technical_summary": "The turn helps reduce the heading error to destination and increases safety.",
+        "rationale": "This turn improves A1's alignment with its destination, reducing the risk of collision with other aircraft."
+      },
+      {
+        "agent_id": "A2",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "A2 is keeping its current heading to maintain a safe distance from A3.",
+        "technical_summary": "The current heading is optimal for maintaining pairwise separation with A3.",
+        "rationale": "This decision ensures that A2 maintains a safe distance from A3, reducing the risk of collision."
+      },
+      {
+        "agent_id": "A3",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -25,
+        "scenario_summary": "A3 is turning left 25 degrees to recover from its heading error and merge back with A2.",
+        "technical_summary": "The turn helps reduce the heading error to destination and increases safety by merging with A2.",
+        "rationale": "This turn improves A3's alignment with its destination, reducing the risk of collision with other aircraft."
+      }
+    ]
+  }
+}
+
+Note: The output only includes actionable agents, which are A1, A2, and A3.

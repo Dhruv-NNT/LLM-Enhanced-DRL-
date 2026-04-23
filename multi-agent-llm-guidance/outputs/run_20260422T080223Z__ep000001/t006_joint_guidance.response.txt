@@ -1,0 +1,17 @@
+Here is the output for the actionable agent A1 (MERGE_BACK):
+
+{
+"answer": {
+  "global_summary": "A1 is advised to merge back towards its destination while maintaining a safe distance from A2.",
+  "agents": [
+    {
+      "agent_id": "A1",
+      "call_name": "MERGE_BACK",
+      "heading_change_deg": -20,
+      "scenario_summary": "A1 is currently heading away from its destination and needs to adjust its course to merge back towards it.",
+      "technical_summary": "The nearest neighbor, A2, is at a distance of 9.82 units with a bearing error of -161.5 degrees. To maintain pairwise separation, A1 should turn by -20 degrees to ensure a safe distance.",
+      "rationale": "This turn will help A1 merge back towards its destination while maintaining a safe distance from A2 and avoiding potential conflicts."
+    }
+  ]
+}
+}

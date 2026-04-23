@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "A1 and A2 are safely merging back towards their destinations.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is adjusting its heading to avoid a potential conflict with A2.",
+        "technical_summary": "A1's current heading error to destination is 3.9 degrees, and the suggested turn will reduce this error while maintaining safe separation from A2.",
+        "rationale": "The suggested turn of -20 degrees helps A1 recover from its current heading error and maintain a safe distance from A2."
+      }
+    ]
+  }
+}

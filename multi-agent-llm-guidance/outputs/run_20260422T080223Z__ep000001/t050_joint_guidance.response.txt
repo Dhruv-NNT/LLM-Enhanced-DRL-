@@ -1,0 +1,19 @@
+Here is the output:
+
+{
+  "answer": {
+    "global_summary": "A1 and A2 are merging back to their destinations.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is adjusting its heading to merge back to destination.",
+        "technical_summary": "A1's current heading is not aligned with its destination, so it needs to adjust its heading to ensure a safe approach.",
+        "rationale": "This turn helps A1 recover from its current heading error and maintain a safe distance from other aircraft."
+      }
+    ]
+  }
+}
+
+Note: The output only includes the actionable agent A1 (MERGE_BACK), as per the task requirements.

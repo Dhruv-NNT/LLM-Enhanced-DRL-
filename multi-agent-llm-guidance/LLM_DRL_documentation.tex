@@ -1,0 +1,56 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\title{Multi-Agent LLM Guidance With RL-Compatible Shared-Policy Design}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Overview}
+This folder implements a multi-agent extension of the original three-call LLM guidance pipeline. The environment remains compatible with future pure reinforcement-learning experiments while already supporting pure LLM episodes and hybrid RL+LLM episodes.
+
+\section{Architecture}
+\begin{itemize}[leftmargin=*]
+\item \textbf{Simulator core}: \texttt{rl\_llm\_multi/core.py} contains the framework-agnostic sector dynamics, homogeneous agent state, route assignment, and pairwise safety logic.
+\item \textbf{Environment wrappers}: \texttt{rl\_llm\_multi/env.py} exposes a PettingZoo-style simultaneous-action wrapper and a centralized joint wrapper for direct LLM control.
+\item \textbf{RL path}: \texttt{rl\_llm\_multi/ppo.py} implements a shared actor plus centralized critic PPO variant. The actor consumes local observations plus a 7-dimensional advice embedding. The critic consumes the global scene state.
+\item \textbf{LLM path}: \texttt{rl\_llm\_multi/llm.py} performs centralized scene analysis, constructs text-first prompts, normalizes the response schema, snaps turns to allowed bins, and repairs unsafe joint decisions deterministically.
+\end{itemize}
+
+\section{Route Capacity}
+The maximum number of agents is defined by the unique route signatures in \texttt{../22feb\_paths.csv}:
+\[
+\texttt{max\_agents\_possible} = \left|\texttt{unique(linestring, origin, destination)}\right| = 6.
+\]
+
+Shared-entry staggering is applied for:
+\begin{itemize}[leftmargin=*]
+\item \texttt{PATH2} and \texttt{PATH5}
+\item \texttt{PATH3} and \texttt{PATH4}
+\end{itemize}
+
+The later agent in a shared-prefix group is launched only after the earlier agent reaches the sector-entry step.
+
+\section{Episode Modes}
+\begin{itemize}[leftmargin=*]
+\item \texttt{RL\_ONLY}: PPO acts without LLM advice.
+\item \texttt{HYBRID}: the LLM produces structured advice embeddings, but PPO remains the acting policy.
+\item \texttt{LLM\_ONLY}: the LLM emits the direct joint turn action at each controller trigger.
+\end{itemize}
+
+\section{Safety and Rendering}
+Safety uses a single conservative threshold throughout:
+\[
+\texttt{SAFE\_R} = 5.0.
+\]
+
+Rendering reuses the original sector plotting base and saves frames at exactly \texttt{1200x800} via a \texttt{12x8} inch figure and \texttt{dpi=100}. Each selected agent receives a distinct stable color for route visualization, origin, destination, and current position.
+
+\section{Logging}
+Prompt text, raw responses, normalized JSON, and compact call indexes are written under the new folder only. This preserves compatibility with future memory-retrieval additions without using memory retrieval in this version.
+
+\end{document}

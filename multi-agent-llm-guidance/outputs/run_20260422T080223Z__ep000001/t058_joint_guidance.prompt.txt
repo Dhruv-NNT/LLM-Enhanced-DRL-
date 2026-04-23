@@ -1,0 +1,76 @@
+ROLE: You are a cautious centralized ATCO helper for a multi-agent sector.
+GOAL: Guide every aircraft safely to its destination while maintaining pairwise separation.
+SAFETY: SAFE_R = 5.0 units for all aircraft pairs.
+TASK:
+- Only return decisions for the actionable agents listed below.
+- Use the preview table and controller state for each actionable agent.
+- Favor the smallest safe turn that improves safety and/or recovery.
+- EXECUTE_TURN and EMERGENCY_MANEUVER are conflict-first.
+- MERGE_BACK must bias toward the destination side.
+OUTPUT RULES:
+- Return EXACTLY ONE JSON object.
+- heading_change_deg must be one of {-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30}.
+- Positive means left, negative means right, 0 means keep heading.
+STRICT JSON SHAPE:
+{
+  "answer": {
+    "global_summary": "<1-3 short sentences>",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "EXECUTE_TURN|EMERGENCY_MANEUVER|MERGE_BACK",
+        "heading_change_deg": -30..30 step 5,
+        "scenario_summary": "<brief>",
+        "technical_summary": "<brief technical explanation>",
+        "rationale": "<why this helps>"
+      }
+    ]
+  }
+}
+
+GLOBAL SCENE:
+- step_index: 59
+- active_agents: ['A1', 'A2']
+- A1: pos=(26.1,15.0) dest=(22.1,39.4) heading=-129.6° inside_sector=0 conflict_predicted=0
+- A2: pos=(21.7,23.2) dest=(70.9,38.0) heading=-136.4° inside_sector=0 conflict_predicted=0
+- risky_pairs: ['A1<->A2:9.33']
+
+ACTIONABLE AGENT A1 (MERGE_BACK):
+- position: (26.1, 15.0)
+- destination: (22.1, 39.4)
+- distance_to_destination: 24.75
+- heading_deg: -129.6
+- heading_error_to_destination_deg: -131.1
+- nearest_neighbor: A2 (distance=9.33, bearing_error_deg=-111.9)
+- boundary_distance: n/a
+- safe_streak: 58
+- boundary_warning_active: 0
+- conflict_predicted: 0
+- candidate_turn_preview:
+  turn=-30 | safe=1 | min_sep_any=6.53 | boundary_exit_step=1 | end_heading_error_to_dest_deg=109.8
+  turn=-25 | safe=1 | min_sep_any=6.61 | boundary_exit_step=1 | end_heading_error_to_dest_deg=114.4
+  turn=-20 | safe=1 | min_sep_any=6.70 | boundary_exit_step=1 | end_heading_error_to_dest_deg=119.1
+  turn=-15 | safe=1 | min_sep_any=6.81 | boundary_exit_step=1 | end_heading_error_to_dest_deg=123.6
+  turn=-10 | safe=1 | min_sep_any=6.94 | boundary_exit_step=1 | end_heading_error_to_dest_deg=128.1
+  turn=-5 | safe=1 | min_sep_any=7.09 | boundary_exit_step=1 | end_heading_error_to_dest_deg=132.6
+  turn=+0 | safe=1 | min_sep_any=7.26 | boundary_exit_step=1 | end_heading_error_to_dest_deg=137.0
+
+ACTIONABLE AGENT A2 (MERGE_BACK):
+- position: (21.7, 23.2)
+- destination: (70.9, 38.0)
+- distance_to_destination: 51.40
+- heading_deg: -136.4
+- heading_error_to_destination_deg: +153.2
+- nearest_neighbor: A1 (distance=9.33, bearing_error_deg=+75.0)
+- boundary_distance: n/a
+- safe_streak: 53
+- boundary_warning_active: 0
+- conflict_predicted: 0
+- candidate_turn_preview:
+  turn=+0 | safe=1 | min_sep_any=7.26 | boundary_exit_step=1 | end_heading_error_to_dest_deg=155.1
+  turn=+5 | safe=1 | min_sep_any=6.91 | boundary_exit_step=1 | end_heading_error_to_dest_deg=150.4
+  turn=+10 | safe=1 | min_sep_any=6.57 | boundary_exit_step=1 | end_heading_error_to_dest_deg=145.7
+  turn=+15 | safe=1 | min_sep_any=6.23 | boundary_exit_step=1 | end_heading_error_to_dest_deg=141.0
+  turn=+20 | safe=1 | min_sep_any=5.91 | boundary_exit_step=1 | end_heading_error_to_dest_deg=136.3
+  turn=+25 | safe=1 | min_sep_any=5.60 | boundary_exit_step=1 | end_heading_error_to_dest_deg=131.5
+  turn=+30 | safe=1 | min_sep_any=5.32 | boundary_exit_step=1 | end_heading_error_to_dest_deg=126.8

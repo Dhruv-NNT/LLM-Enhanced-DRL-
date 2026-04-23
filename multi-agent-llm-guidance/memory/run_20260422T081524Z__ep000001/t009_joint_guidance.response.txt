@@ -1,0 +1,19 @@
+Here is the JSON output:
+
+{
+  "answer": {
+    "global_summary": "Multiple aircraft are merging back to their destinations, with some needing turns to improve safety.",
+    "agents": [
+      {
+        "agent_id": "A2",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A2 is adjusting its heading to avoid a potential conflict with A3.",
+        "technical_summary": "A turn of -20 degrees will reduce the minimum separation distance between A2 and A3 by 0.07 units, improving safety.",
+        "rationale": "This turn helps to increase the safe streak for both aircraft while maintaining pairwise separation."
+      }
+    ]
+  }
+}
+
+Note: The output only includes actionable agent A2, as per the task requirements.

@@ -1,0 +1,156 @@
+{
+  "answer": {
+    "global_summary": "Both A1 and A2 are executing a Merge Back maneuver to ensure pairwise separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -15,
+        "scenario_summary": "A1 is adjusting its heading to merge with the boundary and maintain safe distance from A2.",
+        "technical_summary": "A1 will turn -15 degrees to exit the boundary and reduce its heading error to destination.",
+        "rationale": "This turn helps A1 recover from its current position and ensures a safe distance from A2."
+      },
+      {
+        "agent_id": "A2",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "",
+        "technical_summary": "",
+        "rationale": ""
+      }
+    ]
+  },
+  "preview_rows": {
+    "A1": [
+      {
+        "heading_change_deg": -30,
+        "safe_over_preview": true,
+        "min_sep_any": 10.205775781057806,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 32.740921503506115,
+        "cumulative_reward": 6.506285461020807
+      },
+      {
+        "heading_change_deg": -25,
+        "safe_over_preview": true,
+        "min_sep_any": 10.153142163882853,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 38.982949769467325,
+        "cumulative_reward": 6.2382567737569
+      },
+      {
+        "heading_change_deg": -20,
+        "safe_over_preview": true,
+        "min_sep_any": 10.078867342057277,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 45.102295103646014,
+        "cumulative_reward": 5.934046125661345
+      },
+      {
+        "heading_change_deg": -15,
+        "safe_over_preview": true,
+        "min_sep_any": 9.985309033487068,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 51.090563676932646,
+        "cumulative_reward": 5.597789061630506
+      },
+      {
+        "heading_change_deg": -10,
+        "safe_over_preview": true,
+        "min_sep_any": 9.873348261692211,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 56.94286731907434,
+        "cumulative_reward": 5.233789854458898
+      },
+      {
+        "heading_change_deg": -5,
+        "safe_over_preview": true,
+        "min_sep_any": 9.743218998412337,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 62.65740981109373,
+        "cumulative_reward": 4.8464203428457475
+      },
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": true,
+        "min_sep_any": 9.595194404771773,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 68.23499749804358,
+        "cumulative_reward": 4.440030556626883
+      }
+    ],
+    "A2": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": true,
+        "min_sep_any": 9.595194404771773,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 66.86110600271047,
+        "cumulative_reward": 4.440030556626883
+      },
+      {
+        "heading_change_deg": 5,
+        "safe_over_preview": true,
+        "min_sep_any": 9.432911445793511,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 61.09737085024014,
+        "cumulative_reward": 4.841666281159173
+      },
+      {
+        "heading_change_deg": 10,
+        "safe_over_preview": true,
+        "min_sep_any": 9.243211787294731,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 55.152970896969634,
+        "cumulative_reward": 5.222478013170917
+      },
+      {
+        "heading_change_deg": 15,
+        "safe_over_preview": true,
+        "min_sep_any": 9.099479961882812,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 49.02526823660463,
+        "cumulative_reward": 5.57767636071309
+      },
+      {
+        "heading_change_deg": 20,
+        "safe_over_preview": true,
+        "min_sep_any": 9.11413238995485,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 42.715736280793465,
+        "cumulative_reward": 5.902396447232826
+      },
+      {
+        "heading_change_deg": 25,
+        "safe_over_preview": true,
+        "min_sep_any": 9.286310031974766,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 36.23095419320367,
+        "cumulative_reward": 6.191811564386697
+      },
+      {
+        "heading_change_deg": 30,
+        "safe_over_preview": true,
+        "min_sep_any": 9.606292648409323,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 29.58346758953917,
+        "cumulative_reward": 6.4412958462802
+      }
+    ]
+  },
+  "ghost_compare": {
+    "llm_turns": {
+      "A1": -15,
+      "A2": 0
+    },
+    "ppo_turns": {
+      "A1": -30,
+      "A2": 20
+    },
+    "horizon_steps": 5,
+    "llm_reward": 5.597789061630506,
+    "ppo_reward": 7.968651351626749,
+    "llm_min_sep_any": 9.985309033487068,
+    "ppo_min_sep_any": 10.389623154950185
+  }
+}

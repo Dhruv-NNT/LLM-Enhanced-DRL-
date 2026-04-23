@@ -1,0 +1,88 @@
+{
+  "answer": {
+    "global_summary": "A1 is advised to merge back safely.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -15,
+        "scenario_summary": "A1 is approaching the boundary with a safe streak of 8 and a predicted conflict of 0.",
+        "technical_summary": "The closest neighbor A2 is at a distance of 9.65 units, with a bearing error of +156.8 degrees.",
+        "rationale": "A turn of -15 degrees will improve safety while maintaining the safe streak."
+      }
+    ]
+  },
+  "preview_rows": {
+    "A1": [
+      {
+        "heading_change_deg": -30,
+        "safe_over_preview": true,
+        "min_sep_any": 9.649670645099393,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 7.947150756563531,
+        "cumulative_reward": 9.64613344638133
+      },
+      {
+        "heading_change_deg": -25,
+        "safe_over_preview": true,
+        "min_sep_any": 9.657149419998138,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 14.087851554073723,
+        "cumulative_reward": 9.54979495116004
+      },
+      {
+        "heading_change_deg": -20,
+        "safe_over_preview": true,
+        "min_sep_any": 9.652555838453948,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 20.192910780435113,
+        "cumulative_reward": 9.408460954389602
+      },
+      {
+        "heading_change_deg": -15,
+        "safe_over_preview": true,
+        "min_sep_any": 9.635907663926872,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 26.24831435543132,
+        "cumulative_reward": 9.223994224496428
+      },
+      {
+        "heading_change_deg": -10,
+        "safe_over_preview": true,
+        "min_sep_any": 9.607269419537229,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 32.2415782319992,
+        "cumulative_reward": 8.998796478315688
+      },
+      {
+        "heading_change_deg": -5,
+        "safe_over_preview": true,
+        "min_sep_any": 9.566752632102,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 38.16202293784761,
+        "cumulative_reward": 8.735733659647233
+      },
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": true,
+        "min_sep_any": 9.514516258253549,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 44.00093205511109,
+        "cumulative_reward": 8.438052734557658
+      }
+    ]
+  },
+  "ghost_compare": {
+    "llm_turns": {
+      "A1": -15
+    },
+    "ppo_turns": {
+      "A1": -30
+    },
+    "horizon_steps": 5,
+    "llm_reward": 9.223994224496428,
+    "ppo_reward": 9.64613344638133,
+    "llm_min_sep_any": 9.635907663926872,
+    "ppo_min_sep_any": 9.649670645099393
+  }
+}

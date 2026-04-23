@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "A1 and A2 are merging back to their respective destinations, maintaining pairwise separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is adjusting its heading to converge with its destination while keeping a safe distance from A2.",
+        "technical_summary": "The turn of -20 degrees will ensure a minimum separation of 7.33 units and an end heading error to destination of 144.9 degrees, maintaining the safety margin.",
+        "rationale": "This turn helps A1 merge back to its destination while avoiding a potential conflict with A2."
+      }
+    ]
+  }
+}

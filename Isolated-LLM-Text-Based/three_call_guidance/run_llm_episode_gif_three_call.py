@@ -116,6 +116,32 @@ def _print_step_log(step_index: int, ctl: LLMThreeCallEpisodeController, turn_de
         )
 
 
+def _episode_outcome(env: object, *, term: bool, trunc: bool) -> tuple[bool, str]:
+    if not hasattr(env, "agent"):
+        return False, "unknown"
+
+    own_position = np.array(env.agent.o_position, dtype=float)
+    intr_position = np.array(env.agent.i_position, dtype=float)
+    own_destination = np.array(env.agent.o_destination, dtype=float)
+    intr_destination = np.array(env.agent.i_destination, dtype=float)
+
+    own_at_goal = np.linalg.norm(own_position - own_destination) < 5.0
+    intr_at_goal = np.linalg.norm(intr_position - intr_destination) < 5.0
+    sep_dist = np.linalg.norm(own_position - intr_position)
+    collision_risk = sep_dist < float(env.SAFE_R)
+    success = bool(term and not trunc and own_at_goal and intr_at_goal and not collision_risk)
+
+    if success:
+        return True, "goal_reached"
+    if trunc:
+        return False, "truncated"
+    if collision_risk:
+        return False, "collision_risk"
+    if term:
+        return False, "terminated_not_success"
+    return False, "manual_break"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default=DEFAULT_CONFIG.model)
@@ -156,6 +182,8 @@ def main() -> None:
 
     ep_ret = 0.0
     done = False
+    last_term = False
+    last_trunc = False
 
     env.render(show=False, folder=str(frames_dir) + "/")
 
@@ -181,16 +209,28 @@ def main() -> None:
         obs, reward, term, trunc, _ = env.step(action_idx)
         ep_ret += float(reward)
         done = bool(term or trunc)
+        last_term = bool(term)
+        last_trunc = bool(trunc)
 
         env.render(show=False, folder=str(frames_dir) + "/")
 
         if env.n_step > env.MAX_STEP + 5:
             break
 
+    success, outcome_label = _episode_outcome(env, term=last_term, trunc=last_trunc)
+    committed_cases = ctl.finalize_episode_memory(
+        run_id=out_dir.name,
+        episode_id="ep001",
+        success=success,
+        outcome_label=outcome_label,
+    )
     ctl.mark_finished()
     gif_path = out_dir / "ep001.gif"
     _save_gif(frames_dir, gif_path, fps=5.0)
-    print(f"[THREE-CALL] Saved GIF -> {gif_path} | Return={ep_ret:.3f}")
+    print(
+        f"[THREE-CALL] Saved GIF -> {gif_path} | Return={ep_ret:.3f} "
+        f"| outcome={outcome_label} | memory_cases_committed={committed_cases}"
+    )
 
 
 if __name__ == "__main__":

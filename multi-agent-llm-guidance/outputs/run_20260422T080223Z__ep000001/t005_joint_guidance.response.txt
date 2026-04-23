@@ -1,0 +1,19 @@
+Here is the output in JSON format:
+
+{
+  "answer": {
+    "global_summary": "A1 executing a -20 degree turn to improve safety and recovery.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "EXECUTE_TURN",
+        "heading_change_deg": -20,
+        "scenario_summary": "Executing a -20 degree turn to exit the boundary safely.",
+        "technical_summary": "The safest turn is a -20 degree turn, which will improve safety and recovery while exiting the boundary.",
+        "rationale": "This turn is chosen because it provides the smallest safe turn that improves safety and recovery."
+      }
+    ]
+  }
+}
+
+Note: The output only includes one JSON object with exactly one actionable agent, as per the task requirements.

@@ -1,0 +1,19 @@
+Here is the output in JSON format:
+
+{
+  "answer": {
+    "global_summary": "Guiding A1 and A2 to their destinations while maintaining pairwise separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is merging back towards its destination, requiring a heading change of -20 degrees to maintain safety and recover from its current position.",
+        "technical_summary": "The candidate turn preview shows that turning by -20 degrees will reduce the minimum separation distance to 4.96 units, while also improving the end heading error to destination by 139.2 degrees.",
+        "rationale": "A heading change of -20 degrees is recommended to ensure A1 maintains a safe distance from its nearest neighbor, A2, and recovers from its current position."
+      }
+    ]
+  }
+}
+
+Note: The output only includes the actionable agent A1 (MERGE_BACK), as per the task requirements.

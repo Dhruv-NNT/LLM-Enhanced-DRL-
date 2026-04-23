@@ -1,0 +1,130 @@
+{
+  "answer": {
+    "global_summary": "A1 and A3 are merging back to their destinations, while A2 is maintaining its course.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "A1 is adjusting its heading to merge back with the sector's boundary.",
+        "technical_summary": "A1 is turning -30 degrees to reduce its distance to the destination and avoid a potential conflict with A4.",
+        "rationale": "This turn helps A1 maintain a safe distance from A4 and recover its original course."
+      },
+      {
+        "agent_id": "A2",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "",
+        "technical_summary": "",
+        "rationale": ""
+      },
+      {
+        "agent_id": "A3",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "A3 is adjusting its heading to merge back with the sector's boundary.",
+        "technical_summary": "A3 is turning -20 degrees to reduce its distance to the destination and avoid a potential conflict with A5.",
+        "rationale": "This turn helps A3 maintain a safe distance from A5 and recover its original course."
+      },
+      {
+        "agent_id": "A4",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "",
+        "technical_summary": "",
+        "rationale": ""
+      }
+    ]
+  },
+  "preview_rows": {
+    "A1": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": true,
+        "min_sep_any": 7.221572571247527,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 0.5821185779172993,
+        "cumulative_reward": 9.560100363071776
+      }
+    ],
+    "A2": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": true,
+        "min_sep_any": 7.221572571247527,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 0.022339350497162513,
+        "cumulative_reward": 9.560100363071776
+      }
+    ],
+    "A3": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": true,
+        "min_sep_any": 7.221572571247527,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 33.96496457691222,
+        "cumulative_reward": 9.560100363071776
+      },
+      {
+        "heading_change_deg": 5,
+        "safe_over_preview": true,
+        "min_sep_any": 6.576777490498267,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 27.635225137518262,
+        "cumulative_reward": 9.638585475548346
+      },
+      {
+        "heading_change_deg": 10,
+        "safe_over_preview": true,
+        "min_sep_any": 6.051052675453532,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 21.207799168520808,
+        "cumulative_reward": 9.702864445877745
+      },
+      {
+        "heading_change_deg": 15,
+        "safe_over_preview": true,
+        "min_sep_any": 5.682019391620137,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 14.701578336115432,
+        "cumulative_reward": 9.751947929963524
+      },
+      {
+        "heading_change_deg": 20,
+        "safe_over_preview": true,
+        "min_sep_any": 5.504295860970844,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 8.138660635953983,
+        "cumulative_reward": 9.78506425089819
+      },
+      {
+        "heading_change_deg": 25,
+        "safe_over_preview": true,
+        "min_sep_any": 5.53770300578435,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 1.5435930275972964,
+        "cumulative_reward": 9.801693811699073
+      },
+      {
+        "heading_change_deg": 30,
+        "safe_over_preview": true,
+        "min_sep_any": 5.778337297193,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 5.057635044916395,
+        "cumulative_reward": 9.801505381088655
+      }
+    ],
+    "A4": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": true,
+        "min_sep_any": 7.221572571247527,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 0.008363069057111261,
+        "cumulative_reward": 9.560100363071776
+      }
+    ]
+  },
+  "ghost_compare": null
+}

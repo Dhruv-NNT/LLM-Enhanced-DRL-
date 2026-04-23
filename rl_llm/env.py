@@ -280,7 +280,8 @@ class StructuredEnv(gym.Env):
     and what shape/value-ranges our observations will have. This tells any RL algorithm how to talk to our environment.
     """
     # Minimum safe separation distance between aircraft in grid units.
-    SAFE_R = 5 # Minimum safe separation distance between aircraft
+    # SAFE_R = 5 # Minimum safe separation distance between aircraft
+    SAFE_R = 2.5
     # Hard cap on how many steps the episode can run.
     MAX_STEP = 60 # Maximum number of time-steps per episode
 

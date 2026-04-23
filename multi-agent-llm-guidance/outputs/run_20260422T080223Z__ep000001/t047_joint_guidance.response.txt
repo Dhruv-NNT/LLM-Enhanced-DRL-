@@ -1,0 +1,17 @@
+Here is the output:
+
+{
+  "answer": {
+    "global_summary": "A1 and A2 are merging back with no conflicts.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -30,
+        "scenario_summary": "A1 is turning to merge back, improving safety.",
+        "technical_summary": "The turn helps reduce the heading error to destination and maintains pairwise separation.",
+        "rationale": "This turn reduces the risk of collision with A2 by increasing the distance between them."
+      }
+    ]
+  }
+}

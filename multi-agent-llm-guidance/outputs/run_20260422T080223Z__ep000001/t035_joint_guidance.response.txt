@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "Guiding both aircraft safely to their destinations.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "Adjusting A1's heading to merge with A2 and maintain safe separation.",
+        "technical_summary": "A1 will turn -20 degrees to reduce its heading error to destination, ensuring a minimum separation of 23.39 units from A2.",
+        "rationale": "This turn helps recover the heading error while maintaining safety and reducing the risk of conflict."
+      }
+    ]
+  }
+}

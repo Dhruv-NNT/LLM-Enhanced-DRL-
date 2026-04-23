@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "A1 is executing a merge back maneuver to avoid conflict with A2.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is merging back towards the destination while avoiding conflict with A2.",
+        "technical_summary": "A1's heading change of -20 degrees will ensure a safe merge back maneuver, maintaining pairwise separation from A2.",
+        "rationale": "This heading change helps to recover the aircraft's trajectory and maintain safety by reducing the minimum separation distance to the nearest neighbor (A2)."
+      }
+    ]
+  }
+}

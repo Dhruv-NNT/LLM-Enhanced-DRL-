@@ -1,0 +1,198 @@
+{
+  "answer": {
+    "global_summary": "",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "",
+        "technical_summary": "",
+        "rationale": "fallback deterministic choice"
+      },
+      {
+        "agent_id": "A2",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "",
+        "technical_summary": "",
+        "rationale": "fallback deterministic choice"
+      },
+      {
+        "agent_id": "A3",
+        "call_name": "EMERGENCY_MANEUVER",
+        "heading_change_deg": 5,
+        "scenario_summary": "",
+        "technical_summary": "",
+        "rationale": "fallback deterministic choice"
+      },
+      {
+        "agent_id": "A4",
+        "call_name": "EMERGENCY_MANEUVER",
+        "heading_change_deg": -5,
+        "scenario_summary": "",
+        "technical_summary": "",
+        "rationale": "fallback deterministic choice"
+      },
+      {
+        "agent_id": "A5",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "",
+        "technical_summary": "",
+        "rationale": "fallback deterministic choice"
+      },
+      {
+        "agent_id": "A6",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "",
+        "technical_summary": "",
+        "rationale": "fallback deterministic choice"
+      }
+    ]
+  },
+  "preview_rows": {
+    "A1": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": false,
+        "min_sep_any": 4.932120334126769,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 0.6261973076856577,
+        "cumulative_reward": -8.230364100834608
+      }
+    ],
+    "A2": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": false,
+        "min_sep_any": 4.932120334126769,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 0.02350873985585622,
+        "cumulative_reward": -8.230364100834608
+      }
+    ],
+    "A3": [
+      {
+        "heading_change_deg": 5,
+        "safe_over_preview": false,
+        "min_sep_any": 4.802038026837038,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 30.76833921410025,
+        "cumulative_reward": -8.214086070160256
+      },
+      {
+        "heading_change_deg": 10,
+        "safe_over_preview": false,
+        "min_sep_any": 4.685888328667526,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 25.48149684733812,
+        "cumulative_reward": -8.200100702332179
+      },
+      {
+        "heading_change_deg": 15,
+        "safe_over_preview": false,
+        "min_sep_any": 4.58564484875677,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 20.180999477746838,
+        "cumulative_reward": -8.188533347026572
+      },
+      {
+        "heading_change_deg": 20,
+        "safe_over_preview": false,
+        "min_sep_any": 4.503155597883538,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 14.869479838836696,
+        "cumulative_reward": -8.17948838845279
+      },
+      {
+        "heading_change_deg": 25,
+        "safe_over_preview": false,
+        "min_sep_any": 4.44005296067179,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 9.549719113109347,
+        "cumulative_reward": -8.17304784464675
+      },
+      {
+        "heading_change_deg": 30,
+        "safe_over_preview": false,
+        "min_sep_any": 4.397660004126363,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 4.224611260962547,
+        "cumulative_reward": -8.169270248283635
+      }
+    ],
+    "A4": [
+      {
+        "heading_change_deg": -30,
+        "safe_over_preview": false,
+        "min_sep_any": 4.283189234727993,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 31.277509544702525,
+        "cumulative_reward": -8.278559510042818
+      },
+      {
+        "heading_change_deg": -25,
+        "safe_over_preview": false,
+        "min_sep_any": 4.349059131183196,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 26.083124588190913,
+        "cumulative_reward": -8.264345678182607
+      },
+      {
+        "heading_change_deg": -20,
+        "safe_over_preview": false,
+        "min_sep_any": 4.434304371107612,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 20.879557982340856,
+        "cumulative_reward": -8.252490280265889
+      },
+      {
+        "heading_change_deg": -15,
+        "safe_over_preview": false,
+        "min_sep_any": 4.537205246053593,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 15.668514206820788,
+        "cumulative_reward": -8.243094711278193
+      },
+      {
+        "heading_change_deg": -10,
+        "safe_over_preview": false,
+        "min_sep_any": 4.655836978017567,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 10.451783839493714,
+        "cumulative_reward": -8.23623960169265
+      },
+      {
+        "heading_change_deg": -5,
+        "safe_over_preview": false,
+        "min_sep_any": 4.788164031950349,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 5.231223729834795,
+        "cumulative_reward": -8.231983883157582
+      }
+    ],
+    "A5": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": false,
+        "min_sep_any": 4.932120334126769,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 0.019082287194606806,
+        "cumulative_reward": -8.230364100834608
+      }
+    ],
+    "A6": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": false,
+        "min_sep_any": 4.932120334126769,
+        "boundary_exit_step": null,
+        "end_heading_error_to_dest_deg": 0.03129810524828258,
+        "cumulative_reward": -8.230364100834608
+      }
+    ]
+  },
+  "ghost_compare": null
+}

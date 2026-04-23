@@ -1,0 +1,27 @@
+Here is the JSON output:
+
+{
+  "answer": {
+    "global_summary": "A1 and A2 are safely separated by at least 5 units.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is merging back to its destination while maintaining safe separation from A2.",
+        "technical_summary": "A1 will turn left by 20 degrees to reduce its heading error and maintain a safe distance from A2.",
+        "rationale": "This turn helps A1 recover its original flight path and maintain safe separation from A2."
+      },
+      {
+        "agent_id": "A2",
+        "call_name": "EXECUTE_TURN",
+        "heading_change_deg": -15,
+        "scenario_summary": "A2 is executing a turn to adjust its heading error and maintain safe separation from A1.",
+        "technical_summary": "A2 will turn right by 15 degrees to reduce its heading error and maintain a safe distance from A1.",
+        "rationale": "This turn helps A2 recover its original flight path and maintain safe separation from A1."
+      }
+    ]
+  }
+}
+
+Please note that the output is based on the provided scenario, and the actual decisions made by an ATCO would depend on various factors, including the specific rules and procedures in place.

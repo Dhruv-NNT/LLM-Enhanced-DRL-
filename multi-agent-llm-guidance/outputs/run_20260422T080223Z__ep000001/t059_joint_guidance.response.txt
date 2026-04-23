@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "Both A1 and A2 are in emergency maneuver mode due to predicted conflicts.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "EXECUTE_TURN|EMERGENCY_MANEUVER|MERGE_BACK",
+        "heading_change_deg": -30,
+        "scenario_summary": "A1 is executing an emergency turn to avoid a predicted conflict with A2.",
+        "technical_summary": "The smallest safe turn available for A1 is -30 degrees, which will improve safety and recovery.",
+        "rationale": "This turn helps A1 to reduce its heading error to destination and maintain a safe distance from A2."
+      }
+    ]
+  }
+}

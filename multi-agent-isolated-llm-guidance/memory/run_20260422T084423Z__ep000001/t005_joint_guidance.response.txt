@@ -1,0 +1,19 @@
+Here is the JSON output for actionable agent A1:
+
+{
+  "answer": {
+    "global_summary": "A1 executing a turn to improve safety and recovery.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "EXECUTE_TURN",
+        "heading_change_deg": -20,
+        "scenario_summary": "Executing a 20-degree left turn to recover from boundary warning and maintain safe separation.",
+        "technical_summary": "The chosen turn minimizes the distance to the destination while ensuring a safe margin of separation from other aircraft.",
+        "rationale": "This turn helps A1 recover from its current position and heading, reducing the risk of collision with other aircraft."
+      }
+    ]
+  }
+}
+
+Note: The chosen turn is -20 degrees, which means a left turn of 20 degrees.

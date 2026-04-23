@@ -1,0 +1,23 @@
+{
+  "answer": {
+    "global_summary": "A1 and A3 are merging back to their destinations, while A2 is maintaining its course.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -30,
+        "scenario_summary": "A1 is adjusting its heading to merge back with the sector's boundary.",
+        "technical_summary": "A1 is turning -30 degrees to reduce its distance to the destination and avoid a potential conflict with A4.",
+        "rationale": "This turn helps A1 maintain a safe distance from A4 and recover its original course."
+      },
+      {
+        "agent_id": "A3",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A3 is adjusting its heading to merge back with the sector's boundary.",
+        "technical_summary": "A3 is turning -20 degrees to reduce its distance to the destination and avoid a potential conflict with A5.",
+        "rationale": "This turn helps A3 maintain a safe distance from A5 and recover its original course."
+      }
+    ]
+  }
+}

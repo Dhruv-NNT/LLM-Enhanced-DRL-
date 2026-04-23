@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "Guiding both aircraft safely to their destinations.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "Adjusting A1's heading to merge with its nearest neighbor, A2.",
+        "technical_summary": "To improve safety and recovery, A1 will turn 20 degrees left to reduce its distance to A2.",
+        "rationale": "This maneuver helps maintain pairwise separation while guiding both aircraft safely to their destinations."
+      }
+    ]
+  }
+}

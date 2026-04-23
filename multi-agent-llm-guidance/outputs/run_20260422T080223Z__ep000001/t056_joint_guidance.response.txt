@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "Guiding A1 and A2 to their destinations while maintaining pairwise separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is merging back towards its destination, requiring a heading change of -20 degrees to maintain safe distance from A2.",
+        "technical_summary": "The previewed turn of -20 degrees ensures a minimum separation of 3.66 units with A2 while adjusting the heading error to destination by 123.4 degrees.",
+        "rationale": "This decision prioritizes safety and recovery, as the smaller heading change reduces the risk of collision and maintains a safe distance from A2."
+      }
+    ]
+  }
+}

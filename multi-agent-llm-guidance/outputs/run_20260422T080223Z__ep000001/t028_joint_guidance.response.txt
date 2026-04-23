@@ -1,0 +1,19 @@
+Here is the output in JSON format:
+
+{
+  "answer": {
+    "global_summary": "Both aircraft are merging back into their respective sectors, and no conflicts are predicted.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is turning to the left to merge back into its sector, maintaining a safe distance from A2.",
+        "technical_summary": "The turn is chosen to minimize the separation between A1 and A2 while ensuring a safe boundary exit.",
+        "rationale": "This turn helps A1 recover from its current position and merge back into its sector safely."
+      }
+    ]
+  }
+}
+
+Note: The output only includes actionable agent A1, as per the task requirements.

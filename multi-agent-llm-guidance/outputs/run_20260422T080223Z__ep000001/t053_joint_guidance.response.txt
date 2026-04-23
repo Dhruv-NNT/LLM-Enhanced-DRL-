@@ -1,0 +1,23 @@
+Here is the output in JSON format:
+
+{
+  "answer": {
+    "global_summary": "A1 and A2 are merging back to their destinations.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is adjusting its heading to converge with the destination.",
+        "technical_summary": "The smallest safe turn of -20 degrees will improve safety and recovery.",
+        "rationale": "This turn helps A1 recover from its current heading error and merge back to its destination."
+      }
+    ]
+  }
+}
+
+Explanation:
+
+For A1, I recommend a heading change of -20 degrees. This is the smallest safe turn that improves safety and recovery. The preview table shows that this turn will reduce the minimum separation with A2 to 11.64 units, which is within the SAFE_R threshold of 5.0 units.
+
+For A2, no action is needed as it is already on a good trajectory to its destination.

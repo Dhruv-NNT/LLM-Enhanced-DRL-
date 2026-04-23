@@ -1,0 +1,19 @@
+Here is the output in JSON format:
+
+{
+  "answer": {
+    "global_summary": "A1 and A2 are merging back to their respective destinations, maintaining pairwise separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is adjusting its heading to converge with destination while avoiding conflict with A2.",
+        "technical_summary": "A1's current heading error to destination is -86.0°, and a -20° turn will reduce this error to 81.6°, maintaining pairwise separation.",
+        "rationale": "This turn helps A1 recover from its current trajectory while ensuring safe distance from A2."
+      }
+    ]
+  }
+}
+
+Note: The output only includes actionable agent A1 (MERGE_BACK), as per the task requirements.

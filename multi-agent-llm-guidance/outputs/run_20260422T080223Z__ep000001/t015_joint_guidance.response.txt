@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "Both A1 and A2 are executing a Merge Back maneuver to ensure pairwise separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -15,
+        "scenario_summary": "A1 is adjusting its heading to merge with the boundary and maintain safe distance from A2.",
+        "technical_summary": "A1 will turn -15 degrees to exit the boundary and reduce its heading error to destination.",
+        "rationale": "This turn helps A1 recover from its current position and ensures a safe distance from A2."
+      }
+    ]
+  }
+}

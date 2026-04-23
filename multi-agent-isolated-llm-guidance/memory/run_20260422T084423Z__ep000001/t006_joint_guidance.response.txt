@@ -1,0 +1,17 @@
+Here is the output in JSON format:
+
+{
+  "answer": {
+    "global_summary": "A1 is merging back to destination, taking a -15 degree turn to improve safety and recover from its current heading.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -15,
+        "scenario_summary": "A1 is merging back to destination, avoiding conflict with A2.",
+        "technical_summary": "A1 takes a -15 degree turn to reduce its heading error and maintain safe separation from A2.",
+        "rationale": "This turn helps A1 recover from its current heading and avoid potential conflict with A2."
+      }
+    ]
+  }
+}

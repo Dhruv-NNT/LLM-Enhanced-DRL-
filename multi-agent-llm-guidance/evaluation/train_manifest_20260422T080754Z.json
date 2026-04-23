@@ -1,0 +1,18 @@
+[
+  {
+    "episode_idx": 1,
+    "mode": "HYBRID",
+    "num_agents": 2,
+    "seed": 42,
+    "route_ids": [
+      "PATH2",
+      "PATH5"
+    ],
+    "steps": 8,
+    "total_reward": 14.723389276105664,
+    "success": false,
+    "truncated": true,
+    "collision": false,
+    "active_calls_logged": 3
+  }
+]

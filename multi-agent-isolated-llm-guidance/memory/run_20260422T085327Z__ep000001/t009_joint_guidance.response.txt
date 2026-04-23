@@ -1,0 +1,33 @@
+Here is the output in JSON format:
+
+{
+  "answer": {
+    "global_summary": "A1, A2, and A3 are safely merging back to their destinations.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "No turn needed for A1 to maintain safe separation.",
+        "technical_summary": "A1 is already heading towards its destination with sufficient separation from other aircraft.",
+        "rationale": "Maintaining the current heading ensures a safe and efficient approach."
+      },
+      {
+        "agent_id": "A2",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -5,
+        "scenario_summary": "A2 needs to adjust its heading slightly to maintain safe separation.",
+        "technical_summary": "A2's current heading is not aligned with its destination, so a small turn is necessary.",
+        "rationale": "The small turn helps A2 recover from its current heading and maintain a safe distance from other aircraft."
+      },
+      {
+        "agent_id": "A3",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A3 needs to adjust its heading more significantly to maintain safe separation.",
+        "technical_summary": "A3's current heading is not aligned with its destination, and a larger turn is necessary to recover.",
+        "rationale": "The larger turn helps A3 recover from its current heading and maintain a safe distance from other aircraft."
+      }
+    ]
+  }
+}

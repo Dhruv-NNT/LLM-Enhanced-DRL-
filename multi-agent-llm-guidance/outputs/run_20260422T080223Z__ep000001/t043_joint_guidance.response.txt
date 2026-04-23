@@ -1,0 +1,17 @@
+Here is the JSON output for the actionable agent A1 (MERGE_BACK):
+
+{
+  "answer": {
+    "global_summary": "A1 is advised to merge back with a heading change of -30 degrees.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -30,
+        "scenario_summary": "A1 is merging back towards its destination, adjusting its heading to avoid conflict with A2.",
+        "technical_summary": "A1's current heading (-104.6°) is not aligned with its destination (22.1, 39.4), and a heading change of -30 degrees will improve its alignment and separation from A2.",
+        "rationale": "This turn helps to reduce the risk of collision with A2 by increasing the distance between them."
+      }
+    ]
+  }
+}

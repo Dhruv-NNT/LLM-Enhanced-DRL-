@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "A1 is advised to merge back safely.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -15,
+        "scenario_summary": "A1 is approaching the boundary with a safe streak of 8 and a predicted conflict of 0.",
+        "technical_summary": "The closest neighbor A2 is at a distance of 9.65 units, with a bearing error of +156.8 degrees.",
+        "rationale": "A turn of -15 degrees will improve safety while maintaining the safe streak."
+      }
+    ]
+  }
+}

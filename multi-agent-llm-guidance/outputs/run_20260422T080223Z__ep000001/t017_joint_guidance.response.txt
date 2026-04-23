@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "Both A1 and A2 are executing Merge Back maneuvers, maintaining a safe distance from each other.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -10,
+        "scenario_summary": "A1 is merging back to its destination while maintaining a safe distance from A2.",
+        "technical_summary": "A1's heading error to destination has decreased by 24.0 degrees, and the minimum separation with A2 is 11.76 units.",
+        "rationale": "This turn helps A1 maintain a safe distance from A2 and reduce its heading error to destination."
+      }
+    ]
+  }
+}

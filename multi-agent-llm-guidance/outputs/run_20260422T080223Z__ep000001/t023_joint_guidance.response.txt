@@ -1,0 +1,19 @@
+Here is the JSON output for the actionable agent A1 (MERGE_BACK):
+
+{
+  "answer": {
+    "global_summary": "A1 is merging back to its destination while maintaining pairwise separation with A2.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is adjusting its heading to merge back to its destination.",
+        "technical_summary": "A1's heading error to destination has decreased by 15.5 degrees, reducing the risk of conflict with A2.",
+        "rationale": "This turn helps A1 maintain a safe distance from A2 and continue merging back to its destination."
+      }
+    ]
+  }
+}
+
+Note that I have chosen the smallest safe turn (-20) that improves safety and/or recovery for A1.

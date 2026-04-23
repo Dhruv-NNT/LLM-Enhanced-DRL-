@@ -1,0 +1,19 @@
+Here is the output for actionable agent A1 (MERGE_BACK):
+
+{
+  "answer": {
+    "global_summary": "A1, an aircraft merging back into the sector, requires a heading change to safely converge with its destination.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is currently 37.37 km away from its destination and needs to adjust its heading to merge back into the sector.",
+        "technical_summary": "The nearest neighbor, A2, is 11.69 km away with a bearing error of +166.4 degrees. To ensure safe separation, A1 should turn -20 degrees to converge with its destination.",
+        "rationale": "A heading change of -20 degrees will allow A1 to safely merge back into the sector while maintaining a minimum separation distance from A2."
+      }
+    ]
+  }
+}
+
+Note: The output for actionable agent A2 is not provided as it is not necessary, given that only one actionable agent (A1) is being considered.

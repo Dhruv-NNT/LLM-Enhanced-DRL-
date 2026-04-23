@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "A1 and A2 are safely merging back to their destinations.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -30,
+        "scenario_summary": "A1 is adjusting its heading to merge with the boundary, ensuring a safe distance from A2.",
+        "technical_summary": "The turn of -30 degrees will allow A1 to maintain a safe separation from A2 while approaching the sector boundary.",
+        "rationale": "This turn helps A1 recover from its current heading error and ensures a safe merge with the boundary."
+      }
+    ]
+  }
+}

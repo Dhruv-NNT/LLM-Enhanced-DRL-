@@ -1,0 +1,17 @@
+Here is the JSON output for actionable agent A1:
+
+{
+  "answer": {
+    "global_summary": "A1 is merging back towards destination while maintaining pairwise separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is currently 24.96 km away from its destination and needs to adjust its heading to merge back towards it.",
+        "technical_summary": "The closest neighbor, A2, is 23.81 km away with a bearing error of +118.0°. A turn of -20° will improve safety while maintaining pairwise separation.",
+        "rationale": "A turn of -20° helps A1 merge back towards its destination while keeping a safe distance from A2."
+      }
+    ]
+  }
+}

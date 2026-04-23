@@ -1,0 +1,156 @@
+{
+  "answer": {
+    "global_summary": "Guiding both aircraft safely to their destinations.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 30,
+        "scenario_summary": "Adjusting A1's heading to merge with its nearest neighbor, A2.",
+        "technical_summary": "To improve safety and recovery, A1 will turn 20 degrees left to reduce its distance to A2.",
+        "rationale": "This maneuver helps maintain pairwise separation while guiding both aircraft safely to their destinations."
+      },
+      {
+        "agent_id": "A2",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 30,
+        "scenario_summary": "",
+        "technical_summary": "",
+        "rationale": ""
+      }
+    ]
+  },
+  "preview_rows": {
+    "A1": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": true,
+        "min_sep_any": 14.833105512255853,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 179.60642713886273,
+        "cumulative_reward": -0.54391401593301
+      },
+      {
+        "heading_change_deg": 5,
+        "safe_over_preview": true,
+        "min_sep_any": 15.300551637631504,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 175.8769737077713,
+        "cumulative_reward": -0.7358528257873724
+      },
+      {
+        "heading_change_deg": 10,
+        "safe_over_preview": true,
+        "min_sep_any": 15.758211357942507,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 172.04054325584616,
+        "cumulative_reward": -0.9226150576532656
+      },
+      {
+        "heading_change_deg": 15,
+        "safe_over_preview": true,
+        "min_sep_any": 16.197635507772446,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 168.09440555058552,
+        "cumulative_reward": -1.1013164425687298
+      },
+      {
+        "heading_change_deg": 20,
+        "safe_over_preview": true,
+        "min_sep_any": 16.61109727721335,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 164.03683255443207,
+        "cumulative_reward": -1.2691931750083567
+      },
+      {
+        "heading_change_deg": 25,
+        "safe_over_preview": true,
+        "min_sep_any": 16.991645231502503,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 159.86687726033102,
+        "cumulative_reward": -1.4236525332858645
+      },
+      {
+        "heading_change_deg": 30,
+        "safe_over_preview": true,
+        "min_sep_any": 17.333133399976752,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 155.58417034320655,
+        "cumulative_reward": -1.5623166930772245
+      }
+    ],
+    "A2": [
+      {
+        "heading_change_deg": 0,
+        "safe_over_preview": true,
+        "min_sep_any": 14.833105512255853,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 66.02047949341176,
+        "cumulative_reward": -0.54391401593301
+      },
+      {
+        "heading_change_deg": 5,
+        "safe_over_preview": true,
+        "min_sep_any": 14.896184455250342,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 60.520907838040046,
+        "cumulative_reward": -0.1429290916949701
+      },
+      {
+        "heading_change_deg": 10,
+        "safe_over_preview": true,
+        "min_sep_any": 15.084337227570817,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 54.91754242387964,
+        "cumulative_reward": 0.23660117034335537
+      },
+      {
+        "heading_change_deg": 15,
+        "safe_over_preview": true,
+        "min_sep_any": 15.391583516789625,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 49.21162703606478,
+        "cumulative_reward": 0.5906308299734249
+      },
+      {
+        "heading_change_deg": 20,
+        "safe_over_preview": true,
+        "min_sep_any": 15.808728261610572,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 43.4062458651224,
+        "cumulative_reward": 0.9151804584657919
+      },
+      {
+        "heading_change_deg": 25,
+        "safe_over_preview": true,
+        "min_sep_any": 16.32431669384663,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 37.506537331426756,
+        "cumulative_reward": 1.206425367873055
+      },
+      {
+        "heading_change_deg": 30,
+        "safe_over_preview": true,
+        "min_sep_any": 16.92563245055744,
+        "boundary_exit_step": 1,
+        "end_heading_error_to_dest_deg": 31.51984540760077,
+        "cumulative_reward": 1.4607676669555452
+      }
+    ]
+  },
+  "ghost_compare": {
+    "llm_turns": {
+      "A1": 30,
+      "A2": 30
+    },
+    "ppo_turns": {
+      "A1": 10,
+      "A2": 20
+    },
+    "horizon_steps": 5,
+    "llm_reward": 0.44236498981133043,
+    "ppo_reward": 0.5364794167455365,
+    "llm_min_sep_any": 18.56222511890213,
+    "ppo_min_sep_any": 16.48293098547887
+  }
+}

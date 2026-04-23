@@ -1,0 +1,19 @@
+Here is the output in JSON format:
+
+{
+  "answer": {
+    "global_summary": "A1 and A2 are merging back to their destinations, maintaining safe separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 adjusts its heading to merge back with the sector boundary while maintaining a safe distance from A2.",
+        "technical_summary": "A1's heading is adjusted by 20 degrees to the right to reduce its bearing error and maintain separation from A2.",
+        "rationale": "This turn helps A1 recover from its current position and merge back to the sector boundary, ensuring a safe distance from A2."
+      }
+    ]
+  }
+}
+
+Note: The output only includes actionable agents (A1) and provides a recommended heading change of -20 degrees.

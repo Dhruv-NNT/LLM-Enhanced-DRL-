@@ -1,0 +1,19 @@
+Here is the decision for A1 (MERGE_BACK):
+
+{
+  "answer": {
+    "global_summary": "A1 is instructed to execute a -30 degree turn to merge back and maintain safe separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "EXECUTE_TURN|EMERGENCY_MANEUVER|MERGE_BACK",
+        "heading_change_deg": -30,
+        "scenario_summary": "A1 is instructed to execute a turn to merge back and maintain safe separation.",
+        "technical_summary": "The decision is based on the candidate turn preview, which shows that a -30 degree turn will result in the smallest safe turn that improves safety and/or recovery.",
+        "rationale": "This turn helps A1 to merge back safely while maintaining pairwise separation with A2."
+      }
+    ]
+  }
+}
+
+Note: I have chosen the smallest safe turn that improves safety and/or recovery, which is a -30 degree turn. This decision prioritizes conflict-free merging back and maintains pairwise separation with A2.

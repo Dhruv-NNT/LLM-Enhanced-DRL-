@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "Both A1 and A2 are in a stable merge-back situation, with no conflicts predicted.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 is on track to reach its destination while maintaining safe separation from A2.",
+        "technical_summary": "A small turn of 20 degrees will help A1 maintain a safe distance and heading error to destination.",
+        "rationale": "This turn helps A1 recover from its current heading error and maintain a safe distance from A2."
+      }
+    ]
+  }
+}

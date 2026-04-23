@@ -1,0 +1,19 @@
+Here is the output in JSON format:
+
+{
+  "answer": {
+    "global_summary": "A1 and A2 are merging back to their respective destinations, with no conflicts predicted.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -15,
+        "scenario_summary": "A1 is adjusting its heading to merge back to destination while maintaining safe separation from A2.",
+        "technical_summary": "A1's candidate turns show that a heading change of -15 degrees will result in the smallest safe turn, improving safety and recovery.",
+        "rationale": "This decision helps maintain pairwise separation with A2 and ensures a safe approach to destination."
+      }
+    ]
+  }
+}
+
+Note: The output only includes actionable agents (A1) and provides a single JSON object as required.

@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import math
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -20,12 +20,18 @@ import numpy as np
 import ollama
 from shapely.geometry import Point, Polygon
 
+from three_call_memory import (
+    MemoryFeatures,
+    ThreeCallMemoryStore,
+    format_memory_card,
+)
+
 
 @dataclass(frozen=True)
 class ThreeCallGuidanceConfig:
     allowed_turn_bins: tuple[int, ...] = (-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30)
-    safe_r: float = 5.0 
-    # safe_r: float = 2.5 
+    safe_r: float = 5.0
+    # safe_r: float = 2.5
     conflict_lookahead_steps: int = 8
     turn_preview_steps: int = 5
     boundary_lookahead_steps: int = 7
@@ -45,6 +51,12 @@ class ThreeCallGuidanceConfig:
     annotation_execute_turn: str = "EXECUTE TURN"
     annotation_emergency: str = "EMERGENCY MANEUVER"
     annotation_merge_back: str = "MERGE BACK"
+    use_memory: bool = False
+    memory_top_k: int = 2
+    memory_min_similarity: float = 0.70
+    memory_store_path: Path = field(
+        default_factory=lambda: Path(__file__).resolve().parent / "memory" / "three_call_memory.jsonl"
+    )
 
 
 DEFAULT_CONFIG = ThreeCallGuidanceConfig()
@@ -274,6 +286,7 @@ class ThreeCallPromptBuilder:
             self._kinematics_text(snap, prev),
             self._turn_preview_text(guidance_state),
             self._boundary_lookahead_text(guidance_state),
+            self._memory_cases_text(guidance_state),
             self._guidance_state_text(call_name, guidance_state),
         ]
         return "\n\n".join(part for part in parts if part)
@@ -480,6 +493,12 @@ class ThreeCallPromptBuilder:
             ]
         )
 
+    def _memory_cases_text(self, guidance_state: Dict[str, Any]) -> str:
+        cards = guidance_state.get("memory_prompt_cards") or []
+        if not cards:
+            return ""
+        return "\n".join(["Relevant successful past cases:"] + [str(card) for card in cards])
+
     def _guidance_state_text(self, call_name: str, guidance_state: Dict[str, Any]) -> str:
         lines = ["Controller-supplied guidance state:"]
         lines.append(f"- call_name: {call_name}")
@@ -506,6 +525,9 @@ class ThreeCallPromptBuilder:
         lines.append(f"- merge_back_count: {guidance_state.get('merge_back_count')}")
         lines.append(f"- zero_turn_allowed: {guidance_state.get('zero_turn_allowed')}")
         lines.append(f"- merge_back_recheck_remaining: {guidance_state.get('merge_back_recheck_remaining')}")
+        if guidance_state.get("memory_enabled"):
+            lines.append(f"- memory_enabled: {guidance_state.get('memory_enabled')}")
+            lines.append(f"- retrieved_memory_count: {guidance_state.get('retrieved_memory_count')}")
         lines.append(f"- turn_preview_steps: {guidance_state.get('turn_preview_steps')}")
         return "\n".join(lines)
 
@@ -532,6 +554,7 @@ class LLMThreeCallEpisodeController:
         self.top_p = config.top_p if top_p is None else float(top_p)
         self.max_tokens = config.max_tokens if max_tokens is None else int(max_tokens)
         self.sector_polygon = _load_sector_polygon()
+        self.memory_store = ThreeCallMemoryStore(Path(config.memory_store_path))
         self.reset()
 
     def reset(self) -> None:
@@ -563,11 +586,15 @@ class LLMThreeCallEpisodeController:
         self.last_merge_back_mode = "ALIGNMENT"
         self.last_merge_back_reason = "SAFE_STREAK"
         self.merge_back_recheck_remaining = 0
+        self.last_memory_prompt_cards: List[str] = []
+        self.last_memory_match_debug: List[Dict[str, Any]] = []
+        self.last_memory_features: Optional[MemoryFeatures] = None
         self.has_called_execute_turn = False
         self.emergency_count = 0
         self.merge_back_count = 0
         self._prev_obs: Optional[np.ndarray] = None
         self._prev_step: Optional[int] = None
+        self.memory_store.discard_buffer()
 
     def mark_finished(self) -> None:
         self.stage = "FINISHED"
@@ -788,6 +815,9 @@ class LLMThreeCallEpisodeController:
             "merge_back_count": self.merge_back_count,
             "zero_turn_allowed": zero_turn_allowed,
             "merge_back_recheck_remaining": self.merge_back_recheck_remaining,
+            "memory_enabled": self.config.use_memory,
+            "retrieved_memory_count": len(self.last_memory_prompt_cards),
+            "memory_prompt_cards": self.last_memory_prompt_cards,
             "turn_preview_steps": self.config.turn_preview_steps,
             "turn_preview_rows": self.last_turn_preview_rows,
             "step": cur.step,
@@ -976,6 +1006,90 @@ class LLMThreeCallEpisodeController:
     def _should_repeat_merge_back(self, cur: ObsSnapshot) -> bool:
         return abs(_heading_error_to_dest_deg(cur)) > self.config.merge_back_repeat_error_deg
 
+    def _build_memory_features(self, call_name: str, cur: ObsSnapshot) -> MemoryFeatures:
+        predicted_loss_step = (
+            self.last_execute_predicted_loss_step if call_name == "EXECUTE_TURN" else self.last_predicted_loss_step
+        )
+        return MemoryFeatures(
+            call_name=call_name,
+            intruder_bearing_deg=round(_bearing_error_to_intruder_deg(cur), 3),
+            intruder_distance=round(cur.sep_oi, 3),
+            destination_bearing_deg=round(_heading_error_to_dest_deg(cur), 3),
+            destination_distance=round(cur.dist_o_dest, 3),
+            predicted_loss_step=None if predicted_loss_step is None else int(predicted_loss_step),
+            ttcp_steps=None if self.last_predicted_ttcp_steps is None else round(self.last_predicted_ttcp_steps, 3),
+            boundary_warning_active=bool(self.last_boundary_warning_active),
+            boundary_exit_step=None if self.last_boundary_exit_step is None else int(self.last_boundary_exit_step),
+            boundary_distance=None if self.last_boundary_distance is None else round(self.last_boundary_distance, 3),
+            safe_streak_steps=int(self.safe_streak_steps),
+            merge_back_mode=str(self.last_merge_back_mode),
+        )
+
+    def _prepare_memory_context(self, call_name: str, cur: ObsSnapshot) -> None:
+        self.last_memory_prompt_cards = []
+        self.last_memory_match_debug = []
+        self.last_memory_features = None
+
+        if not self.config.use_memory:
+            return
+
+        query_features = self._build_memory_features(call_name, cur)
+        self.last_memory_features = query_features
+        matches = self.memory_store.retrieve(
+            query_features,
+            top_k=self.config.memory_top_k,
+            min_similarity=self.config.memory_min_similarity,
+            safe_r=self.config.safe_r,
+            turn_preview_steps=self.config.turn_preview_steps,
+            conflict_lookahead_steps=self.config.conflict_lookahead_steps,
+            boundary_lookahead_steps=self.config.boundary_lookahead_steps,
+            safe_streak_required=self.config.safe_streak_required,
+        )
+        self.last_memory_prompt_cards = [
+            format_memory_card(index + 1, match) for index, match in enumerate(matches)
+        ]
+        self.last_memory_match_debug = [
+            {
+                "case_id": match.case.case_id,
+                "similarity": round(match.similarity, 3),
+                "heading_change_deg": int(match.case.action_heading_change_deg),
+                "outcome_label": match.case.outcome_label,
+            }
+            for match in matches
+        ]
+
+    def _buffer_memory_case(self, call_name: str, step: int, applied_turn: int, normalized: Dict[str, Any]) -> None:
+        if not self.config.use_memory or self.last_memory_features is None or self.last_tag is None:
+            return
+
+        answer = normalized.get("answer") or {}
+        audit_summary = (
+            str(answer.get("technical_summary") or "")
+            or str(answer.get("scenario_summary") or "")
+            or str(answer.get("rationale") or "")
+        )
+        self.memory_store.buffer_case(
+            call_tag=self.last_tag,
+            call_name=call_name,
+            step=step,
+            features=self.last_memory_features,
+            heading_change_deg=int(applied_turn),
+            audit_summary=audit_summary[:200],
+        )
+
+    def finalize_episode_memory(self, *, run_id: str, episode_id: str, success: bool, outcome_label: str) -> int:
+        if not self.config.use_memory:
+            self.memory_store.discard_buffer()
+            return 0
+        if not success:
+            self.memory_store.discard_buffer()
+            return 0
+        return self.memory_store.commit_buffer(
+            run_id=str(run_id),
+            episode_id=str(episode_id),
+            outcome_label=str(outcome_label),
+        )
+
     def _build_fallback_answer(
         self,
         call_name: str,
@@ -1067,6 +1181,7 @@ class LLMThreeCallEpisodeController:
         self.last_allowed_turn_bins = self._allowed_turn_bins_for_call(call_name, cur)
         self.last_merge_back_mode = self._merge_back_mode(cur)
         self._build_turn_preview(call_name, cur, prev)
+        self._prepare_memory_context(call_name, cur)
 
         if call_name == "EXECUTE_TURN":
             zero_turn_allowed = 0 in self.last_allowed_turn_bins
@@ -1135,6 +1250,10 @@ class LLMThreeCallEpisodeController:
             "boundary_warning_active": self.last_boundary_warning_active,
             "boundary_distance": self.last_boundary_distance,
             "merge_back_recheck_remaining": int(self.merge_back_recheck_remaining),
+            "memory_enabled": bool(self.config.use_memory),
+            "retrieved_memory_case_ids": [item["case_id"] for item in self.last_memory_match_debug],
+            "retrieved_memory_scores": [item["similarity"] for item in self.last_memory_match_debug],
+            "retrieved_memory_actions": [item["heading_change_deg"] for item in self.last_memory_match_debug],
         }
 
         self.did_call_llm = True
@@ -1144,6 +1263,7 @@ class LLMThreeCallEpisodeController:
         self.last_raw_text = raw_text
         self.last_normalized = normalized
         self.last_turn_deg = int(applied_turn)
+        self._buffer_memory_case(call_name, step, int(applied_turn), normalized)
 
         if call_name == "EXECUTE_TURN":
             self.has_called_execute_turn = True

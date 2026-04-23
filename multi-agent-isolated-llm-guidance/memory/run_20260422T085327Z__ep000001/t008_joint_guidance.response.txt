@@ -1,0 +1,31 @@
+{
+  "answer": {
+    "global_summary": "A1, A2, and A3 are merging back to their destinations while maintaining pairwise separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -10,
+        "scenario_summary": "A1 is adjusting its heading to merge back to its destination while avoiding conflicts with other aircraft.",
+        "technical_summary": "A1's nearest neighbor, A2, is 25.67 units away at a bearing error of -60.3 degrees. To improve safety and recovery, A1 will turn -10 degrees to the right.",
+        "rationale": "This heading change helps A1 merge back to its destination while maintaining a safe distance from A2."
+      },
+      {
+        "agent_id": "A2",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": 0,
+        "scenario_summary": "A2 is maintaining its current heading to merge back to its destination.",
+        "technical_summary": "A2's nearest neighbor, A3, is 13.57 units away at a bearing error of +76.0 degrees. Since A2 is already on course for its destination, no heading change is necessary.",
+        "rationale": "This decision ensures that A2 maintains its current heading and merges back to its destination safely."
+      },
+      {
+        "agent_id": "A3",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A3 is adjusting its heading to merge back to its destination while avoiding conflicts with other aircraft.",
+        "technical_summary": "A3's nearest neighbor, A5, is 9.80 units away at a bearing error of -178.6 degrees. To improve safety and recovery, A3 will turn -20 degrees to the right.",
+        "rationale": "This heading change helps A3 merge back to its destination while maintaining a safe distance from A5."
+      }
+    ]
+  }
+}

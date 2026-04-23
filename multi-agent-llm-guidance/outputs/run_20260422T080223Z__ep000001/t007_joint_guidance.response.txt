@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "A1 is guided to merge back safely, reducing risk and maintaining pairwise separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -20,
+        "scenario_summary": "A1 adjusts its heading to merge back safely, avoiding a potential conflict with A2.",
+        "technical_summary": "The chosen turn (-20°) ensures a safe distance from the nearest neighbor (A2) while maintaining pairwise separation and reducing risk.",
+        "rationale": "This decision prioritizes safety by minimizing the risk of collision and ensuring a stable trajectory for A1."
+      }
+    ]
+  }
+}

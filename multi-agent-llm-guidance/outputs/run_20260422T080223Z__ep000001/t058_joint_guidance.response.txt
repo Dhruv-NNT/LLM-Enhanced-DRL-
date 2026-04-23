@@ -1,0 +1,15 @@
+{
+  "answer": {
+    "global_summary": "A1 and A2 are merging back to their destinations, with a focus on maintaining pairwise separation.",
+    "agents": [
+      {
+        "agent_id": "A1",
+        "call_name": "MERGE_BACK",
+        "heading_change_deg": -30,
+        "scenario_summary": "A1 is adjusting its heading to merge back to destination while avoiding conflict with A2.",
+        "technical_summary": "A1's heading change will improve safety by reducing the minimum separation distance with A2 from 6.53 to 5.32 units.",
+        "rationale": "The smallest safe turn that improves safety and recovery is a -30 degree heading change, which also helps maintain pairwise separation."
+      }
+    ]
+  }
+}
