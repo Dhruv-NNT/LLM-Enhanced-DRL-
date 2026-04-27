@@ -1,4 +1,4 @@
-"""Shared route, sector, and rendering helpers for the multi-agent setup."""
+"""Shared route, sector, weather, and rendering helpers for the isolated multi-agent setup."""
 
 from __future__ import annotations
 
@@ -7,15 +7,23 @@ import random
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from shapely import affinity
 from shapely.geometry import LineString, Point, Polygon
 
-from configs import AGENT_SPEED, MAX_AGENTS, ROUTES_CSV, SAFE_R, SECTOR_GEOJSON, WAYPOINTS_CSV
+from configs import (
+    AGENT_SPEED,
+    MAX_AGENTS,
+    ROUTE_MIRROR_SUFFIX,
+    ROUTES_CSV,
+    SECTOR_GEOJSON,
+    WAYPOINTS_CSV,
+)
 
 
 def rescaling(
@@ -32,6 +40,8 @@ def rescaling(
 @dataclass(frozen=True)
 class RouteSpec:
     route_id: str
+    canonical_route_id: str
+    is_reversed: bool
     origin: str
     destination: str
     waypoint_names: Tuple[str, ...]
@@ -48,6 +58,21 @@ class AssignedRoute:
     route: RouteSpec
     color: str
     start_step: int
+
+
+@dataclass
+class WeatherCell:
+    center: Tuple[float, float]
+    major_radius_nm: float
+    minor_ratio: float
+    angle_rad: float
+    motion_heading_rad: float
+    speed_units_per_step: float
+    major_growth_nm_per_step: float
+
+    @property
+    def minor_radius_nm(self) -> float:
+        return float(self.major_radius_nm * self.minor_ratio)
 
 
 @lru_cache(maxsize=1)
@@ -67,6 +92,73 @@ def load_sector_polygon() -> Polygon:
 
 
 @lru_cache(maxsize=1)
+def load_sector_bounds_nm() -> Tuple[float, float, float, float]:
+    """Return approximate sector bounds in NM and grid units."""
+    df = gpd.read_file(SECTOR_GEOJSON)
+    poly = df.geometry[5]
+    min_lon, min_lat, max_lon, max_lat = poly.bounds
+    lat_mid = 0.5 * (min_lat + max_lat)
+    lon_nm_per_deg = 60.0 * math.cos(math.radians(lat_mid))
+    width_nm = float(max_lon - min_lon) * lon_nm_per_deg
+    height_nm = float(max_lat - min_lat) * 60.0
+    sector = load_sector_polygon()
+    min_x, min_y, max_x, max_y = sector.bounds
+    return width_nm, height_nm, float(max_x - min_x), float(max_y - min_y)
+
+
+def sector_nm_scales() -> Tuple[float, float]:
+    """Return approximate NM per simulator unit for x and y axes."""
+    width_nm, height_nm, width_units, height_units = load_sector_bounds_nm()
+    return width_nm / max(width_units, 1e-6), height_nm / max(height_units, 1e-6)
+
+
+def nm_to_grid_x(distance_nm: float) -> float:
+    x_scale, _ = sector_nm_scales()
+    return float(distance_nm / max(x_scale, 1e-6))
+
+
+def nm_to_grid_y(distance_nm: float) -> float:
+    _, y_scale = sector_nm_scales()
+    return float(distance_nm / max(y_scale, 1e-6))
+
+
+def nm_to_grid_mean(distance_nm: float) -> float:
+    x_scale, y_scale = sector_nm_scales()
+    avg_scale = 0.5 * (x_scale + y_scale)
+    return float(distance_nm / max(avg_scale, 1e-6))
+
+
+def weather_axis_units(cell: WeatherCell) -> Tuple[float, float]:
+    return nm_to_grid_x(cell.major_radius_nm), nm_to_grid_y(cell.minor_radius_nm)
+
+
+def weather_polygon(cell: WeatherCell, *, resolution: int = 96) -> Polygon:
+    base = Point(0.0, 0.0).buffer(1.0, resolution=resolution)
+    major_units, minor_units = weather_axis_units(cell)
+    poly = affinity.scale(base, xfact=major_units, yfact=minor_units, origin=(0.0, 0.0))
+    poly = affinity.rotate(poly, math.degrees(cell.angle_rad), origin=(0.0, 0.0))
+    poly = affinity.translate(poly, xoff=cell.center[0], yoff=cell.center[1])
+    return poly
+
+
+def weather_signed_clearance(cell: WeatherCell, point: Tuple[float, float]) -> float:
+    poly = weather_polygon(cell)
+    cur = Point(point)
+    distance = float(poly.exterior.distance(cur))
+    return -distance if poly.covers(cur) else distance
+
+
+def weather_trail(cell: WeatherCell, steps: int) -> List[Tuple[float, float]]:
+    trail = [cell.center]
+    x_val, y_val = cell.center
+    for _ in range(int(max(0, steps))):
+        x_val += cell.speed_units_per_step * math.cos(cell.motion_heading_rad)
+        y_val += cell.speed_units_per_step * math.sin(cell.motion_heading_rad)
+        trail.append((x_val, y_val))
+    return trail
+
+
+@lru_cache(maxsize=1)
 def load_waypoint_map() -> Dict[str, Tuple[float, float]]:
     """Load waypoint names and rescaled coordinates."""
     df = pd.read_csv(WAYPOINTS_CSV)[["NAME", "LAT", "LON"]]
@@ -80,7 +172,7 @@ def load_waypoint_map() -> Dict[str, Tuple[float, float]]:
 
 
 def stable_agent_palette(max_agents: int = MAX_AGENTS) -> List[str]:
-    """Return a stable high-contrast palette for up to six agents."""
+    """Return a stable high-contrast palette for up to twelve agents."""
     base = [
         "#111827",
         "#b91c1c",
@@ -88,6 +180,12 @@ def stable_agent_palette(max_agents: int = MAX_AGENTS) -> List[str]:
         "#7c3aed",
         "#b45309",
         "#2563eb",
+        "#be123c",
+        "#15803d",
+        "#4338ca",
+        "#9333ea",
+        "#c2410c",
+        "#0f766e",
     ]
     return base[:max_agents]
 
@@ -136,52 +234,80 @@ def _extract_entry_distance(line: LineString, sector: Polygon, fallback_distance
     return min(float(line.project(point)) for point in entry_points)
 
 
+def _route_spec_from_waypoints(
+    route_id: str,
+    canonical_route_id: str,
+    waypoint_names: Sequence[str],
+    *,
+    is_reversed: bool,
+    waypoint_map: Dict[str, Tuple[float, float]],
+    sector: Polygon,
+) -> RouteSpec:
+    points = tuple(waypoint_map[name] for name in waypoint_names)
+    line = LineString(points)
+    first_inside_idx = _first_inside_index(waypoint_names, waypoint_map, sector)
+    if first_inside_idx is None:
+        prefix_names = tuple(waypoint_names)
+        fallback_entry_distance = float(line.length)
+    else:
+        prefix_names = tuple(waypoint_names[: first_inside_idx + 1])
+        prefix_line = LineString(points[: first_inside_idx + 1])
+        fallback_entry_distance = float(prefix_line.length)
+    entry_distance = _extract_entry_distance(line, sector, fallback_entry_distance)
+    entry_step = int(math.ceil(entry_distance / AGENT_SPEED))
+    return RouteSpec(
+        route_id=route_id,
+        canonical_route_id=canonical_route_id,
+        is_reversed=bool(is_reversed),
+        origin=str(waypoint_names[0]),
+        destination=str(waypoint_names[-1]),
+        waypoint_names=tuple(str(name) for name in waypoint_names),
+        points=points,
+        linestring=line,
+        shared_prefix_key="->".join(prefix_names),
+        entry_distance=float(entry_distance),
+        entry_step=entry_step,
+    )
+
+
 @lru_cache(maxsize=1)
 def build_route_catalog() -> Tuple[RouteSpec, ...]:
-    """Build the six unique route signatures from the shared route catalog."""
+    """Build forward and mirrored route signatures from the shared catalog."""
     path_df = pd.read_csv(ROUTES_CSV)
     waypoint_map = load_waypoint_map()
     sector = load_sector_polygon()
     catalog: List[RouteSpec] = []
 
     for _, row in path_df.iterrows():
-        route_id = str(row["ROUTE_NAME"]).strip()
+        canonical_route_id = str(row["ROUTE_NAME"]).strip()
         waypoint_names: List[str] = []
-        points: List[Tuple[float, float]] = []
         for col, value in row.items():
             if col in {"ROUTE_NAME", "SID", "STAR"} or pd.isna(value):
                 continue
             name = str(value).strip()
-            if not name:
-                continue
-            waypoint_names.append(name)
-            points.append(waypoint_map[name])
-
-        if len(points) < 2:
+            if name:
+                waypoint_names.append(name)
+        if len(waypoint_names) < 2:
             continue
 
-        line = LineString(points)
-        first_inside_idx = _first_inside_index(waypoint_names, waypoint_map, sector)
-        if first_inside_idx is None:
-            prefix_names = waypoint_names
-            fallback_entry_distance = float(line.length)
-        else:
-            prefix_names = waypoint_names[: first_inside_idx + 1]
-            prefix_line = LineString(points[: first_inside_idx + 1])
-            fallback_entry_distance = float(prefix_line.length)
-        entry_distance = _extract_entry_distance(line, sector, fallback_entry_distance)
-        entry_step = int(math.ceil(entry_distance / AGENT_SPEED))
         catalog.append(
-            RouteSpec(
-                route_id=route_id,
-                origin=waypoint_names[0],
-                destination=waypoint_names[-1],
-                waypoint_names=tuple(waypoint_names),
-                points=tuple(points),
-                linestring=line,
-                shared_prefix_key="->".join(prefix_names),
-                entry_distance=float(entry_distance),
-                entry_step=entry_step,
+            _route_spec_from_waypoints(
+                canonical_route_id,
+                canonical_route_id,
+                waypoint_names,
+                is_reversed=False,
+                waypoint_map=waypoint_map,
+                sector=sector,
+            )
+        )
+        catalog.append(
+            _route_spec_from_waypoints(
+                f"{canonical_route_id}{ROUTE_MIRROR_SUFFIX}",
+                canonical_route_id,
+                list(reversed(waypoint_names)),
+                is_reversed=True,
+                waypoint_map=waypoint_map,
+                sector=sector,
             )
         )
 
@@ -212,15 +338,19 @@ def assign_routes(
     route_ids: Optional[Sequence[str]] = None,
 ) -> List[AssignedRoute]:
     """Select routes without replacement and compute staggered start steps."""
-    if not 1 <= int(num_agents) <= max_agents_possible():
-        raise ValueError(
-            f"num_agents must be within [1, {max_agents_possible()}], got {num_agents}"
-        )
+    capacity = max_agents_possible()
+    if not 1 <= int(num_agents) <= capacity:
+        raise ValueError(f"num_agents must be within [1, {capacity}], got {num_agents}")
+
     rng = random.Random(seed)
     catalog = resolve_route_specs(route_ids)
     if route_ids is None:
         selected = rng.sample(catalog, int(num_agents))
     else:
+        if len(catalog) < int(num_agents):
+            raise ValueError(
+                f"Need at least {num_agents} explicit route ids, got {len(catalog)}"
+            )
         selected = list(catalog[: int(num_agents)])
 
     palette = stable_agent_palette(MAX_AGENTS)
@@ -289,7 +419,8 @@ def plot_sector() -> plt.Figure:
     for route in build_route_catalog():
         xs = [point[0] for point in route.points]
         ys = [point[1] for point in route.points]
-        ax.plot(xs, ys, color="blue", alpha=0.3)
+        color = "#3b82f6" if not route.is_reversed else "#0ea5e9"
+        ax.plot(xs, ys, color=color, alpha=0.18, linewidth=0.8)
 
     ax.set_xlim(0, 100)
     ax.set_ylim(0, 100)

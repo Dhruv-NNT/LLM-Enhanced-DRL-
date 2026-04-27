@@ -1,0 +1,12 @@
+Here is the output:
+
+{
+  "answer": {
+    "scenario_summary": "Merging back to destination",
+    "technical_summary": "Recovering from merge maneuver",
+    "rationale": "Biasing turn towards destination while avoiding nearby traffic and weather",
+    "maneuver": { "heading_change_deg": -15 }
+  }
+}
+
+Note: The heading change is biased towards the destination side (-15 degrees) to ensure a safe recovery, while also taking into account the nearby traffic and weather.

@@ -1,0 +1,14 @@
+Here is the output in JSON format:
+
+```
+{
+  "answer": {
+    "scenario_summary": "Recovering from merge back",
+    "technical_summary": "Biasing turn towards destination while avoiding nearby traffic and weather",
+    "rationale": "Safe recovery with respect to nearby traffic and weather",
+    "maneuver": { "heading_change_deg": -15 }
+  }
+}
+```
+
+I've decided to bias the turn towards the destination side by 15 degrees, which should help the aircraft recover safely while avoiding nearby traffic and weather.

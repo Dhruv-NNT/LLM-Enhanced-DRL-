@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional, Sequence
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 from configs import (
     EVAL_DIR,
@@ -21,6 +21,7 @@ from configs import (
     ROUTE_IDS_DEFAULT,
     RUN_MODES,
     SEED,
+    USE_VISION_DEFAULT,
 )
 from rl_llm_multi import JointGuidanceEnv, MultiAgentThreeCallController
 from rl_llm_multi.utils import max_agents_possible
@@ -37,7 +38,9 @@ class EpisodeResult:
     success: bool
     truncated: bool
     collision: bool
+    failure_reason: Optional[str]
     active_calls_logged: int
+    used_vision: bool
 
 
 def _timestamp() -> str:
@@ -80,6 +83,36 @@ def _write_gif(frame_dir: Path, gif_path: Path, duration_ms: int = FRAME_DURATIO
         frame.close()
 
 
+def _annotate_frame(frame_path: Path, texts: Sequence[str]) -> None:
+    if not texts or not frame_path.exists():
+        return
+
+    with Image.open(frame_path).convert("RGBA") as img:
+        draw = ImageDraw.Draw(img, "RGBA")
+        try:
+            font = ImageFont.truetype("DejaVuSans-Bold.ttf", 22)
+        except OSError:
+            font = ImageFont.load_default()
+
+        left = 24
+        top = 24
+        pad_x = 16
+        pad_y = 10
+        gap_y = 10
+        for text in texts:
+            bbox = draw.textbbox((left, top), text, font=font)
+            box = (
+                bbox[0] - pad_x,
+                bbox[1] - pad_y,
+                bbox[2] + pad_x,
+                bbox[3] + pad_y,
+            )
+            draw.rounded_rectangle(box, radius=12, fill=(220, 30, 30, 210))
+            draw.text((left, top), text, fill=(255, 255, 255, 255), font=font)
+            top = box[3] + gap_y
+        img.convert("RGB").save(frame_path)
+
+
 def evaluate_episode(
     *,
     num_agents: int,
@@ -87,6 +120,7 @@ def evaluate_episode(
     route_ids: Optional[Sequence[str]],
     output_dir: Path,
     episode_step_cap: Optional[int] = None,
+    use_vision: bool = USE_VISION_DEFAULT,
 ) -> EpisodeResult:
     route_ids = _normalize_route_ids(route_ids)
     memory_dir = _ensure_dir(MEMORY_DIR / f"run_{_timestamp()}__ep000001")
@@ -104,7 +138,15 @@ def evaluate_episode(
     done = False
     truncated = False
     while not done and not truncated:
-        actions = controller.choose_llm_actions(env.core, step=env.n_step)
+        latest_frame_path = str(output_dir / f"image_{env.n_step:03d}.png")
+        actions = controller.choose_llm_actions(
+            env.core,
+            step=env.n_step,
+            latest_frame_path=latest_frame_path,
+            use_vision=use_vision,
+        )
+        if controller.last_annotations:
+            _annotate_frame(Path(latest_frame_path), controller.last_annotations)
         if actions:
             llm_calls += 1
         _, reward, done, truncated, _ = env.step(actions)
@@ -120,8 +162,10 @@ def evaluate_episode(
         total_reward=total_reward,
         success=bool(env.core.last_team_success),
         truncated=bool(truncated),
-        collision=bool(done and not env.core.last_team_success and not truncated),
+        collision=bool(env.core.last_failure_reason == "collision"),
+        failure_reason=env.core.last_failure_reason,
         active_calls_logged=llm_calls,
+        used_vision=bool(use_vision),
     )
 
 
@@ -134,6 +178,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=str, default=None)
     parser.add_argument("--gif-name", type=str, default=None)
     parser.add_argument("--episode-step-cap", type=int, default=None)
+    parser.add_argument("--use-vision", action="store_true", default=USE_VISION_DEFAULT)
     return parser.parse_args()
 
 
@@ -150,6 +195,7 @@ def main() -> None:
         route_ids=args.route_ids,
         output_dir=output_dir,
         episode_step_cap=args.episode_step_cap,
+        use_vision=args.use_vision,
     )
 
     gif_name = args.gif_name or f"llm_only_{_timestamp()}.gif"
@@ -161,12 +207,14 @@ def main() -> None:
         json.dump(asdict(result), handle, indent=2)
 
     print(
-        "mode={} steps={} reward={:.3f} success={} truncated={} gif={}".format(
+        "mode={} steps={} reward={:.3f} success={} truncated={} failure_reason={} used_vision={} gif={}".format(
             result.mode,
             result.steps,
             result.total_reward,
             int(result.success),
             int(result.truncated),
+            result.failure_reason,
+            int(result.used_vision),
             gif_path,
         )
     )

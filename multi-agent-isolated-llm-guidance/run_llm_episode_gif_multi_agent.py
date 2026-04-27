@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from configs import NUM_AGENTS_DEFAULT, PLOT_DIR, ROUTE_IDS_DEFAULT, SEED
+from configs import NUM_AGENTS_DEFAULT, PLOT_DIR, ROUTE_IDS_DEFAULT, SEED, USE_VISION_DEFAULT
 from evaluate import _timestamp, _validate_num_agents, _write_gif, evaluate_episode
 
 
@@ -17,6 +17,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=str, default=None)
     parser.add_argument("--gif-name", type=str, default=None)
     parser.add_argument("--episode-step-cap", type=int, default=None)
+    parser.add_argument("--use-vision", action="store_true", default=USE_VISION_DEFAULT)
     return parser.parse_args()
 
 
@@ -32,15 +33,18 @@ def main() -> None:
         route_ids=args.route_ids,
         output_dir=output_dir,
         episode_step_cap=args.episode_step_cap,
+        use_vision=args.use_vision,
     )
     gif_path = output_dir / (args.gif_name or f"llm_only_{_timestamp()}.gif")
     _write_gif(output_dir, gif_path)
     print(
-        "steps={} reward={:.3f} success={} truncated={} gif={}".format(
+        "steps={} reward={:.3f} success={} truncated={} failure_reason={} used_vision={} gif={}".format(
             result.steps,
             result.total_reward,
             int(result.success),
             int(result.truncated),
+            result.failure_reason,
+            int(result.used_vision),
             gif_path,
         )
     )

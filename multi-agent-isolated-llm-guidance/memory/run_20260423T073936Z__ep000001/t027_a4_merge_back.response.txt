@@ -1,0 +1,14 @@
+Here is the output in JSON format:
+
+```
+{
+  "answer": {
+    "scenario_summary": "Merging back onto route",
+    "technical_summary": "Recovering from deviation while avoiding nearby traffic and weather threats",
+    "rationale": "Biasing turn towards destination to minimize risk of collision or incursion into forbidden airspace",
+    "maneuver": { "heading_change_deg": -15 }
+  }
+}
+```
+
+I've decided to bias the turn towards the destination side by 15 degrees, as this will help recover from the deviation while minimizing the risk of collision with nearby traffic (A2) and avoiding incursion into forbidden airspace.

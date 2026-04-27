@@ -1,28 +1,28 @@
-"""Centralized multi-agent three-call controller and prompt helpers."""
+"""Centralized multi-agent three-call controller and prompt helpers for isolated pure-LLM episodes."""
 
 from __future__ import annotations
 
+import base64
 import copy
 import json
 import math
 import os
 import re
-import traceback
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, TYPE_CHECKING
-
-import numpy as np
 
 from configs import (
     ACTION_BINS,
-    BOUNDARY_LOOKAHEAD_STEPS,
-    CONFLICT_LOOKAHEAD_STEPS,
+    CLEAR_STREAK_REQUIRED,
+    DESTINATION_ALIGNMENT_DEG,
+    EMERGENCY_LOOKAHEAD_STEPS,
     EVAL_MEMORY_PATH,
+    HAZARD_LOOKAHEAD_STEPS,
     JSON_ANSWERS_DIR,
+    MERGE_BACK_RECHECK_STEPS,
     MERGE_BACK_REPEAT_ERROR_DEG,
     OLLAMA_HOST,
     OLLAMA_MAX_TOKENS,
@@ -30,15 +30,15 @@ from configs import (
     OLLAMA_TEMPERATURE,
     OLLAMA_TIMEOUT_SECONDS,
     OLLAMA_TOP_P,
+    PREVIEW_TOP_K,
+    ROUTE_RECOVERY_XTRACK_UNITS,
     SAFE_R,
-    SAFE_STREAK_REQUIRED,
     TURN_PREVIEW_STEPS,
 )
-from .utils import deg_to_action_idx
+from .utils import line_signed_cross_track
 
 if TYPE_CHECKING:  # pragma: no cover
     from .core import AgentState, MultiAgentSectorCore
-    from .ppo import SharedActorCentralCriticPPO
 
 
 JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
@@ -50,13 +50,14 @@ class AgentControllerState:
     execute_called: bool = False
     emergency_count: int = 0
     merge_back_count: int = 0
+    merge_back_recheck_remaining: int = 0
     last_advice_turn: int = 0
-    advice_active: bool = False
     last_call_name: Optional[str] = None
+    last_merge_back_reason: Optional[str] = None
 
 
 class MultiAgentPromptBuilder:
-    """Build text-first prompts for the centralized multi-agent controller."""
+    """Build local per-aircraft prompts for sequential guidance."""
 
     def __init__(self, safe_r: float = SAFE_R) -> None:
         self.safe_r = float(safe_r)
@@ -64,119 +65,182 @@ class MultiAgentPromptBuilder:
     def build_prompt(
         self,
         core: "MultiAgentSectorCore",
-        actionable: List[Dict[str, Any]],
-        preview_rows: Dict[str, List[Dict[str, Any]]],
+        agent_id: str,
+        call_name: str,
+        threat_rows: List[Dict[str, Any]],
+        preview_rows: List[Dict[str, Any]],
+        fixed_actions: Optional[Dict[str, int]] = None,
     ) -> str:
-        sections = [self._instructions_text()]
-        sections.append(self._global_scene_text(core))
-        for item in actionable:
-            sections.append(
-                self._per_agent_text(
-                    core,
-                    item["agent_id"],
-                    item["call_name"],
-                    preview_rows.get(item["agent_id"], []),
-                )
-            )
+        sections = [
+            self._instructions_text(call_name),
+            self._ownship_text(core, agent_id, call_name),
+            self._committed_actions_text(fixed_actions or {}),
+            self._weather_text(core, agent_id),
+            self._primary_threat_text(threat_rows),
+            self._other_threats_text(threat_rows),
+            self._preview_rows_text(preview_rows),
+        ]
         return "\n\n".join(section for section in sections if section)
 
-    def _instructions_text(self) -> str:
+    def _instructions_text(self, call_name: str) -> str:
         bins_text = ", ".join(str(value) for value in ACTION_BINS)
+        if call_name == "EXECUTE_TURN":
+            stage_text = (
+                "STAGE: EXECUTE_TURN. This aircraft needs its first avoidance turn.\n"
+                "- Focus on this ownship only.\n"
+                "- Use the local threat and preview information below.\n"
+            )
+        elif call_name == "EMERGENCY_MANEUVER":
+            stage_text = (
+                "STAGE: EMERGENCY_MANEUVER. A near-term hazard is predicted for this aircraft.\n"
+                "- Focus on immediate safety for this ownship.\n"
+                "- Prefer a non-zero turn if that improves safety.\n"
+            )
+        elif call_name == "MERGE_BACK":
+            stage_text = (
+                "STAGE: MERGE_BACK. This aircraft should recover toward destination when safe.\n"
+                "- Bias the turn toward the destination side.\n"
+                "- Keep recovery safe with respect to nearby traffic and weather.\n"
+            )
+        else:
+            stage_text = f"STAGE: {call_name}.\n"
         return (
-            "ROLE: You are a cautious centralized ATCO helper for a multi-agent sector.\n"
-            "GOAL: Guide every aircraft safely to its destination while maintaining pairwise separation.\n"
-            "SAFETY: SAFE_R = 5.0 units for all aircraft pairs.\n"
-            "TASK:\n"
-            "- Only return decisions for the actionable agents listed below.\n"
-            "- Use the preview table and controller state for each actionable agent.\n"
-            "- Favor the smallest safe turn that improves safety and/or recovery.\n"
-            "- EXECUTE_TURN and EMERGENCY_MANEUVER are conflict-first.\n"
-            "- MERGE_BACK must bias toward the destination side.\n"
+            "ROLE: You are a cautious ATCO helper for one aircraft.\n"
+            f"{stage_text}"
+            f"- SAFE_R = {self.safe_r:.1f} units.\n"
+            "- The weather ellipse is forbidden airspace.\n"
+            "- Return exactly one action for the ownship only.\n"
             "OUTPUT RULES:\n"
             "- Return EXACTLY ONE JSON object.\n"
             f"- heading_change_deg must be one of {{{bins_text}}}.\n"
-            "- Positive means left, negative means right, 0 means keep heading.\n"
+            "- Positive is left, negative is right, 0 means hold current heading.\n"
             "STRICT JSON SHAPE:\n"
             "{\n"
             "  \"answer\": {\n"
-            "    \"global_summary\": \"<1-3 short sentences>\",\n"
-            "    \"agents\": [\n"
-            "      {\n"
-            "        \"agent_id\": \"A1\",\n"
-            "        \"call_name\": \"EXECUTE_TURN|EMERGENCY_MANEUVER|MERGE_BACK\",\n"
-            "        \"heading_change_deg\": -30..30 step 5,\n"
-            "        \"scenario_summary\": \"<brief>\",\n"
-            "        \"technical_summary\": \"<brief technical explanation>\",\n"
-            "        \"rationale\": \"<why this helps>\"\n"
-            "      }\n"
-            "    ]\n"
+            "    \"scenario_summary\": \"<brief>\",\n"
+            "    \"technical_summary\": \"<brief>\",\n"
+            "    \"rationale\": \"<brief>\",\n"
+            "    \"maneuver\": { \"heading_change_deg\": 0 }\n"
             "  }\n"
             "}"
         )
 
-    def _global_scene_text(self, core: "MultiAgentSectorCore") -> str:
-        lines = ["GLOBAL SCENE:"]
-        lines.append(f"- step_index: {core.n_step + 1}")
-        lines.append(f"- active_agents: {core.active_agent_ids}")
-        for agent_id in core.active_agent_ids:
-            state = core.get_agent(agent_id)
-            lines.append(
-                f"- {agent_id}: pos=({state.position[0]:.1f},{state.position[1]:.1f}) "
-                f"dest=({state.destination[0]:.1f},{state.destination[1]:.1f}) "
-                f"heading={math.degrees(state.heading_rad):+.1f}° "
-                f"inside_sector={int(state.inside_sector)} "
-                f"conflict_predicted={int(state.conflict_predicted)}"
-            )
-        risky_pairs = [
-            f"{a}<->{b}:{distance:.2f}"
-            for (a, b), distance in core.last_pairwise_separations.items()
-            if distance < 2.0 * core.safe_r
-        ]
-        lines.append(f"- risky_pairs: {risky_pairs or ['none']}")
-        return "\n".join(lines)
-
-    def _per_agent_text(
+    def _ownship_text(
         self,
         core: "MultiAgentSectorCore",
         agent_id: str,
         call_name: str,
-        preview_rows: List[Dict[str, Any]],
     ) -> str:
         state = core.get_agent(agent_id)
-        dist_dest = core.distance_to_destination(state)
-        route_heading = math.degrees(
-            math.atan2(
-                state.destination[1] - state.position[1],
-                state.destination[0] - state.position[0],
-            )
-        )
-        heading_error_to_dest = _wrap_deg(route_heading - math.degrees(state.heading_rad))
+        signed_xtrk, _, _ = line_signed_cross_track(state.route.linestring, state.position)
         boundary_distance = core.boundary_distance(state)
-        nearest_id, nearest_dist = core.nearest_neighbor(agent_id)
-        nearest_bearing = core._bearing_to_neighbor_deg(agent_id, nearest_id)
-        lines = [f"ACTIONABLE AGENT {agent_id} ({call_name}):"]
-        lines.append(f"- position: ({state.position[0]:.1f}, {state.position[1]:.1f})")
-        lines.append(f"- destination: ({state.destination[0]:.1f}, {state.destination[1]:.1f})")
-        lines.append(f"- distance_to_destination: {dist_dest:.2f}")
-        lines.append(f"- heading_deg: {math.degrees(state.heading_rad):+.1f}")
-        lines.append(f"- heading_error_to_destination_deg: {heading_error_to_dest:+.1f}")
-        lines.append(
-            f"- nearest_neighbor: {nearest_id or 'none'} "
-            f"(distance={0.0 if nearest_id is None else nearest_dist:.2f}, "
-            f"bearing_error_deg={nearest_bearing:+.1f})"
+        heading_error_to_dest = _heading_error_to_destination(state)
+        return "\n".join(
+            [
+                f"OWNSHIP {agent_id}:",
+                f"- call_name={call_name}",
+                f"- position=({state.position[0]:.1f},{state.position[1]:.1f}) heading_deg={math.degrees(state.heading_rad):+.1f}",
+                (
+                    f"- destination=({state.destination[0]:.1f},{state.destination[1]:.1f}) "
+                    f"distance_to_destination={core.distance_to_destination(state):.2f} "
+                    f"heading_error_to_destination_deg={heading_error_to_dest:+.1f}"
+                ),
+                (
+                    f"- route_recovery_error: cross_track={signed_xtrk:+.2f} "
+                    f"boundary_distance={'n/a' if boundary_distance is None else f'{boundary_distance:.2f}'}"
+                ),
+                (
+                    f"- predicted_pair_loss_step={state.predicted_pair_loss_step} "
+                    f"predicted_weather_entry_step={state.predicted_weather_entry_step} "
+                    f"predicted_boundary_exit_step={state.predicted_boundary_exit_step}"
+                ),
+                (
+                    f"- predicted_weather_clearance={state.predicted_weather_clearance:.2f} "
+                    f"safe_streak={state.safe_streak} "
+                    f"boundary_warning_active={int(bool(state.boundary_warning_active))}"
+                ),
+            ]
         )
-        lines.append(f"- boundary_distance: {'n/a' if boundary_distance is None else f'{boundary_distance:.2f}'}")
-        lines.append(f"- safe_streak: {state.safe_streak}")
-        lines.append(f"- boundary_warning_active: {int(state.boundary_warning_active)}")
-        lines.append(f"- conflict_predicted: {int(state.conflict_predicted)}")
-        lines.append("- candidate_turn_preview:")
-        for row in preview_rows:
+
+    def _committed_actions_text(self, fixed_actions: Dict[str, int]) -> str:
+        if not fixed_actions:
+            return "EARLIER COMMITTED ACTIONS THIS STEP:\n- none"
+        lines = ["EARLIER COMMITTED ACTIONS THIS STEP:"]
+        for agent_id, turn_deg in sorted(fixed_actions.items()):
+            lines.append(f"- {agent_id}: {int(turn_deg):+d} deg")
+        return "\n".join(lines)
+
+    def _weather_text(self, core: "MultiAgentSectorCore", agent_id: str) -> str:
+        state = core.get_agent(agent_id)
+        current_clearance = core.weather_signed_clearance(state.position)
+        weather = core.weather_dict()
+        if weather is None:
+            return "LOCAL WEATHER RISK:\n- none"
+        return "\n".join(
+            [
+                "LOCAL WEATHER RISK:",
+                f"- current_clearance={current_clearance:.2f}",
+                (
+                    f"- predicted_weather_entry_step={state.predicted_weather_entry_step} "
+                    f"predicted_min_clearance={state.predicted_weather_clearance:.2f}"
+                ),
+                (
+                    f"- weather_center=({weather['center'][0]:.1f},{weather['center'][1]:.1f}) "
+                    f"orientation_deg={math.degrees(weather['angle_rad']):+.1f}"
+                ),
+            ]
+        )
+
+    def _primary_threat_text(self, threat_rows: List[Dict[str, Any]]) -> str:
+        if not threat_rows:
+            return "PRIMARY THREAT:\n- none"
+        row = threat_rows[0]
+        return "\n".join(
+            [
+                f"PRIMARY THREAT: {row['intruder_id']}",
+                (
+                    f"- intruder_position=({row['intruder_position'][0]:.1f},{row['intruder_position'][1]:.1f}) "
+                    f"intruder_heading_deg={row['intruder_heading_deg']:+.1f}"
+                ),
+                (
+                    f"- current_distance={row['current_distance']:.2f} "
+                    f"bearing_error_deg={row['bearing_error_deg']:+.1f}"
+                ),
+                (
+                    f"- predicted_loss_step={row['predicted_loss_step']} "
+                    f"predicted_min_sep={row['predicted_min_sep']:.2f}"
+                ),
+            ]
+        )
+
+    def _other_threats_text(self, threat_rows: List[Dict[str, Any]]) -> str:
+        if len(threat_rows) <= 1:
+            return "OTHER THREATS:\n- none"
+        lines = ["OTHER THREATS:"]
+        for row in threat_rows[1:4]:
             lines.append(
-                "  "
+                "- "
+                f"{row['intruder_id']}: distance={row['current_distance']:.2f} "
+                f"predicted_loss_step={row['predicted_loss_step']} "
+                f"predicted_min_sep={row['predicted_min_sep']:.2f}"
+            )
+        return "\n".join(lines)
+
+    def _preview_rows_text(self, preview_rows: List[Dict[str, Any]]) -> str:
+        lines = ["LOCAL TURN PREVIEW (already conditioned on earlier committed actions this step):"]
+        if not preview_rows:
+            lines.append("- none")
+            return "\n".join(lines)
+        for row in preview_rows[:PREVIEW_TOP_K]:
+            lines.append(
+                "- "
                 f"turn={int(row['heading_change_deg']):+d} | "
                 f"safe={int(bool(row['safe_over_preview']))} | "
-                f"min_sep_any={float(row['min_sep_any']):.2f} | "
+                f"pair_loss_step={row['pair_loss_step']} | "
+                f"weather_entry_step={row['weather_entry_step']} | "
                 f"boundary_exit_step={row['boundary_exit_step']} | "
+                f"min_sep_to_any={float(row['min_sep_to_any']):.2f} | "
+                f"min_weather_clearance={float(row['min_weather_clearance']):.2f} | "
                 f"end_heading_error_to_dest_deg={float(row['end_heading_error_to_dest_deg']):.1f}"
             )
         return "\n".join(lines)
@@ -207,8 +271,29 @@ def _snap_to_allowed_bin(value: float) -> int:
     return int(min(ACTION_BINS, key=lambda candidate: abs(candidate - float(value))))
 
 
+def _snap_to_allowed_turn(value: float, allowed_turns: Sequence[int]) -> int:
+    turns = list(allowed_turns)
+    if not turns:
+        return 0
+    return int(min(turns, key=lambda candidate: abs(candidate - float(value))))
+
+
 def _wrap_deg(angle_deg: float) -> float:
     return ((angle_deg + 180.0) % 360.0) - 180.0
+
+
+def _pair_key(agent_a: str, agent_b: str) -> Tuple[str, str]:
+    return tuple(sorted((str(agent_a), str(agent_b))))
+
+
+def _heading_error_to_destination(state: "AgentState") -> float:
+    dest_heading = math.degrees(
+        math.atan2(
+            state.destination[1] - state.position[1],
+            state.destination[0] - state.position[0],
+        )
+    )
+    return _wrap_deg(dest_heading - math.degrees(state.heading_rad))
 
 
 def start_llm_log_dir(base_dir: str = str(JSON_ANSWERS_DIR)) -> Tuple[str, str]:
@@ -220,12 +305,26 @@ def start_llm_log_dir(base_dir: str = str(JSON_ANSWERS_DIR)) -> Tuple[str, str]:
     return run_dir, run_id
 
 
-def ollama_invoke(prompt_text: str) -> str:
+def ollama_invoke(
+    prompt_text: str,
+    *,
+    image_paths: Optional[Sequence[str]] = None,
+) -> Dict[str, Any]:
     base_url = os.environ.get("OLLAMA_HOST", OLLAMA_HOST).rstrip("/")
+    usable_images: List[str] = []
+    for image_path in image_paths or []:
+        if image_path and os.path.exists(image_path):
+            with open(image_path, "rb") as handle:
+                usable_images.append(base64.b64encode(handle.read()).decode("ascii"))
+
+    message: Dict[str, Any] = {"role": "user", "content": prompt_text}
+    if usable_images:
+        message["images"] = usable_images
+
     payload = {
         "model": OLLAMA_MODEL,
         "stream": False,
-        "messages": [{"role": "user", "content": prompt_text}],
+        "messages": [message],
         "options": {
             "temperature": OLLAMA_TEMPERATURE,
             "top_p": OLLAMA_TOP_P,
@@ -241,18 +340,49 @@ def ollama_invoke(prompt_text: str) -> str:
     try:
         with urllib.request.urlopen(request, timeout=float(OLLAMA_TIMEOUT_SECONDS)) as response:
             raw_body = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="ignore")
+        return {
+            "llm_status": "http_error",
+            "raw_text": body,
+            "error": str(exc),
+            "used_vision": bool(usable_images),
+        }
     except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
-        raise RuntimeError(f"Ollama request failed: {exc}") from exc
+        return {
+            "llm_status": "connection_error",
+            "raw_text": "",
+            "error": str(exc),
+            "used_vision": bool(usable_images),
+        }
 
-    parsed = json.loads(raw_body)
-    content = (parsed.get("message") or {}).get("content", "")
-    if not content:
-        raise RuntimeError("Ollama response did not contain message.content")
-    return str(content)
+    try:
+        parsed = json.loads(raw_body)
+        content = (parsed.get("message") or {}).get("content", "")
+        if content:
+            return {
+                "llm_status": "ok",
+                "raw_text": str(content),
+                "error": "",
+                "used_vision": bool(usable_images),
+            }
+        return {
+            "llm_status": "empty_content",
+            "raw_text": raw_body,
+            "error": "Ollama response did not contain message.content",
+            "used_vision": bool(usable_images),
+        }
+    except Exception as exc:
+        return {
+            "llm_status": "bad_response",
+            "raw_text": raw_body,
+            "error": str(exc),
+            "used_vision": bool(usable_images),
+        }
 
 
 class MultiAgentThreeCallController:
-    """Centralized controller that manages per-agent three-call semantics."""
+    """Per-aircraft pure-LLM controller with sequential local calls."""
 
     def __init__(
         self,
@@ -271,6 +401,7 @@ class MultiAgentThreeCallController:
         self.last_raw_text: Optional[str] = None
         self.last_normalized: Optional[Dict[str, Any]] = None
         self.last_tag: Optional[str] = None
+        self.last_annotations: List[str] = []
         self.last_joint_actions: Dict[str, int] = {}
 
     def reset(self) -> None:
@@ -279,6 +410,7 @@ class MultiAgentThreeCallController:
         self.last_raw_text = None
         self.last_normalized = None
         self.last_tag = None
+        self.last_annotations = []
         self.last_joint_actions = {}
 
     def _controller_state(self, agent_id: str) -> AgentControllerState:
@@ -286,58 +418,113 @@ class MultiAgentThreeCallController:
             self.agent_states[agent_id] = AgentControllerState()
         return self.agent_states[agent_id]
 
-    def _heading_error_to_destination(self, state: "AgentState") -> float:
-        dest_heading = math.degrees(
-            math.atan2(
-                state.destination[1] - state.position[1],
-                state.destination[0] - state.position[0],
-            )
-        )
-        return _wrap_deg(dest_heading - math.degrees(state.heading_rad))
-
-    def _call_name_for_agent(self, core: "MultiAgentSectorCore", agent_id: str) -> Optional[str]:
+    def _call_decision_for_agent(
+        self,
+        core: "MultiAgentSectorCore",
+        agent_id: str,
+    ) -> Optional[Dict[str, str]]:
         state = core.get_agent(agent_id)
         ctrl = self._controller_state(agent_id)
         if state.finished or not state.launched:
-            ctrl.advice_active = False
             return None
         if not state.has_entered_sector:
             ctrl.stage = "FOLLOW_ROUTE"
+            ctrl.merge_back_recheck_remaining = 0
             return None
-        if not ctrl.execute_called:
-            return "EXECUTE_TURN"
-        if state.conflict_predicted:
-            return "EMERGENCY_MANEUVER"
-        heading_err = abs(self._heading_error_to_destination(state))
-        if state.boundary_warning_active or state.safe_streak >= SAFE_STREAK_REQUIRED:
-            return "MERGE_BACK"
-        if ctrl.stage == "MERGE_BACK_RECHECK" and heading_err > MERGE_BACK_REPEAT_ERROR_DEG:
-            return "MERGE_BACK"
-        if ctrl.stage == "MERGE_BACK_RECHECK" and heading_err <= MERGE_BACK_REPEAT_ERROR_DEG:
-            ctrl.stage = "WAIT_FOR_SAFE"
+
+        signed_xtrk, _, _ = line_signed_cross_track(state.route.linestring, state.position)
+        heading_err = abs(_heading_error_to_destination(state))
+        immediate_hazard = bool(
+            (state.predicted_pair_loss_step is not None and state.predicted_pair_loss_step <= EMERGENCY_LOOKAHEAD_STEPS)
+            or (
+                state.predicted_weather_entry_step is not None
+                and state.predicted_weather_entry_step <= EMERGENCY_LOOKAHEAD_STEPS
+            )
+        )
+        any_hazard = bool(state.hazard_predicted)
+
+        if any_hazard and not ctrl.execute_called:
+            return {
+                "agent_id": str(agent_id),
+                "call_name": "EXECUTE_TURN",
+                "call_reason": "FIRST_HAZARD",
+            }
+        if immediate_hazard:
+            return {
+                "agent_id": str(agent_id),
+                "call_name": "EMERGENCY_MANEUVER",
+                "call_reason": "IMMEDIATE_HAZARD",
+            }
+        if ctrl.stage == "MERGE_BACK_RECHECK":
+            if ctrl.merge_back_recheck_remaining > 0:
+                ctrl.merge_back_recheck_remaining -= 1
+                return None
+            if state.boundary_warning_active:
+                return {
+                    "agent_id": str(agent_id),
+                    "call_name": "MERGE_BACK",
+                    "call_reason": "BOUNDARY_LOOKAHEAD",
+                }
+            if heading_err > MERGE_BACK_REPEAT_ERROR_DEG:
+                return {
+                    "agent_id": str(agent_id),
+                    "call_name": "MERGE_BACK",
+                    "call_reason": "ALIGNMENT_REPEAT",
+                }
+            ctrl.stage = "WAIT_CLEAR"
+            return None
+        if ctrl.execute_called and state.boundary_warning_active:
+            return {
+                "agent_id": str(agent_id),
+                "call_name": "MERGE_BACK",
+                "call_reason": "BOUNDARY_LOOKAHEAD",
+            }
+        if (
+            ctrl.execute_called
+            and state.safe_streak >= CLEAR_STREAK_REQUIRED
+            and (
+                abs(signed_xtrk) > ROUTE_RECOVERY_XTRACK_UNITS
+                or heading_err > DESTINATION_ALIGNMENT_DEG
+            )
+        ):
+            return {
+                "agent_id": str(agent_id),
+                "call_name": "MERGE_BACK",
+                "call_reason": "SAFE_STREAK",
+            }
         return None
+
+    def _phase_label_text(self, agent_id: str, call_name: str, call_reason: str) -> str:
+        label_map = {
+            "EXECUTE_TURN": "EXECUTE TURN",
+            "EMERGENCY_MANEUVER": "EMERGENCY MANEUVER",
+            "MERGE_BACK": "MERGE BACK",
+        }
+        label = label_map.get(call_name, call_name.replace("_", " "))
+        if call_name == "MERGE_BACK" and call_reason == "BOUNDARY_LOOKAHEAD":
+            label = f"{label} (BOUNDARY)"
+        return f"{agent_id}: {label}"
+
+    def _entered_sector_annotations(self, core: "MultiAgentSectorCore", step: int) -> List[str]:
+        annotations: List[str] = []
+        for agent_id in core.active_agent_ids:
+            state = core.get_agent(agent_id)
+            if state.sector_entry_step is not None and int(state.sector_entry_step) == int(step):
+                annotations.append(f"{agent_id}: ENTERED SECTOR")
+        return annotations
 
     def _allowed_turns(self, core: "MultiAgentSectorCore", agent_id: str, call_name: str) -> List[int]:
         state = core.get_agent(agent_id)
         if call_name == "MERGE_BACK":
-            heading_err = self._heading_error_to_destination(state)
+            heading_err = _heading_error_to_destination(state)
             if abs(heading_err) <= 2.5:
                 return [0]
             if heading_err > 0:
                 return [value for value in ACTION_BINS if value >= 0]
             return [value for value in ACTION_BINS if value <= 0]
-
-        neighbor_id, _ = core.nearest_neighbor(agent_id)
-        bearing = core._bearing_to_neighbor_deg(agent_id, neighbor_id)
-        if bearing > 0:
-            bins = [value for value in ACTION_BINS if value >= 0]
-        elif bearing < 0:
-            bins = [value for value in ACTION_BINS if value <= 0]
-        else:
-            bins = [value for value in ACTION_BINS if value != 0]
         if call_name == "EMERGENCY_MANEUVER":
-            bins = [value for value in bins if value != 0]
-        return bins or [0]
+            return [value for value in ACTION_BINS if value != 0]
+        return list(ACTION_BINS)
 
     def _simulate_joint_horizon(
         self,
@@ -348,65 +535,220 @@ class MultiAgentThreeCallController:
     ) -> Dict[str, Any]:
         sim = core.clone()
         cumulative_reward = 0.0
+        active_ids = list(core.active_agent_ids)
         min_sep_any = float("inf")
-        boundary_exit_step: Dict[str, Optional[int]] = {agent_id: None for agent_id in first_step_turns}
-        for tick in range(int(horizon_steps)):
-            turns = first_step_turns if tick == 0 else {}
-            sim.step(turns)
+        pair_loss_step = {agent_id: None for agent_id in active_ids}
+        per_agent_min_sep = {agent_id: float("inf") for agent_id in active_ids}
+        min_weather_clearance = {agent_id: float("inf") for agent_id in active_ids}
+        weather_entry_step = {agent_id: None for agent_id in active_ids}
+        boundary_exit_step = {agent_id: None for agent_id in active_ids}
+        pairwise_summary: Dict[Tuple[str, str], Dict[str, Any]] = {}
+
+        for tick in range(1, int(horizon_steps) + 1):
+            turns = first_step_turns if tick == 1 else {}
+            sim.step(turns, compute_predictions=False)
             cumulative_reward += float(sim.reward)
-            if sim.last_pairwise_separations:
-                min_sep_any = min(min_sep_any, min(sim.last_pairwise_separations.values()))
-            for agent_id in first_step_turns:
+
+            for pair_key, distance in sim.last_pairwise_separations.items():
+                agent_a, agent_b = pair_key
+                key = _pair_key(agent_a, agent_b)
+                summary = pairwise_summary.setdefault(
+                    key,
+                    {"min_sep": float("inf"), "min_step": None, "loss_step": None},
+                )
+                min_sep_any = min(min_sep_any, float(distance))
+                if float(distance) < float(summary["min_sep"]):
+                    summary["min_sep"] = float(distance)
+                    summary["min_step"] = tick
+                if float(distance) < core.safe_r and summary["loss_step"] is None:
+                    summary["loss_step"] = tick
+                per_agent_min_sep[agent_a] = min(per_agent_min_sep[agent_a], float(distance))
+                per_agent_min_sep[agent_b] = min(per_agent_min_sep[agent_b], float(distance))
+                if float(distance) < core.safe_r and pair_loss_step[agent_a] is None:
+                    pair_loss_step[agent_a] = tick
+                if float(distance) < core.safe_r and pair_loss_step[agent_b] is None:
+                    pair_loss_step[agent_b] = tick
+
+            for agent_id in active_ids:
                 state = sim.agent_states.get(agent_id)
-                if state is None:
+                if state is None or not state.launched or state.finished:
                     continue
+                clearance = sim.weather_signed_clearance(state.position)
+                min_weather_clearance[agent_id] = min(min_weather_clearance[agent_id], float(clearance))
+                if clearance < 0.0 and weather_entry_step[agent_id] is None:
+                    weather_entry_step[agent_id] = tick
                 if state.has_entered_sector and not state.inside_sector and boundary_exit_step[agent_id] is None:
-                    boundary_exit_step[agent_id] = tick + 1
+                    boundary_exit_step[agent_id] = tick
+
             if sim.last_team_done or sim.last_team_truncated:
                 break
 
-        end_heading_errors = {
-            agent_id: abs(self._heading_error_to_destination(sim.get_agent(agent_id)))
-            for agent_id in first_step_turns
-            if agent_id in sim.agent_states
-        }
         if min_sep_any == float("inf"):
             min_sep_any = 999.0
+        for agent_id in active_ids:
+            if per_agent_min_sep[agent_id] == float("inf"):
+                per_agent_min_sep[agent_id] = 999.0
+            if min_weather_clearance[agent_id] == float("inf"):
+                min_weather_clearance[agent_id] = 999.0
+        for summary in pairwise_summary.values():
+            if float(summary["min_sep"]) == float("inf"):
+                summary["min_sep"] = 999.0
+
+        end_heading_errors = {}
+        end_cross_tracks = {}
+        for agent_id in active_ids:
+            if agent_id not in sim.agent_states:
+                continue
+            state = sim.get_agent(agent_id)
+            end_heading_errors[agent_id] = abs(_heading_error_to_destination(state))
+            signed_xtrk, _, _ = line_signed_cross_track(state.route.linestring, state.position)
+            end_cross_tracks[agent_id] = abs(signed_xtrk)
         return {
             "min_sep_any": float(min_sep_any),
-            "safe_over_preview": float(min_sep_any) >= core.safe_r,
+            "pair_loss_step": pair_loss_step,
+            "per_agent_min_sep": per_agent_min_sep,
+            "min_weather_clearance": min_weather_clearance,
+            "weather_entry_step": weather_entry_step,
             "boundary_exit_step": boundary_exit_step,
+            "pairwise_summary": pairwise_summary,
             "team_done": bool(sim.last_team_done),
             "team_truncated": bool(sim.last_team_truncated),
             "cumulative_reward": float(cumulative_reward),
             "end_heading_error_to_dest_deg": end_heading_errors,
+            "end_cross_track_abs": end_cross_tracks,
         }
+
+    def _actionable_sort_key(
+        self,
+        core: "MultiAgentSectorCore",
+        item: Dict[str, Any],
+    ) -> Tuple[Any, ...]:
+        state = core.get_agent(item["agent_id"])
+        earliest_bad_event = min(
+            [
+                step
+                for step in [
+                    state.predicted_pair_loss_step,
+                    state.predicted_weather_entry_step,
+                    state.predicted_boundary_exit_step,
+                ]
+                if step is not None
+            ]
+            or [999]
+        )
+        return (
+            earliest_bad_event,
+            float(state.predicted_min_sep),
+            str(item["agent_id"]),
+        )
+
+    def _threat_sort_key(self, row: Dict[str, Any]) -> Tuple[Any, ...]:
+        return (
+            999 if row["predicted_loss_step"] is None else row["predicted_loss_step"],
+            float(row["predicted_min_sep"]),
+            float(row["current_distance"]),
+            str(row["intruder_id"]),
+        )
+
+    def _ranked_threats(
+        self,
+        core: "MultiAgentSectorCore",
+        agent_id: str,
+        *,
+        fixed_actions: Optional[Dict[str, int]] = None,
+    ) -> List[Dict[str, Any]]:
+        fixed_actions = {
+            other_id: int(turn_deg)
+            for other_id, turn_deg in (fixed_actions or {}).items()
+            if other_id != agent_id
+        }
+        sim = self._simulate_joint_horizon(
+            core,
+            fixed_actions,
+            horizon_steps=HAZARD_LOOKAHEAD_STEPS,
+        )
+        own_state = core.get_agent(agent_id)
+        rows: List[Dict[str, Any]] = []
+        for other_id in core.active_agent_ids:
+            if other_id == agent_id:
+                continue
+            other_state = core.get_agent(other_id)
+            pair = sim["pairwise_summary"].get(
+                _pair_key(agent_id, other_id),
+                {"min_sep": 999.0, "min_step": None, "loss_step": None},
+            )
+            current_distance = float(
+                math.hypot(
+                    own_state.position[0] - other_state.position[0],
+                    own_state.position[1] - other_state.position[1],
+                )
+            )
+            rows.append(
+                {
+                    "intruder_id": other_id,
+                    "intruder_position": tuple(other_state.position),
+                    "intruder_heading_deg": float(math.degrees(other_state.heading_rad)),
+                    "current_distance": current_distance,
+                    "bearing_error_deg": float(core._bearing_to_neighbor_deg(agent_id, other_id)),
+                    "predicted_loss_step": pair["loss_step"],
+                    "predicted_min_sep": float(pair["min_sep"]),
+                    "predicted_min_step": pair["min_step"],
+                }
+            )
+        rows.sort(key=self._threat_sort_key)
+        return rows[:4]
+
+    def _candidate_sort_key(self, row: Dict[str, Any]) -> Tuple[Any, ...]:
+        return (
+            0 if bool(row.get("safe_over_preview", False)) else 1,
+            999 if row.get("pair_loss_step") is None else row.get("pair_loss_step"),
+            999 if row.get("weather_entry_step") is None else row.get("weather_entry_step"),
+            999 if row.get("boundary_exit_step") is None else row.get("boundary_exit_step"),
+            -float(row.get("min_sep_to_any", 999.0)),
+            -float(row.get("min_weather_clearance", 999.0)),
+            float(row.get("end_heading_error_to_dest_deg", 999.0)),
+            float(row.get("end_cross_track_abs", 999.0)),
+            abs(int(row.get("heading_change_deg", 0))),
+        )
 
     def _preview_rows(
         self,
         core: "MultiAgentSectorCore",
         agent_id: str,
         call_name: str,
+        *,
+        fixed_actions: Optional[Dict[str, int]] = None,
     ) -> List[Dict[str, Any]]:
         rows: List[Dict[str, Any]] = []
+        fixed_actions = {} if fixed_actions is None else dict(fixed_actions)
         for turn_deg in self._allowed_turns(core, agent_id, call_name):
+            actions = dict(fixed_actions)
+            actions[agent_id] = int(turn_deg)
             sim = self._simulate_joint_horizon(
                 core,
-                {agent_id: int(turn_deg)},
+                actions,
                 horizon_steps=TURN_PREVIEW_STEPS,
             )
-            rows.append(
-                {
-                    "heading_change_deg": int(turn_deg),
-                    "safe_over_preview": bool(sim["safe_over_preview"]),
-                    "min_sep_any": float(sim["min_sep_any"]),
-                    "boundary_exit_step": sim["boundary_exit_step"].get(agent_id),
-                    "end_heading_error_to_dest_deg": float(
-                        sim["end_heading_error_to_dest_deg"].get(agent_id, 0.0)
-                    ),
-                    "cumulative_reward": float(sim["cumulative_reward"]),
-                }
-            )
+            row = {
+                "heading_change_deg": int(turn_deg),
+                "pair_loss_step": sim["pair_loss_step"].get(agent_id),
+                "weather_entry_step": sim["weather_entry_step"].get(agent_id),
+                "boundary_exit_step": sim["boundary_exit_step"].get(agent_id),
+                "min_sep_to_any": float(sim["per_agent_min_sep"].get(agent_id, 999.0)),
+                "min_weather_clearance": float(sim["min_weather_clearance"].get(agent_id, 999.0)),
+                "safe_over_preview": bool(
+                    sim["pair_loss_step"].get(agent_id) is None
+                    and sim["weather_entry_step"].get(agent_id) is None
+                    and sim["boundary_exit_step"].get(agent_id) is None
+                    and float(sim["per_agent_min_sep"].get(agent_id, 999.0)) >= core.safe_r
+                ),
+                "end_heading_error_to_dest_deg": float(
+                    sim["end_heading_error_to_dest_deg"].get(agent_id, 999.0)
+                ),
+                "end_cross_track_abs": float(sim["end_cross_track_abs"].get(agent_id, 999.0)),
+            }
+            rows.append(row)
+        rows.sort(key=self._candidate_sort_key)
         return rows
 
     def _deterministic_best_turn(
@@ -414,197 +756,106 @@ class MultiAgentThreeCallController:
         core: "MultiAgentSectorCore",
         agent_id: str,
         call_name: str,
+        *,
         fixed_actions: Optional[Dict[str, int]] = None,
     ) -> int:
         best_turn = 0
-        best_key = None
-        fixed_actions = {} if fixed_actions is None else dict(fixed_actions)
-        for turn_deg in self._allowed_turns(core, agent_id, call_name):
-            actions = dict(fixed_actions)
-            actions[agent_id] = int(turn_deg)
-            sim = self._simulate_joint_horizon(core, actions, horizon_steps=CONFLICT_LOOKAHEAD_STEPS)
-            key = (
-                0 if sim["safe_over_preview"] else 1,
-                0 if sim["boundary_exit_step"].get(agent_id) is None else 1,
-                -float(sim["min_sep_any"]),
-                float(sim["end_heading_error_to_dest_deg"].get(agent_id, 0.0)),
-                abs(int(turn_deg)),
-            )
+        best_key: Optional[Tuple[Any, ...]] = None
+        for row in self._preview_rows(
+            core,
+            agent_id,
+            call_name,
+            fixed_actions=fixed_actions,
+        ):
+            key = self._candidate_sort_key(row)
             if best_key is None or key < best_key:
                 best_key = key
-                best_turn = int(turn_deg)
+                best_turn = int(row["heading_change_deg"])
         return best_turn
 
     def _fallback_answer(
         self,
         core: "MultiAgentSectorCore",
-        actionable: List[Dict[str, Any]],
+        agent_id: str,
+        call_name: str,
+        *,
+        fixed_actions: Optional[Dict[str, int]] = None,
     ) -> Dict[str, Any]:
-        agents = []
-        for item in actionable:
-            best_turn = self._deterministic_best_turn(core, item["agent_id"], item["call_name"])
-            agents.append(
-                {
-                    "agent_id": item["agent_id"],
-                    "call_name": item["call_name"],
-                    "heading_change_deg": int(best_turn),
-                    "scenario_summary": "",
-                    "technical_summary": "",
-                    "rationale": "fallback deterministic choice",
-                }
-            )
-        return {"answer": {"global_summary": "", "agents": agents}}
+        return {
+            "answer": {
+                "scenario_summary": "",
+                "technical_summary": "",
+                "rationale": "deterministic fallback choice",
+                "maneuver": {
+                    "heading_change_deg": int(
+                        self._deterministic_best_turn(
+                            core,
+                            agent_id,
+                            call_name,
+                            fixed_actions=fixed_actions,
+                        )
+                    ),
+                },
+            }
+        }
 
-    def _normalize_answer(
+    def _normalize_local_answer(
         self,
         payload: Dict[str, Any],
-        actionable: List[Dict[str, Any]],
+        agent_id: str,
+        call_name: str,
     ) -> Dict[str, Any]:
-        expected = {item["agent_id"]: item["call_name"] for item in actionable}
-        answer = payload.get("answer") or {}
-        global_summary = answer.get("global_summary")
-        if not isinstance(global_summary, str):
-            global_summary = ""
-        raw_agents = answer.get("agents")
-        if not isinstance(raw_agents, list):
-            raw_agents = []
-        normalized_agents: List[Dict[str, Any]] = []
-        indexed = {
-            str(item.get("agent_id")): item
-            for item in raw_agents
-            if isinstance(item, dict) and str(item.get("agent_id")) in expected
-        }
-        for agent_id, call_name in expected.items():
-            item = indexed.get(agent_id, {})
-            try:
-                turn_deg = float(item.get("heading_change_deg", 0))
-            except Exception:
-                turn_deg = 0.0
-            normalized_agents.append(
-                {
-                    "agent_id": agent_id,
-                    "call_name": call_name,
-                    "heading_change_deg": int(_snap_to_allowed_bin(turn_deg)),
-                    "scenario_summary": item.get("scenario_summary", "")
-                    if isinstance(item.get("scenario_summary"), str)
-                    else "",
-                    "technical_summary": item.get("technical_summary", "")
-                    if isinstance(item.get("technical_summary"), str)
-                    else "",
-                    "rationale": item.get("rationale", "")
-                    if isinstance(item.get("rationale"), str)
-                    else "",
-                }
-            )
-        return {"answer": {"global_summary": global_summary, "agents": normalized_agents}}
-
-    def _repair_joint_actions(
-        self,
-        core: "MultiAgentSectorCore",
-        normalized: Dict[str, Any],
-        actionable: List[Dict[str, Any]],
-    ) -> Dict[str, Any]:
-        agents = normalized["answer"]["agents"]
-        actions = {item["agent_id"]: int(item["heading_change_deg"]) for item in agents}
-        sim = self._simulate_joint_horizon(core, actions, horizon_steps=CONFLICT_LOOKAHEAD_STEPS)
-        if sim["safe_over_preview"] and all(
-            step is None for step in sim["boundary_exit_step"].values()
-        ):
-            return normalized
-
-        order = sorted(
-            actionable,
-            key=lambda item: (
-                0 if core.get_agent(item["agent_id"]).conflict_predicted else 1,
-                0 if core.get_agent(item["agent_id"]).boundary_warning_active else 1,
-            ),
-        )
-        for item in order:
-            fixed = {agent_id: turn for agent_id, turn in actions.items() if agent_id != item["agent_id"]}
-            actions[item["agent_id"]] = self._deterministic_best_turn(
-                core,
-                item["agent_id"],
-                item["call_name"],
-                fixed_actions=fixed,
-            )
-        for item in agents:
-            item["heading_change_deg"] = int(actions[item["agent_id"]])
-        return normalized
-
-    def _advice_embedding(
-        self,
-        turn_deg: int,
-        call_name: Optional[str],
-        boundary_warning_active: bool,
-        conflict_predicted: bool,
-        advice_active: bool,
-    ) -> np.ndarray:
-        return np.array(
-            [
-                float(turn_deg) / 30.0,
-                1.0 if call_name == "EXECUTE_TURN" else 0.0,
-                1.0 if call_name == "EMERGENCY_MANEUVER" else 0.0,
-                1.0 if call_name == "MERGE_BACK" else 0.0,
-                1.0 if boundary_warning_active else 0.0,
-                1.0 if conflict_predicted else 0.0,
-                1.0 if advice_active else 0.0,
-            ],
-            dtype=np.float32,
-        )
-
-    def _ghost_compare_joint_horizon(
-        self,
-        core: "MultiAgentSectorCore",
-        ppo: Optional["SharedActorCentralCriticPPO"],
-        *,
-        llm_turns: Dict[str, int],
-        advice_embeddings: Dict[str, np.ndarray],
-        advice_active_masks: Dict[str, float],
-        horizon_steps: int = TURN_PREVIEW_STEPS,
-    ) -> Optional[Dict[str, Any]]:
-        if ppo is None or not llm_turns:
-            return None
-        obs_dict = core.get_active_observations()
-        global_state = core.global_state_vector()
+        answer = payload.get("answer") if isinstance(payload, dict) else {}
+        answer = answer if isinstance(answer, dict) else {}
+        maneuver = answer.get("maneuver") if isinstance(answer.get("maneuver"), dict) else {}
+        raw_heading = maneuver.get("heading_change_deg", answer.get("heading_change_deg", 0))
         try:
-            ppo_actions_idx = ppo.greedy_actions(
-                obs_dict,
-                global_state,
-                advice_embeddings=advice_embeddings,
-                advice_active_masks=advice_active_masks,
-            )
-            ppo_turns = {
-                agent_id: int(ACTION_BINS[action_idx])
-                for agent_id, action_idx in ppo_actions_idx.items()
-                if agent_id in llm_turns
-            }
-            llm_result = self._simulate_joint_horizon(core, llm_turns, horizon_steps=horizon_steps)
-            ppo_result = self._simulate_joint_horizon(core, ppo_turns, horizon_steps=horizon_steps)
-            return {
-                "llm_turns": llm_turns,
-                "ppo_turns": ppo_turns,
-                "horizon_steps": horizon_steps,
-                "llm_reward": llm_result["cumulative_reward"],
-                "ppo_reward": ppo_result["cumulative_reward"],
-                "llm_min_sep_any": llm_result["min_sep_any"],
-                "ppo_min_sep_any": ppo_result["min_sep_any"],
-            }
+            snapped = _snap_to_allowed_bin(float(raw_heading))
         except Exception:
-            traceback.print_exc()
-            return None
+            snapped = 0
+        return {
+            "answer": {
+                "agent_id": agent_id,
+                "call_name": call_name,
+                "scenario_summary": answer.get("scenario_summary", "")
+                if isinstance(answer.get("scenario_summary"), str)
+                else "",
+                "technical_summary": answer.get("technical_summary", "")
+                if isinstance(answer.get("technical_summary"), str)
+                else "",
+                "rationale": answer.get("rationale", "")
+                if isinstance(answer.get("rationale"), str)
+                else "",
+                "maneuver": {"heading_change_deg": int(snapped)},
+            }
+        }
 
-    def _log_joint_call(
+    def _resolve_turn_for_call(
+        self,
+        core: "MultiAgentSectorCore",
+        agent_id: str,
+        call_name: str,
+        requested_turn: int,
+    ) -> int:
+        allowed_turns = self._allowed_turns(core, agent_id, call_name)
+        snapped_turn = _snap_to_allowed_turn(int(requested_turn), allowed_turns)
+        return int(snapped_turn)
+
+    def _log_local_call(
         self,
         *,
         step: int,
+        agent_id: str,
+        call_name: str,
         prompt_text: str,
         raw_text: str,
         normalized: Dict[str, Any],
-        preview_rows: Dict[str, List[Dict[str, Any]]],
-        ghost_compare: Optional[Dict[str, Any]],
+        threat_rows: List[Dict[str, Any]],
+        preview_rows: List[Dict[str, Any]],
+        debug: Dict[str, Any],
     ) -> None:
         _ensure_dir(self.save_dir)
-        tag = f"t{step:03d}_joint_guidance"
+        tag = f"t{step:03d}_{agent_id.lower()}_{call_name.lower()}"
         self.last_tag = tag
         self.last_prompt_text = prompt_text
         self.last_raw_text = raw_text
@@ -615,8 +866,9 @@ class MultiAgentThreeCallController:
         _save_text(prompt_path, prompt_text)
         _save_text(response_path, raw_text)
         payload = copy.deepcopy(normalized)
+        payload["threat_rows"] = threat_rows
         payload["preview_rows"] = preview_rows
-        payload["ghost_compare"] = ghost_compare
+        payload["debug"] = debug
         _save_json(normalized_path, payload)
         with open(os.path.join(self.save_dir, "_index.jsonl"), "a", encoding="utf-8") as handle:
             row = {
@@ -624,8 +876,11 @@ class MultiAgentThreeCallController:
                 "step": step,
                 "run_id": self.run_id,
                 "episode_id": self.episode_id,
-                "n_agents": len(normalized["answer"]["agents"]),
-                "agent_ids": [item["agent_id"] for item in normalized["answer"]["agents"]],
+                "agent_id": agent_id,
+                "call_name": call_name,
+                "llm_status": debug.get("llm_status"),
+                "parse_status": debug.get("parse_status"),
+                "used_vision": debug.get("used_vision"),
             }
             handle.write(json.dumps(row) + "\n")
 
@@ -634,111 +889,141 @@ class MultiAgentThreeCallController:
         core: "MultiAgentSectorCore",
         *,
         step: int,
-        ppo: Optional["SharedActorCentralCriticPPO"] = None,
+        latest_frame_path: Optional[str] = None,
+        use_vision: bool = False,
     ) -> Dict[str, int]:
-        for agent_id in list(self.agent_states):
-            if agent_id not in core.agent_states or core.get_agent(agent_id).finished:
-                self.agent_states[agent_id].advice_active = False
-
+        annotations = self._entered_sector_annotations(core, step)
         actionable: List[Dict[str, Any]] = []
-        preview_rows: Dict[str, List[Dict[str, Any]]] = {}
         for agent_id in core.active_agent_ids:
-            call_name = self._call_name_for_agent(core, agent_id)
-            if call_name is None:
-                continue
-            actionable.append({"agent_id": agent_id, "call_name": call_name})
-            preview_rows[agent_id] = self._preview_rows(core, agent_id, call_name)
+            decision = self._call_decision_for_agent(core, agent_id)
+            if decision is not None:
+                actionable.append(decision)
 
+        actionable.sort(key=lambda item: self._actionable_sort_key(core, item))
         if not actionable:
+            self.last_annotations = annotations
             self.last_joint_actions = {}
             return {}
 
-        prompt_text = self.builder.build_prompt(core, actionable, preview_rows)
-        fallback = self._fallback_answer(core, actionable)
-        try:
-            raw_text = ollama_invoke(prompt_text)
-            parsed = _extract_json(raw_text)
-        except Exception:
-            parsed = fallback
-            raw_text = json.dumps(fallback)
+        planned_actions: Dict[str, int] = {}
+        for item in actionable:
+            agent_id = str(item["agent_id"])
+            call_name = str(item["call_name"])
+            call_reason = str(item.get("call_reason", ""))
+            fixed_actions = dict(planned_actions)
+            threat_rows = self._ranked_threats(core, agent_id, fixed_actions=fixed_actions)
+            preview_rows = self._preview_rows(
+                core,
+                agent_id,
+                call_name,
+                fixed_actions=fixed_actions,
+            )
+            prompt_text = self.builder.build_prompt(
+                core,
+                agent_id,
+                call_name,
+                threat_rows,
+                preview_rows,
+                fixed_actions=fixed_actions,
+            )
+            fallback = self._fallback_answer(
+                core,
+                agent_id,
+                call_name,
+                fixed_actions=fixed_actions,
+            )
 
-        normalized = self._normalize_answer(parsed, actionable)
-        normalized = self._repair_joint_actions(core, normalized, actionable)
+            llm_result = {"llm_status": "skipped", "raw_text": "", "error": "", "used_vision": False}
+            parse_status = "not_attempted"
+            fallback_reason = ""
+            parsed: Dict[str, Any] = fallback
 
-        joint_actions = {
-            item["agent_id"]: int(item["heading_change_deg"])
-            for item in normalized["answer"]["agents"]
-        }
+            if latest_frame_path and use_vision:
+                llm_result = ollama_invoke(prompt_text, image_paths=[latest_frame_path])
+            else:
+                llm_result = ollama_invoke(prompt_text, image_paths=None)
 
-        for item in normalized["answer"]["agents"]:
-            ctrl = self._controller_state(item["agent_id"])
-            ctrl.last_advice_turn = int(item["heading_change_deg"])
-            ctrl.advice_active = True
-            ctrl.last_call_name = item["call_name"]
-            if item["call_name"] == "EXECUTE_TURN":
+            raw_text = str(llm_result.get("raw_text", ""))
+            if llm_result.get("llm_status") == "ok":
+                try:
+                    parsed = _extract_json(raw_text)
+                    parse_status = "ok"
+                except Exception:
+                    parsed = fallback
+                    parse_status = "invalid_json"
+                    fallback_reason = "parse_error"
+            else:
+                parsed = fallback
+                parse_status = "not_attempted"
+                fallback_reason = str(llm_result.get("llm_status"))
+
+            normalized = self._normalize_local_answer(parsed, agent_id, call_name)
+            applied_turn = self._resolve_turn_for_call(
+                core,
+                agent_id,
+                call_name,
+                int(normalized["answer"]["maneuver"]["heading_change_deg"]),
+            )
+            normalized["answer"]["maneuver"]["heading_change_deg"] = int(applied_turn)
+            planned_actions[agent_id] = int(applied_turn)
+
+            ctrl = self._controller_state(agent_id)
+            ctrl.last_advice_turn = int(applied_turn)
+            ctrl.last_call_name = call_name
+            ctrl.last_merge_back_reason = call_reason or None
+            if call_name == "EXECUTE_TURN":
                 ctrl.execute_called = True
-                ctrl.stage = "WAIT_FOR_SAFE"
-            elif item["call_name"] == "EMERGENCY_MANEUVER":
+                ctrl.stage = "WAIT_CLEAR"
+                ctrl.merge_back_recheck_remaining = 0
+            elif call_name == "EMERGENCY_MANEUVER":
+                ctrl.execute_called = True
                 ctrl.emergency_count += 1
-                ctrl.stage = "WAIT_FOR_SAFE"
-            elif item["call_name"] == "MERGE_BACK":
+                ctrl.stage = "WAIT_CLEAR"
+                ctrl.merge_back_recheck_remaining = 0
+            elif call_name == "MERGE_BACK":
                 ctrl.merge_back_count += 1
                 ctrl.stage = "MERGE_BACK_RECHECK"
+                ctrl.merge_back_recheck_remaining = int(MERGE_BACK_RECHECK_STEPS)
+            annotations.append(self._phase_label_text(agent_id, call_name, call_reason))
 
-        advice_embeddings, _, advice_active_masks = self.get_advice_for_rl(core.active_agent_ids, core=core)
-        ghost_compare = self._ghost_compare_joint_horizon(
-            core,
-            ppo,
-            llm_turns=joint_actions,
-            advice_embeddings=advice_embeddings,
-            advice_active_masks=advice_active_masks,
-        )
-        self._log_joint_call(
-            step=step,
-            prompt_text=prompt_text,
-            raw_text=raw_text,
-            normalized=normalized,
-            preview_rows=preview_rows,
-            ghost_compare=ghost_compare,
-        )
-        self.last_joint_actions = joint_actions
-        return joint_actions
-
-    def get_advice_for_rl(
-        self,
-        active_agent_ids: Sequence[str],
-        *,
-        core: Optional["MultiAgentSectorCore"] = None,
-    ) -> Tuple[Dict[str, np.ndarray], Dict[str, int], Dict[str, float]]:
-        embeddings: Dict[str, np.ndarray] = {}
-        target_bins: Dict[str, int] = {}
-        active_masks: Dict[str, float] = {}
-        for agent_id in active_agent_ids:
-            ctrl = self._controller_state(agent_id)
-            boundary_warning = False
-            conflict_predicted = False
-            if core is not None and agent_id in core.agent_states:
-                state = core.get_agent(agent_id)
-                if state.finished:
-                    ctrl.advice_active = False
-                boundary_warning = bool(state.boundary_warning_active)
-                conflict_predicted = bool(state.conflict_predicted)
-            embeddings[agent_id] = self._advice_embedding(
-                ctrl.last_advice_turn,
-                ctrl.last_call_name,
-                boundary_warning,
-                conflict_predicted,
-                ctrl.advice_active,
+            debug = {
+                "llm_status": llm_result.get("llm_status"),
+                "llm_error": llm_result.get("error", ""),
+                "parse_status": parse_status,
+                "fallback_reason": fallback_reason,
+                "call_reason": call_reason,
+                "used_vision": bool(llm_result.get("used_vision", False)),
+                "frame_path": latest_frame_path if latest_frame_path and use_vision else None,
+                "fixed_actions": fixed_actions,
+                "threat_ids": [row["intruder_id"] for row in threat_rows],
+            }
+            self._log_local_call(
+                step=step,
+                agent_id=agent_id,
+                call_name=call_name,
+                prompt_text=prompt_text,
+                raw_text=raw_text,
+                normalized=normalized,
+                threat_rows=threat_rows,
+                preview_rows=preview_rows,
+                debug=debug,
             )
-            target_bins[agent_id] = -1 if not ctrl.advice_active else deg_to_action_idx(ctrl.last_advice_turn, ACTION_BINS)
-            active_masks[agent_id] = 1.0 if ctrl.advice_active else 0.0
-        return embeddings, target_bins, active_masks
+
+        self.last_annotations = annotations
+        self.last_joint_actions = planned_actions
+        return planned_actions
 
     def choose_llm_actions(
         self,
         core: "MultiAgentSectorCore",
         *,
         step: int,
-        ppo: Optional["SharedActorCentralCriticPPO"] = None,
+        latest_frame_path: Optional[str] = None,
+        use_vision: bool = False,
     ) -> Dict[str, int]:
-        return self.update(core, step=step, ppo=ppo)
+        return self.update(
+            core,
+            step=step,
+            latest_frame_path=latest_frame_path,
+            use_vision=use_vision,
+        )

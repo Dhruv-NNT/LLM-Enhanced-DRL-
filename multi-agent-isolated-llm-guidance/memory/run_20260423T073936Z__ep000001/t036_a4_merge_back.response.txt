@@ -1,0 +1,16 @@
+Here is the output in JSON format:
+
+```
+{
+  "answer": {
+    "scenario_summary": "Merging back to destination",
+    "technical_summary": "Recovering from merge back, biasing turn toward destination",
+    "rationale": "Safe recovery with respect to nearby traffic and weather",
+    "maneuver": { "heading_change_deg": -10 }
+  }
+}
+```
+
+In this scenario, the aircraft is in a merge back situation and needs to recover towards its destination. The primary threat is an intruder (A3) that is currently at a distance of 86.14 units with a bearing error of +142.9 degrees. The local weather risk indicates that there is no predicted weather entry step, but the current clearance is 25.42 units and the predicted minimum clearance is 27.46 units.
+
+The local turn preview shows that the safest option is to bias the turn toward the destination side by -10 degrees, which will ensure a safe recovery while avoiding the intruder and respecting the weather constraints.

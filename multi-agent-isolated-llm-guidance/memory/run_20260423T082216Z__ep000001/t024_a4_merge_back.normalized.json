@@ -1,0 +1,133 @@
+{
+  "answer": {
+    "agent_id": "A4",
+    "call_name": "MERGE_BACK",
+    "scenario_summary": "",
+    "technical_summary": "",
+    "rationale": "deterministic fallback choice",
+    "maneuver": {
+      "heading_change_deg": 0
+    }
+  },
+  "threat_rows": [
+    {
+      "intruder_id": "A2",
+      "intruder_position": [
+        49.63443934877767,
+        69.66144966432705
+      ],
+      "intruder_heading_deg": 132.362548487336,
+      "current_distance": 8.762581202021996,
+      "bearing_error_deg": 170.98799562331817,
+      "predicted_loss_step": null,
+      "predicted_min_sep": 10.5422889346159,
+      "predicted_min_step": 1
+    },
+    {
+      "intruder_id": "A3",
+      "intruder_position": [
+        64.09789959725715,
+        40.843952018845954
+      ],
+      "intruder_heading_deg": -57.67503961653012,
+      "current_distance": 32.9740092575111,
+      "bearing_error_deg": 93.42232232226206,
+      "predicted_loss_step": null,
+      "predicted_min_sep": 35.10392366348926,
+      "predicted_min_step": 1
+    }
+  ],
+  "preview_rows": [
+    {
+      "heading_change_deg": 0,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 10.5422889346159,
+      "min_weather_clearance": 0.6411088113479538,
+      "safe_over_preview": true,
+      "end_heading_error_to_dest_deg": 81.9632632727301,
+      "end_cross_track_abs": 7.848263516657113
+    },
+    {
+      "heading_change_deg": -10,
+      "pair_loss_step": null,
+      "weather_entry_step": 4,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 10.497096435758417,
+      "min_weather_clearance": -0.5147983228388501,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 24.167947639807835,
+      "end_cross_track_abs": 0.24115788703389365
+    },
+    {
+      "heading_change_deg": -15,
+      "pair_loss_step": null,
+      "weather_entry_step": 4,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 10.456239715010794,
+      "min_weather_clearance": -0.9840756714721297,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 16.876318988015868,
+      "end_cross_track_abs": 0.8861320762413125
+    },
+    {
+      "heading_change_deg": -20,
+      "pair_loss_step": null,
+      "weather_entry_step": 4,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 10.403419114541038,
+      "min_weather_clearance": -1.2897664304637608,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 9.463943671800962,
+      "end_cross_track_abs": 1.551889524948914
+    },
+    {
+      "heading_change_deg": -25,
+      "pair_loss_step": null,
+      "weather_entry_step": 4,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 10.338856802371842,
+      "min_weather_clearance": -1.3743598652837292,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 1.981154283333666,
+      "end_cross_track_abs": 2.2333634169766907
+    },
+    {
+      "heading_change_deg": -30,
+      "pair_loss_step": null,
+      "weather_entry_step": 4,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 10.262827728562815,
+      "min_weather_clearance": -1.2028281157294476,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 5.51663115277654,
+      "end_cross_track_abs": 2.9253673245211345
+    },
+    {
+      "heading_change_deg": -5,
+      "pair_loss_step": null,
+      "weather_entry_step": 5,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 10.525819101788416,
+      "min_weather_clearance": -0.15899948338843492,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 35.23754132683456,
+      "end_cross_track_abs": 1.3768958307218548
+    }
+  ],
+  "debug": {
+    "llm_status": "connection_error",
+    "llm_error": "timed out",
+    "parse_status": "not_attempted",
+    "fallback_reason": "connection_error",
+    "call_reason": "BOUNDARY_LOOKAHEAD",
+    "used_vision": true,
+    "frame_path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/outputs/llm_only_20260423T082216Z/image_024.png",
+    "fixed_actions": {},
+    "threat_ids": [
+      "A2",
+      "A3"
+    ]
+  }
+}

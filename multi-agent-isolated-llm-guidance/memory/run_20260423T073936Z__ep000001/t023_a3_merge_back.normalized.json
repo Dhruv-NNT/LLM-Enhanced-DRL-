@@ -1,0 +1,133 @@
+{
+  "answer": {
+    "agent_id": "A3",
+    "call_name": "MERGE_BACK",
+    "scenario_summary": "Merging back towards destination",
+    "technical_summary": "Recovering from merge maneuver",
+    "rationale": "Biasing turn to recover safely",
+    "maneuver": {
+      "heading_change_deg": 0
+    }
+  },
+  "threat_rows": [
+    {
+      "intruder_id": "A2",
+      "intruder_position": [
+        50.98207844998599,
+        68.18365778016528
+      ],
+      "intruder_heading_deg": 132.362548487336,
+      "current_distance": 30.2361493757227,
+      "bearing_error_deg": 175.99984636920783,
+      "predicted_loss_step": null,
+      "predicted_min_sep": 34.07119594316419,
+      "predicted_min_step": 1
+    },
+    {
+      "intruder_id": "A4",
+      "intruder_position": [
+        44.07306609174458,
+        77.34516992638683
+      ],
+      "intruder_heading_deg": 163.61972711095515,
+      "current_distance": 41.26953634437825,
+      "bearing_error_deg": -178.886752063644,
+      "predicted_loss_step": null,
+      "predicted_min_sep": 44.57502836131073,
+      "predicted_min_step": 1
+    }
+  ],
+  "preview_rows": [
+    {
+      "heading_change_deg": 0,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 34.07119594316419,
+      "min_weather_clearance": 35.34752515832425,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 111.2430133712893,
+      "end_cross_track_abs": 19.17331635936792
+    },
+    {
+      "heading_change_deg": 5,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 34.05675048239269,
+      "min_weather_clearance": 35.42576303976553,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 108.07573550769223,
+      "end_cross_track_abs": 17.530034840115597
+    },
+    {
+      "heading_change_deg": 10,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 34.0280793660317,
+      "min_weather_clearance": 35.49074161410582,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 104.76885758636718,
+      "end_cross_track_abs": 15.856256458578585
+    },
+    {
+      "heading_change_deg": 15,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 33.98536516174648,
+      "min_weather_clearance": 35.541954955916935,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 101.26965851865839,
+      "end_cross_track_abs": 14.156185660144448
+    },
+    {
+      "heading_change_deg": 20,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 33.92888065939799,
+      "min_weather_clearance": 35.579245613424504,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 97.495472678363,
+      "end_cross_track_abs": 12.434653599149152
+    },
+    {
+      "heading_change_deg": 25,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 33.85898807205565,
+      "min_weather_clearance": 35.6023738647298,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 93.30922952239285,
+      "end_cross_track_abs": 10.697584419651852
+    },
+    {
+      "heading_change_deg": 30,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 33.77613794703341,
+      "min_weather_clearance": 35.611000571900114,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 88.46692817348912,
+      "end_cross_track_abs": 8.953016857298028
+    }
+  ],
+  "debug": {
+    "llm_status": "ok",
+    "llm_error": "",
+    "parse_status": "ok",
+    "fallback_reason": "",
+    "call_reason": "BOUNDARY_LOOKAHEAD",
+    "used_vision": true,
+    "frame_path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/outputs/llm_only_20260423T073936Z/image_023.png",
+    "fixed_actions": {},
+    "threat_ids": [
+      "A2",
+      "A4"
+    ]
+  }
+}

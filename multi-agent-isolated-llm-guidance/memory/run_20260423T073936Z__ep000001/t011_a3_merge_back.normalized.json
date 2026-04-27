@@ -1,0 +1,147 @@
+{
+  "answer": {
+    "agent_id": "A3",
+    "call_name": "MERGE_BACK",
+    "scenario_summary": "Recovering to destination",
+    "technical_summary": "Biasing turn toward destination while avoiding nearby traffic and weather",
+    "rationale": "Safe recovery with respect to nearby traffic and weather",
+    "maneuver": {
+      "heading_change_deg": 0
+    }
+  },
+  "threat_rows": [
+    {
+      "intruder_id": "A2",
+      "intruder_position": [
+        67.15374766448588,
+        50.45015517022391
+      ],
+      "intruder_heading_deg": 132.362548487336,
+      "current_distance": 19.370618914331818,
+      "bearing_error_deg": 32.23629675681701,
+      "predicted_loss_step": null,
+      "predicted_min_sep": 7.533575774806995,
+      "predicted_min_step": 5
+    },
+    {
+      "intruder_id": "A1",
+      "intruder_position": [
+        50.059581206323045,
+        45.06902065378355
+      ],
+      "intruder_heading_deg": 161.3145675174394,
+      "current_distance": 16.664588540134904,
+      "bearing_error_deg": -26.84130508086372,
+      "predicted_loss_step": null,
+      "predicted_min_sep": 13.02205821735576,
+      "predicted_min_step": 3
+    },
+    {
+      "intruder_id": "A4",
+      "intruder_position": [
+        66.59056252203305,
+        69.27837754756169
+      ],
+      "intruder_heading_deg": 153.61972711095518,
+      "current_distance": 17.00933497652706,
+      "bearing_error_deg": 94.20133500448236,
+      "predicted_loss_step": null,
+      "predicted_min_sep": 16.348643339862335,
+      "predicted_min_step": 1
+    }
+  ],
+  "preview_rows": [
+    {
+      "heading_change_deg": 0,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 7.533575774806995,
+      "min_weather_clearance": 15.499005842878548,
+      "safe_over_preview": true,
+      "end_heading_error_to_dest_deg": 46.34093171681576,
+      "end_cross_track_abs": 10.948747554556306
+    },
+    {
+      "heading_change_deg": 5,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 6.726702051685699,
+      "min_weather_clearance": 15.643016791695333,
+      "safe_over_preview": true,
+      "end_heading_error_to_dest_deg": 38.27469656218199,
+      "end_cross_track_abs": 9.284622881210437
+    },
+    {
+      "heading_change_deg": 10,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 5.907098986057274,
+      "min_weather_clearance": 15.77855517645622,
+      "safe_over_preview": true,
+      "end_heading_error_to_dest_deg": 29.675764091863357,
+      "end_cross_track_abs": 7.581131615216673
+    },
+    {
+      "heading_change_deg": 15,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 5.076363196872608,
+      "min_weather_clearance": 15.904757783839377,
+      "safe_over_preview": true,
+      "end_heading_error_to_dest_deg": 20.594609269268517,
+      "end_cross_track_abs": 5.851238353705428
+    },
+    {
+      "heading_change_deg": 25,
+      "pair_loss_step": 4,
+      "weather_entry_step": null,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 4.510859956780321,
+      "min_weather_clearance": 16.126038672000156,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 0.9283516830936662,
+      "end_cross_track_abs": 3.4134223439173956
+    },
+    {
+      "heading_change_deg": 30,
+      "pair_loss_step": 4,
+      "weather_entry_step": null,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 4.082288067593491,
+      "min_weather_clearance": 16.219817060532943,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 5.277002622886641,
+      "end_cross_track_abs": 2.721506308039347
+    },
+    {
+      "heading_change_deg": 20,
+      "pair_loss_step": 5,
+      "weather_entry_step": null,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 4.236141755245873,
+      "min_weather_clearance": 16.020780511727533,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 7.587080905975171,
+      "end_cross_track_abs": 4.1101462374723905
+    }
+  ],
+  "debug": {
+    "llm_status": "ok",
+    "llm_error": "",
+    "parse_status": "ok",
+    "fallback_reason": "",
+    "call_reason": "BOUNDARY_LOOKAHEAD",
+    "used_vision": true,
+    "frame_path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/outputs/llm_only_20260423T073936Z/image_011.png",
+    "fixed_actions": {},
+    "threat_ids": [
+      "A2",
+      "A1",
+      "A4"
+    ]
+  }
+}

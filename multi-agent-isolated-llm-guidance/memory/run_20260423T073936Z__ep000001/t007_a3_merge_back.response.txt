@@ -1,0 +1,14 @@
+Here is the output in JSON format:
+
+```
+{
+  "answer": {
+    "scenario_summary": "Merging back to destination",
+    "technical_summary": "Recovering towards destination while avoiding nearby traffic and weather",
+    "rationale": "Biasing turn towards destination side to ensure safe recovery",
+    "maneuver": { "heading_change_deg": -15 }
+  }
+}
+```
+
+In this output, I've chosen a heading change of -15 degrees, which biases the turn towards the destination side while keeping the recovery safe with respect to nearby traffic and weather.

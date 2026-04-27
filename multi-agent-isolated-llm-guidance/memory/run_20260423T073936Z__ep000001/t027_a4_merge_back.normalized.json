@@ -1,0 +1,133 @@
+{
+  "answer": {
+    "agent_id": "A4",
+    "call_name": "MERGE_BACK",
+    "scenario_summary": "Merging back onto route",
+    "technical_summary": "Recovering from deviation while avoiding nearby traffic and weather threats",
+    "rationale": "Biasing turn towards destination to minimize risk of collision or incursion into forbidden airspace",
+    "maneuver": {
+      "heading_change_deg": 0
+    }
+  },
+  "threat_rows": [
+    {
+      "intruder_id": "A2",
+      "intruder_position": [
+        45.5915220451527,
+        74.09482531681238
+      ],
+      "intruder_heading_deg": 132.362548487336,
+      "current_distance": 10.716611391023859,
+      "bearing_error_deg": 165.46150544031946,
+      "predicted_loss_step": null,
+      "predicted_min_sep": 10.791032658101603,
+      "predicted_min_step": 1
+    },
+    {
+      "intruder_id": "A3",
+      "intruder_position": [
+        63.52730277861395,
+        32.08044579986213
+      ],
+      "intruder_heading_deg": -67.67503961653013,
+      "current_distance": 54.7196387169703,
+      "bearing_error_deg": 136.10222189766353,
+      "predicted_loss_step": null,
+      "predicted_min_sep": 58.15511565276772,
+      "predicted_min_step": 1
+    }
+  ],
+  "preview_rows": [
+    {
+      "heading_change_deg": 0,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 10.791032658101603,
+      "min_weather_clearance": 14.193063555884956,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 109.51047784170612,
+      "end_cross_track_abs": 25.055820710716606
+    },
+    {
+      "heading_change_deg": 5,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 10.758179969009232,
+      "min_weather_clearance": 14.020567229171965,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 105.76071234300372,
+      "end_cross_track_abs": 23.393769107668113
+    },
+    {
+      "heading_change_deg": 10,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 10.713175472718426,
+      "min_weather_clearance": 13.846442309792936,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 101.81753715004544,
+      "end_cross_track_abs": 21.69920678339626
+    },
+    {
+      "heading_change_deg": 15,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 10.656210273968522,
+      "min_weather_clearance": 13.672013668416303,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 97.62766909075924,
+      "end_cross_track_abs": 19.979448655089204
+    },
+    {
+      "heading_change_deg": 20,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 10.587528833537787,
+      "min_weather_clearance": 13.412483273817283,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 93.11745334875047,
+      "end_cross_track_abs": 18.242322233812292
+    },
+    {
+      "heading_change_deg": 25,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 10.507429807484856,
+      "min_weather_clearance": 13.063881575760378,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 88.18275333271288,
+      "end_cross_track_abs": 16.497658767479585
+    },
+    {
+      "heading_change_deg": 30,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 10.416267085943412,
+      "min_weather_clearance": 12.655135133990244,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 82.6728342233302,
+      "end_cross_track_abs": 14.758418513077377
+    }
+  ],
+  "debug": {
+    "llm_status": "ok",
+    "llm_error": "",
+    "parse_status": "ok",
+    "fallback_reason": "",
+    "call_reason": "BOUNDARY_LOOKAHEAD",
+    "used_vision": true,
+    "frame_path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/outputs/llm_only_20260423T073936Z/image_027.png",
+    "fixed_actions": {},
+    "threat_ids": [
+      "A2",
+      "A3"
+    ]
+  }
+}

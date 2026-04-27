@@ -1,0 +1,52 @@
+ROLE: You are a cautious ATCO helper for one aircraft.
+STAGE: MERGE_BACK. This aircraft should recover toward destination when safe.
+- Bias the turn toward the destination side.
+- Keep recovery safe with respect to nearby traffic and weather.
+- SAFE_R = 5.0 units.
+- The weather ellipse is forbidden airspace.
+- Return exactly one action for the ownship only.
+OUTPUT RULES:
+- Return EXACTLY ONE JSON object.
+- heading_change_deg must be one of {-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30}.
+- Positive is left, negative is right, 0 means hold current heading.
+STRICT JSON SHAPE:
+{
+  "answer": {
+    "scenario_summary": "<brief>",
+    "technical_summary": "<brief>",
+    "rationale": "<brief>",
+    "maneuver": { "heading_change_deg": 0 }
+  }
+}
+
+OWNSHIP A4:
+- call_name=MERGE_BACK
+- position=(15.0,93.1) heading_deg=+163.6
+- destination=(18.6,60.2) distance_to_destination=33.11 heading_error_to_destination_deg=+112.6
+- route_recovery_error: cross_track=-33.11 boundary_distance=n/a
+- predicted_pair_loss_step=None predicted_weather_entry_step=None predicted_boundary_exit_step=1
+- predicted_weather_clearance=38.51 safe_streak=46 boundary_warning_active=1
+
+EARLIER COMMITTED ACTIONS THIS STEP:
+- none
+
+LOCAL WEATHER RISK:
+- current_clearance=38.01
+- predicted_weather_entry_step=None predicted_min_clearance=38.51
+- weather_center=(42.5,64.3) orientation_deg=+91.0
+
+PRIMARY THREAT: A3
+- intruder_position=(81.8,15.0) intruder_heading_deg=-67.7
+- current_distance=102.77 bearing_error_deg=+146.9
+- predicted_loss_step=None predicted_min_sep=103.70
+
+OTHER THREATS:
+- none
+
+LOCAL TURN PREVIEW (already conditioned on earlier committed actions this step):
+- turn=+0 | safe=0 | pair_loss_step=None | weather_entry_step=None | boundary_exit_step=1 | min_sep_to_any=103.70 | min_weather_clearance=38.51 | end_heading_error_to_dest_deg=111.8
+- turn=+5 | safe=0 | pair_loss_step=None | weather_entry_step=None | boundary_exit_step=1 | min_sep_to_any=103.57 | min_weather_clearance=38.39 | end_heading_error_to_dest_deg=107.0
+- turn=+10 | safe=0 | pair_loss_step=None | weather_entry_step=None | boundary_exit_step=1 | min_sep_to_any=103.44 | min_weather_clearance=38.27 | end_heading_error_to_dest_deg=102.2
+- turn=+15 | safe=0 | pair_loss_step=None | weather_entry_step=None | boundary_exit_step=1 | min_sep_to_any=103.31 | min_weather_clearance=38.14 | end_heading_error_to_dest_deg=97.5
+- turn=+20 | safe=0 | pair_loss_step=None | weather_entry_step=None | boundary_exit_step=1 | min_sep_to_any=103.17 | min_weather_clearance=38.02 | end_heading_error_to_dest_deg=92.8
+- turn=+25 | safe=0 | pair_loss_step=None | weather_entry_step=None | boundary_exit_step=1 | min_sep_to_any=103.04 | min_weather_clearance=37.34 | end_heading_error_to_dest_deg=88.1

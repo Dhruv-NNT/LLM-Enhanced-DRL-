@@ -1,0 +1,10 @@
+Here is the output:
+
+{
+  "answer": {
+    "scenario_summary": "Merging back to destination",
+    "technical_summary": "Recovering from merge situation with nearby traffic and weather",
+    "rationale": "Biased turn towards destination side while keeping recovery safe",
+    "maneuver": { "heading_change_deg": -10 }
+  }
+}

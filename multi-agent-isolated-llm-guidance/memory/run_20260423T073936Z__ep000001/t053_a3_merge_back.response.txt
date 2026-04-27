@@ -1,0 +1,12 @@
+Here is the output in JSON format:
+
+{
+  "answer": {
+    "scenario_summary": "Recovering from merge back",
+    "technical_summary": "Biasing turn towards destination while avoiding nearby traffic and weather threats",
+    "rationale": "Prioritize safe recovery with respect to nearby traffic and weather",
+    "maneuver": { "heading_change_deg": -10 }
+  }
+}
+
+Note: The heading change is biased towards the destination side (-10 degrees) to ensure a safe recovery.

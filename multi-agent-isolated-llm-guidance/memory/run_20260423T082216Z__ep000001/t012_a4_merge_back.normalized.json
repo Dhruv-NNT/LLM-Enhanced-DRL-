@@ -1,0 +1,147 @@
+{
+  "answer": {
+    "agent_id": "A4",
+    "call_name": "MERGE_BACK",
+    "scenario_summary": "",
+    "technical_summary": "",
+    "rationale": "deterministic fallback choice",
+    "maneuver": {
+      "heading_change_deg": 15
+    }
+  },
+  "threat_rows": [
+    {
+      "intruder_id": "A2",
+      "intruder_position": [
+        65.80610856327755,
+        51.92794705438569
+      ],
+      "intruder_heading_deg": 132.362548487336,
+      "current_distance": 17.802256898581334,
+      "bearing_error_deg": 115.30720822996369,
+      "predicted_loss_step": null,
+      "predicted_min_sep": 11.477033395114338,
+      "predicted_min_step": 12
+    },
+    {
+      "intruder_id": "A3",
+      "intruder_position": [
+        49.801882839201475,
+        59.10505857739766
+      ],
+      "intruder_heading_deg": -77.67503961653013,
+      "current_distance": 18.182546524012132,
+      "bearing_error_deg": 56.97589815608711,
+      "predicted_loss_step": null,
+      "predicted_min_sep": 18.224733236511227,
+      "predicted_min_step": 1
+    },
+    {
+      "intruder_id": "A1",
+      "intruder_position": [
+        48.16499767962513,
+        45.70976495564264
+      ],
+      "intruder_heading_deg": 161.3145675174394,
+      "current_distance": 29.06295373998579,
+      "bearing_error_deg": 76.97471566662108,
+      "predicted_loss_step": null,
+      "predicted_min_sep": 29.15407819129323,
+      "predicted_min_step": 1
+    }
+  ],
+  "preview_rows": [
+    {
+      "heading_change_deg": 15,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 9.22716653148427,
+      "min_weather_clearance": 13.471122931171488,
+      "safe_over_preview": true,
+      "end_heading_error_to_dest_deg": 30.478174186010392,
+      "end_cross_track_abs": 10.011346876902136
+    },
+    {
+      "heading_change_deg": 20,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 8.47716103444093,
+      "min_weather_clearance": 12.512500540984005,
+      "safe_over_preview": true,
+      "end_heading_error_to_dest_deg": 22.306790307070628,
+      "end_cross_track_abs": 8.281438231574752
+    },
+    {
+      "heading_change_deg": 25,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 7.798372208743392,
+      "min_weather_clearance": 11.825753681295351,
+      "safe_over_preview": true,
+      "end_heading_error_to_dest_deg": 13.86079920346208,
+      "end_cross_track_abs": 6.538303383928566
+    },
+    {
+      "heading_change_deg": 30,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": null,
+      "min_sep_to_any": 7.109074590240357,
+      "min_weather_clearance": 11.44996219037623,
+      "safe_over_preview": true,
+      "end_heading_error_to_dest_deg": 5.231180365930783,
+      "end_cross_track_abs": 4.795208642687891
+    },
+    {
+      "heading_change_deg": 0,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 8,
+      "min_sep_to_any": 12.086331505197863,
+      "min_weather_clearance": 17.51717500553063,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 52.842896388828535,
+      "end_cross_track_abs": 14.99116206511458
+    },
+    {
+      "heading_change_deg": 5,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 9,
+      "min_sep_to_any": 11.063043250057923,
+      "min_weather_clearance": 16.018413479711807,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 45.769877363115256,
+      "end_cross_track_abs": 13.379023821174554
+    },
+    {
+      "heading_change_deg": 10,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 10,
+      "min_sep_to_any": 10.100808283120264,
+      "min_weather_clearance": 14.655506337169742,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 38.31114735691369,
+      "end_cross_track_abs": 11.714863670572578
+    }
+  ],
+  "debug": {
+    "llm_status": "connection_error",
+    "llm_error": "timed out",
+    "parse_status": "not_attempted",
+    "fallback_reason": "connection_error",
+    "call_reason": "BOUNDARY_LOOKAHEAD",
+    "used_vision": true,
+    "frame_path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/outputs/llm_only_20260423T082216Z/image_012.png",
+    "fixed_actions": {},
+    "threat_ids": [
+      "A2",
+      "A3",
+      "A1"
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+Here is the output in JSON format:
+
+```
+{
+  "answer": {
+    "scenario_summary": "Merging back to destination",
+    "technical_summary": "Recovering towards destination while avoiding nearby traffic and weather",
+    "rationale": "Biasing turn towards destination side to ensure safe recovery",
+    "maneuver": {
+      "heading_change_deg": -15
+    }
+  }
+}
+```
+
+In this scenario, the aircraft is merging back to its destination after a diversion. The primary threat is an intruder A4 at a distance of 110.17 units and bearing error of -160.9 degrees. The local weather risk is moderate with predicted min clearance of 62.37 units.
+
+To ensure safe recovery towards the destination, I will bias the turn towards the destination side by 15 degrees. This maneuver should help to recover safely while avoiding nearby traffic and weather threats.

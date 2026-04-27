@@ -1,0 +1,14 @@
+Here is the output in JSON format:
+
+```
+{
+  "answer": {
+    "scenario_summary": "Merging back to destination",
+    "technical_summary": "Recovering from merge back situation",
+    "rationale": "Biasing turn towards destination while ensuring safe recovery",
+    "maneuver": { "heading_change_deg": -15 }
+  }
+}
+```
+
+In this output, the heading change is set to `-15`, which means a right turn of 15 degrees. This bias towards the destination side helps the aircraft recover safely from the merge back situation while taking into account nearby traffic and weather conditions.

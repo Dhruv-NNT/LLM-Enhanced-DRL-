@@ -1,0 +1,12 @@
+Here is the output in JSON format:
+
+```
+{
+  "answer": {
+    "scenario_summary": "Merging back towards destination",
+    "technical_summary": "Recovering from merge maneuver",
+    "rationale": "Biasing turn to recover safely",
+    "maneuver": { "heading_change_deg": -10 }
+  }
+}
+```

@@ -3,7 +3,7 @@
 from .core import MultiAgentSectorCore
 from .env import JointGuidanceEnv, MultiAgentParallelEnv
 from .llm import MultiAgentThreeCallController
-from .utils import AssignedRoute, RouteSpec, build_route_catalog, max_agents_possible
+from .utils import AssignedRoute, RouteSpec, WeatherCell, build_route_catalog, max_agents_possible
 
 __all__ = [
     "AssignedRoute",
@@ -12,6 +12,7 @@ __all__ = [
     "MultiAgentSectorCore",
     "MultiAgentThreeCallController",
     "RouteSpec",
+    "WeatherCell",
     "build_route_catalog",
     "max_agents_possible",
 ]

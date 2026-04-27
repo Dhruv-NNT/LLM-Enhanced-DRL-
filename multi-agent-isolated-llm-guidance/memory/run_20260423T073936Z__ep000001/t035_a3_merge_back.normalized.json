@@ -1,0 +1,119 @@
+{
+  "answer": {
+    "agent_id": "A3",
+    "call_name": "MERGE_BACK",
+    "scenario_summary": "Merging back onto route",
+    "technical_summary": "Recovering from merge maneuver",
+    "rationale": "Biasing turn to destination side while maintaining safety margins",
+    "maneuver": {
+      "heading_change_deg": 0
+    }
+  },
+  "threat_rows": [
+    {
+      "intruder_id": "A4",
+      "intruder_position": [
+        21.047199002974224,
+        84.1134374159503
+      ],
+      "intruder_heading_deg": 163.61972711095515,
+      "current_distance": 82.61118826805107,
+      "bearing_error_deg": -166.32477815821733,
+      "predicted_loss_step": null,
+      "predicted_min_sep": 86.14190168674641,
+      "predicted_min_step": 1
+    }
+  ],
+  "preview_rows": [
+    {
+      "heading_change_deg": 15,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 86.20412911211763,
+      "min_weather_clearance": 56.76687447367336,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 141.9406744196515,
+      "end_cross_track_abs": 19.196021163031283
+    },
+    {
+      "heading_change_deg": 10,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 86.19816330398172,
+      "min_weather_clearance": 56.76266695365989,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 142.67793917438962,
+      "end_cross_track_abs": 19.2676788205184
+    },
+    {
+      "heading_change_deg": 20,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 86.19522672977254,
+      "min_weather_clearance": 56.75630858909033,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 140.93701747539552,
+      "end_cross_track_abs": 19.22559381037708
+    },
+    {
+      "heading_change_deg": 5,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 86.17737163345882,
+      "min_weather_clearance": 56.74380119037335,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 143.23327724939145,
+      "end_cross_track_abs": 19.458045451357815
+    },
+    {
+      "heading_change_deg": 25,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 86.17151932351476,
+      "min_weather_clearance": 56.7311304332905,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 139.6005981075221,
+      "end_cross_track_abs": 19.335523139614786
+    },
+    {
+      "heading_change_deg": 0,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 86.14190168674641,
+      "min_weather_clearance": 56.71040967632709,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 143.70361868648519,
+      "end_cross_track_abs": 19.779598632531524
+    },
+    {
+      "heading_change_deg": 30,
+      "pair_loss_step": null,
+      "weather_entry_step": null,
+      "boundary_exit_step": 1,
+      "min_sep_to_any": 86.13317520147561,
+      "min_weather_clearance": 56.691513402038325,
+      "safe_over_preview": false,
+      "end_heading_error_to_dest_deg": 137.88499599928514,
+      "end_cross_track_abs": 19.503282416491608
+    }
+  ],
+  "debug": {
+    "llm_status": "ok",
+    "llm_error": "",
+    "parse_status": "ok",
+    "fallback_reason": "",
+    "call_reason": "BOUNDARY_LOOKAHEAD",
+    "used_vision": true,
+    "frame_path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/outputs/llm_only_20260423T073936Z/image_035.png",
+    "fixed_actions": {},
+    "threat_ids": [
+      "A4"
+    ]
+  }
+}

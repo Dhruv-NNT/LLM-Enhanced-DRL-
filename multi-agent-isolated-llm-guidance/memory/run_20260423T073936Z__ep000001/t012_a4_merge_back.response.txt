@@ -1,0 +1,14 @@
+Here is the output in the required JSON format:
+
+```
+{
+  "answer": {
+    "scenario_summary": "Merging back to destination",
+    "technical_summary": "Recovering from route deviation",
+    "rationale": "Biasing turn towards destination while avoiding nearby traffic and weather",
+    "maneuver": { "heading_change_deg": -20 }
+  }
+}
+```
+
+In this scenario, the aircraft is merging back to its destination after deviating from the original route. The primary threat is an intruder (A2) that is approaching within a distance of 12.84 units and has a bearing error of +119.5 degrees. To recover safely, I will bias the turn towards the destination side by -20 degrees while keeping in mind nearby traffic and weather threats.

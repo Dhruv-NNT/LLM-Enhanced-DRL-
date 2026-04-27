@@ -1,0 +1,12 @@
+Here is the output:
+
+{
+  "answer": {
+    "scenario_summary": "Merging back with caution",
+    "technical_summary": "Biasing turn to recover towards destination while avoiding nearby traffic and weather threats",
+    "rationale": "Recovering from merge situation while keeping safe distance from other aircraft and weather boundaries",
+    "maneuver": { "heading_change_deg": -10 }
+  }
+}
+
+I've decided to bias the turn by -10 degrees, which is a cautious but reasonable adjustment to start recovering towards the destination while keeping an eye on nearby traffic and weather threats.
