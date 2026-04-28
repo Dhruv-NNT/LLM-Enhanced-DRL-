@@ -1,0 +1,21 @@
+{
+  "answer": {
+    "scenario_summary": "A3 and A4 are in close proximity and have high pair loss values, indicating potential collision risks.",
+    "actions": {
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "To mitigate potential collision risk with A4 and reduce pair loss.",
+        "maneuver": {
+          "heading_change_deg": -10
+        }
+      },
+      "A4": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "To mitigate potential collision risk with A3 and reduce pair loss.",
+        "maneuver": {
+          "heading_change_deg": 10
+        }
+      }
+    }
+  }
+}

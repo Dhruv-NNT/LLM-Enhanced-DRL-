@@ -1,0 +1,28 @@
+{
+  "answer": {
+    "scenario_summary": "Aircraft A2, A3, and A4 are in close proximity, with A2 and A4 having the highest risk of collision.",
+    "actions": {
+      "A2": {
+        "call_name": "EMERGENCY_MANEUVER",
+        "rationale": "To avoid collision with A4 and reduce risk.",
+        "maneuver": {
+          "heading_change": -5
+        }
+      },
+      "A3": {
+        "call_name": "EMERGENCY_MANEUVER",
+        "rationale": "To avoid collision with A2 and A4, and reduce risk.",
+        "maneuver": {
+          "heading_change": -5
+        }
+      },
+      "A4": {
+        "call_name": "EMERGENCY_MANEUVER",
+        "rationale": "To avoid collision with A2 and A3, and reduce risk.",
+        "maneuver": {
+          "heading_change": 5
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "answer": {
+    "scenario_summary": "Aircraft A2, A3, and A4 are in close proximity, with A2 and A3 having the highest risk of collision.",
+    "actions": {
+      "A2": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "To avoid collision with A3 and A4, turn left by 25 degrees.",
+        "maneuver": {
+          "heading_change": -25
+        }
+      },
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "To avoid collision with A2 and A4, turn right by 20 degrees.",
+        "maneuver": {
+          "heading_change": 20
+        }
+      },
+      "A4": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "To avoid collision with A2 and A3, turn left by 15 degrees.",
+        "maneuver": {
+          "heading_change": -15
+        }
+      }
+    }
+  }
+}

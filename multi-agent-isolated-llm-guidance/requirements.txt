@@ -1,0 +1,6 @@
+langgraph
+langchain
+Pillow
+shapely
+matplotlib
+numpy

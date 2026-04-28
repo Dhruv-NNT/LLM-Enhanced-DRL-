@@ -12,6 +12,7 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, TYPE_CHECKING
 
 from configs import (
@@ -101,6 +102,11 @@ class MultiAgentPromptBuilder:
                 "STAGE: MERGE_BACK. This aircraft should recover toward destination when safe.\n"
                 "- Bias the turn toward the destination side.\n"
                 "- Keep recovery safe with respect to nearby traffic and weather.\n"
+                "MERGE_BACK PRIORITY:\n"
+                "- Choose a safe candidate that improves recovery toward destination.\n"
+                "- Prefer larger progress_to_destination.\n"
+                "- Prefer reducing cross_track_abs.\n"
+                "- Use 0 only if it remains aligned and still makes good destination progress.\n"
             )
         else:
             stage_text = f"STAGE: {call_name}.\n"
@@ -241,6 +247,10 @@ class MultiAgentPromptBuilder:
                 f"boundary_exit_step={row['boundary_exit_step']} | "
                 f"min_sep_to_any={float(row['min_sep_to_any']):.2f} | "
                 f"min_weather_clearance={float(row['min_weather_clearance']):.2f} | "
+                f"progress_to_destination={float(row.get('progress_to_destination', 0.0)):.2f} | "
+                f"cross_track_reduction={float(row.get('cross_track_reduction', 0.0)):.2f} | "
+                f"end_distance_to_destination={float(row.get('end_distance_to_destination', 999.0)):.2f} | "
+                f"end_cross_track_abs={float(row.get('end_cross_track_abs', 999.0)):.2f} | "
                 f"end_heading_error_to_dest_deg={float(row['end_heading_error_to_dest_deg']):.1f}"
             )
         return "\n".join(lines)
@@ -596,6 +606,7 @@ class MultiAgentThreeCallController:
 
         end_heading_errors = {}
         end_cross_tracks = {}
+        end_distances = {}
         for agent_id in active_ids:
             if agent_id not in sim.agent_states:
                 continue
@@ -603,6 +614,7 @@ class MultiAgentThreeCallController:
             end_heading_errors[agent_id] = abs(_heading_error_to_destination(state))
             signed_xtrk, _, _ = line_signed_cross_track(state.route.linestring, state.position)
             end_cross_tracks[agent_id] = abs(signed_xtrk)
+            end_distances[agent_id] = sim.distance_to_destination(state)
         return {
             "min_sep_any": float(min_sep_any),
             "pair_loss_step": pair_loss_step,
@@ -616,6 +628,7 @@ class MultiAgentThreeCallController:
             "cumulative_reward": float(cumulative_reward),
             "end_heading_error_to_dest_deg": end_heading_errors,
             "end_cross_track_abs": end_cross_tracks,
+            "end_distance_to_destination": end_distances,
         }
 
     def _actionable_sort_key(
@@ -711,6 +724,23 @@ class MultiAgentThreeCallController:
             abs(int(row.get("heading_change_deg", 0))),
         )
 
+    def _merge_back_candidate_sort_key(self, row: Dict[str, Any]) -> Tuple[Any, ...]:
+        return (
+            0 if bool(row.get("safe_over_preview", False)) else 1,
+            999 if row.get("boundary_exit_step") is None else row.get("boundary_exit_step"),
+            999 if row.get("weather_entry_step") is None else row.get("weather_entry_step"),
+            999 if row.get("pair_loss_step") is None else row.get("pair_loss_step"),
+            -float(row.get("progress_to_destination", 0.0)),
+            -float(row.get("cross_track_reduction", 0.0)),
+            float(row.get("end_heading_error_to_dest_deg", 999.0)),
+            abs(int(row.get("heading_change_deg", 0))),
+        )
+
+    def _candidate_sort_key_for_call(self, call_name: str, row: Dict[str, Any]) -> Tuple[Any, ...]:
+        if call_name == "MERGE_BACK":
+            return self._merge_back_candidate_sort_key(row)
+        return self._candidate_sort_key(row)
+
     def _preview_rows(
         self,
         core: "MultiAgentSectorCore",
@@ -721,6 +751,10 @@ class MultiAgentThreeCallController:
     ) -> List[Dict[str, Any]]:
         rows: List[Dict[str, Any]] = []
         fixed_actions = {} if fixed_actions is None else dict(fixed_actions)
+        current_state = core.get_agent(agent_id)
+        start_distance = core.distance_to_destination(current_state)
+        start_signed_xtrk, _, _ = line_signed_cross_track(current_state.route.linestring, current_state.position)
+        start_cross_track_abs = abs(start_signed_xtrk)
         for turn_deg in self._allowed_turns(core, agent_id, call_name):
             actions = dict(fixed_actions)
             actions[agent_id] = int(turn_deg)
@@ -745,10 +779,21 @@ class MultiAgentThreeCallController:
                 "end_heading_error_to_dest_deg": float(
                     sim["end_heading_error_to_dest_deg"].get(agent_id, 999.0)
                 ),
+                "start_distance_to_destination": float(start_distance),
+                "end_distance_to_destination": float(
+                    sim["end_distance_to_destination"].get(agent_id, 999.0)
+                ),
+                "progress_to_destination": float(
+                    start_distance - sim["end_distance_to_destination"].get(agent_id, 999.0)
+                ),
+                "start_cross_track_abs": float(start_cross_track_abs),
                 "end_cross_track_abs": float(sim["end_cross_track_abs"].get(agent_id, 999.0)),
+                "cross_track_reduction": float(
+                    start_cross_track_abs - sim["end_cross_track_abs"].get(agent_id, 999.0)
+                ),
             }
             rows.append(row)
-        rows.sort(key=self._candidate_sort_key)
+        rows.sort(key=lambda row: self._candidate_sort_key_for_call(call_name, row))
         return rows
 
     def _deterministic_best_turn(
@@ -767,7 +812,7 @@ class MultiAgentThreeCallController:
             call_name,
             fixed_actions=fixed_actions,
         ):
-            key = self._candidate_sort_key(row)
+            key = self._candidate_sort_key_for_call(call_name, row)
             if best_key is None or key < best_key:
                 best_key = key
                 best_turn = int(row["heading_change_deg"])
@@ -1027,3 +1072,733 @@ class MultiAgentThreeCallController:
             latest_frame_path=latest_frame_path,
             use_vision=use_vision,
         )
+
+
+class GlobalPromptBuilder:
+    """Build one global prompt for all entered aircraft due for guidance."""
+
+    def __init__(self, safe_r: float = SAFE_R) -> None:
+        self.safe_r = float(safe_r)
+
+    def build_prompt(
+        self,
+        core: "MultiAgentSectorCore",
+        *,
+        step: int,
+        actionable: List[Dict[str, Any]],
+        entered_agent_ids: List[str],
+        threat_rows_by_agent: Dict[str, List[Dict[str, Any]]],
+        preview_rows_by_agent: Dict[str, List[Dict[str, Any]]],
+        recent_decisions: Sequence[Dict[str, Any]],
+        frame_paths: Sequence[str],
+    ) -> str:
+        sections = [
+            self._instructions_text(actionable),
+            self._merge_back_priority_text(actionable),
+            self._eligible_agents_text(core, actionable),
+            self._entered_context_text(core, entered_agent_ids),
+            self._weather_text(core),
+            self._threats_text(threat_rows_by_agent),
+            self._preview_text(preview_rows_by_agent),
+            self._recent_memory_text(recent_decisions),
+            self._frame_context_text(frame_paths),
+        ]
+        return "\n\n".join(section for section in sections if section)
+
+    def _instructions_text(self, actionable: List[Dict[str, Any]]) -> str:
+        bins_text = ", ".join(str(value) for value in ACTION_BINS)
+        agent_ids = ", ".join(str(item["agent_id"]) for item in actionable) or "none"
+        return (
+            "ROLE: You are a cautious ATCO helper for the entered aircraft listed below.\n"
+            "GLOBAL GUIDANCE TASK:\n"
+            f"- Return one maneuver for every GUIDANCE-ELIGIBLE agent: {agent_ids}.\n"
+            "- Do not return actions for aircraft that have not entered the sector.\n"
+            "- Use the simulator-generated candidate previews as the main decision evidence.\n"
+            f"- SAFE_R = {self.safe_r:.1f} units.\n"
+            "- The weather ellipse is forbidden airspace.\n"
+            "OUTPUT RULES:\n"
+            "- Return EXACTLY ONE JSON object and no extra text.\n"
+            f"- heading_change_deg must be one of {{{bins_text}}}.\n"
+            "- Positive is left, negative is right, 0 means hold current heading.\n"
+            "STRICT JSON SHAPE:\n"
+            "{\n"
+            "  \"answer\": {\n"
+            "    \"scenario_summary\": \"<brief>\",\n"
+            "    \"actions\": {\n"
+            "      \"A1\": {\n"
+            "        \"call_name\": \"EXECUTE_TURN\",\n"
+            "        \"rationale\": \"<brief>\",\n"
+            "        \"maneuver\": { \"heading_change_deg\": 0 }\n"
+            "      }\n"
+            "    }\n"
+            "  }\n"
+            "}"
+        )
+
+    def _merge_back_priority_text(self, actionable: List[Dict[str, Any]]) -> str:
+        if not any(str(item.get("call_name")) == "MERGE_BACK" for item in actionable):
+            return ""
+        return (
+            "MERGE_BACK PRIORITY:\n"
+            "- Choose a safe candidate that improves recovery toward destination.\n"
+            "- Prefer larger progress_to_destination.\n"
+            "- Prefer reducing cross_track_abs.\n"
+            "- Use 0 only if it remains aligned and still makes good destination progress."
+        )
+
+    def _agent_state_line(self, core: "MultiAgentSectorCore", agent_id: str) -> str:
+        state = core.get_agent(agent_id)
+        signed_xtrk, _, _ = line_signed_cross_track(state.route.linestring, state.position)
+        boundary_distance = core.boundary_distance(state)
+        return (
+            f"{agent_id}: pos=({state.position[0]:.1f},{state.position[1]:.1f}) "
+            f"heading={math.degrees(state.heading_rad):+.1f} "
+            f"dest=({state.destination[0]:.1f},{state.destination[1]:.1f}) "
+            f"dist_dest={core.distance_to_destination(state):.2f} "
+            f"heading_err={_heading_error_to_destination(state):+.1f} "
+            f"xtrack={signed_xtrk:+.2f} "
+            f"boundary_dist={'n/a' if boundary_distance is None else f'{boundary_distance:.2f}'} "
+            f"pair_loss={state.predicted_pair_loss_step} "
+            f"weather_entry={state.predicted_weather_entry_step} "
+            f"boundary_exit={state.predicted_boundary_exit_step} "
+            f"weather_clearance={state.predicted_weather_clearance:.2f} "
+            f"safe_streak={state.safe_streak}"
+        )
+
+    def _eligible_agents_text(
+        self,
+        core: "MultiAgentSectorCore",
+        actionable: List[Dict[str, Any]],
+    ) -> str:
+        lines = ["GUIDANCE-ELIGIBLE AGENTS THIS STEP:"]
+        if not actionable:
+            lines.append("- none")
+            return "\n".join(lines)
+        for item in actionable:
+            agent_id = str(item["agent_id"])
+            lines.append(
+                f"- {self._agent_state_line(core, agent_id)} "
+                f"call_name={item['call_name']} call_reason={item.get('call_reason', '')}"
+            )
+        return "\n".join(lines)
+
+    def _entered_context_text(self, core: "MultiAgentSectorCore", entered_agent_ids: List[str]) -> str:
+        lines = ["ENTERED TRAFFIC CONTEXT:"]
+        if not entered_agent_ids:
+            lines.append("- none")
+            return "\n".join(lines)
+        for agent_id in entered_agent_ids:
+            lines.append(f"- {self._agent_state_line(core, agent_id)}")
+        return "\n".join(lines)
+
+    def _weather_text(self, core: "MultiAgentSectorCore") -> str:
+        weather = core.weather_dict()
+        if weather is None:
+            return "GLOBAL WEATHER:\n- none"
+        return "\n".join(
+            [
+                "GLOBAL WEATHER:",
+                (
+                    f"- center=({weather['center'][0]:.1f},{weather['center'][1]:.1f}) "
+                    f"orientation_deg={math.degrees(weather['angle_rad']):+.1f} "
+                    f"motion_heading_deg={math.degrees(weather['motion_heading_rad']):+.1f} "
+                    f"speed_units_per_step={float(weather['speed_units_per_step']):.2f}"
+                ),
+                (
+                    f"- major_radius_nm={float(weather['major_radius_nm']):.2f} "
+                    f"minor_radius_nm={float(weather['minor_radius_nm']):.2f}"
+                ),
+            ]
+        )
+
+    def _threats_text(self, threat_rows_by_agent: Dict[str, List[Dict[str, Any]]]) -> str:
+        lines = ["RANKED TRAFFIC THREATS:"]
+        if not threat_rows_by_agent:
+            lines.append("- none")
+            return "\n".join(lines)
+        for agent_id, rows in sorted(threat_rows_by_agent.items()):
+            if not rows:
+                lines.append(f"- {agent_id}: none")
+                continue
+            compact_rows = []
+            for row in rows[:4]:
+                compact_rows.append(
+                    f"{row['intruder_id']} dist={row['current_distance']:.2f} "
+                    f"loss={row['predicted_loss_step']} min_sep={row['predicted_min_sep']:.2f}"
+                )
+            lines.append(f"- {agent_id}: " + "; ".join(compact_rows))
+        return "\n".join(lines)
+
+    def _preview_text(self, preview_rows_by_agent: Dict[str, List[Dict[str, Any]]]) -> str:
+        lines = ["PER-AGENT TURN PREVIEWS:"]
+        if not preview_rows_by_agent:
+            lines.append("- none")
+            return "\n".join(lines)
+        for agent_id, rows in sorted(preview_rows_by_agent.items()):
+            lines.append(f"- {agent_id}:")
+            for row in rows[:PREVIEW_TOP_K]:
+                lines.append(
+                    "  "
+                    f"turn={int(row['heading_change_deg']):+d} | "
+                    f"safe={int(bool(row['safe_over_preview']))} | "
+                    f"pair_loss={row['pair_loss_step']} | "
+                    f"weather_entry={row['weather_entry_step']} | "
+                    f"boundary_exit={row['boundary_exit_step']} | "
+                    f"min_sep={float(row['min_sep_to_any']):.2f} | "
+                    f"min_weather_clearance={float(row['min_weather_clearance']):.2f} | "
+                    f"progress_to_destination={float(row.get('progress_to_destination', 0.0)):.2f} | "
+                    f"cross_track_reduction={float(row.get('cross_track_reduction', 0.0)):.2f} | "
+                    f"end_distance={float(row.get('end_distance_to_destination', 999.0)):.2f} | "
+                    f"end_cross_track={float(row.get('end_cross_track_abs', 999.0)):.2f} | "
+                    f"end_heading_error={float(row['end_heading_error_to_dest_deg']):.1f}"
+                )
+        return "\n".join(lines)
+
+    def _recent_memory_text(self, recent_decisions: Sequence[Dict[str, Any]]) -> str:
+        lines = ["RECENT GLOBAL DECISION MEMORY:"]
+        if not recent_decisions:
+            lines.append("- none")
+            return "\n".join(lines)
+        for item in recent_decisions[-4:]:
+            actions = item.get("actions", {})
+            fragments = []
+            for agent_id, action in sorted(actions.items()):
+                fragments.append(
+                    f"{agent_id}:{action.get('call_name')} "
+                    f"{int(action.get('heading_change_deg', 0)):+d}deg"
+                )
+            lines.append(f"- step={item.get('step')}: " + "; ".join(fragments))
+        return "\n".join(lines)
+
+    def _frame_context_text(self, frame_paths: Sequence[str]) -> str:
+        lines = ["VISION FRAME CONTEXT:"]
+        if not frame_paths:
+            lines.append("- none")
+            return "\n".join(lines)
+        for idx, frame_path in enumerate(frame_paths):
+            lines.append(f"- frame_{idx}: {os.path.basename(frame_path)}")
+        return "\n".join(lines)
+
+
+class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
+    """Global LangGraph controller that asks for all due entered-agent actions at once."""
+
+    def __init__(
+        self,
+        builder: Optional[GlobalPromptBuilder] = None,
+        *,
+        save_dir: str = str(JSON_ANSWERS_DIR),
+        memory_path: str = str(EVAL_MEMORY_PATH),
+        retry_limit: int = 2,
+    ) -> None:
+        super().__init__(save_dir=save_dir, memory_path=memory_path)
+        self.global_builder = GlobalPromptBuilder() if builder is None else builder
+        self.retry_limit = int(retry_limit)
+        self.recent_decisions: List[Dict[str, Any]] = []
+        self.graph = self._build_graph()
+
+    def _build_graph(self):
+        try:
+            from langgraph.graph import END, StateGraph
+        except Exception as exc:  # pragma: no cover
+            raise RuntimeError(
+                "langgraph is required for GlobalLangGraphGuidanceController. "
+                "Install it in the llmdrl conda environment."
+            ) from exc
+
+        graph = StateGraph(dict)
+        graph.add_node("collect_state", self._graph_collect_state)
+        graph.add_node("assign_stages", self._graph_assign_stages)
+        graph.add_node("build_global_context", self._graph_build_global_context)
+        graph.add_node("call_llm", self._graph_call_llm)
+        graph.add_node("parse_validate_retry", self._graph_parse_validate_retry)
+        graph.add_node("guardrail_actions", self._graph_guardrail_actions)
+        graph.add_node("fallback_missing", self._graph_fallback_missing)
+        graph.add_node("commit_and_log", self._graph_commit_and_log)
+        graph.set_entry_point("collect_state")
+        graph.add_edge("collect_state", "assign_stages")
+        graph.add_edge("assign_stages", "build_global_context")
+        graph.add_edge("build_global_context", "call_llm")
+        graph.add_edge("call_llm", "parse_validate_retry")
+        graph.add_edge("parse_validate_retry", "guardrail_actions")
+        graph.add_edge("guardrail_actions", "fallback_missing")
+        graph.add_edge("fallback_missing", "commit_and_log")
+        graph.add_edge("commit_and_log", END)
+        return graph.compile()
+
+    def reset(self) -> None:
+        super().reset()
+        self.recent_decisions = []
+
+    def _global_call_decision_for_agent(
+        self,
+        core: "MultiAgentSectorCore",
+        agent_id: str,
+    ) -> Optional[Dict[str, str]]:
+        state = core.get_agent(agent_id)
+        ctrl = self._controller_state(agent_id)
+        if state.finished or not state.launched:
+            return None
+        if not state.has_entered_sector:
+            ctrl.stage = "FOLLOW_ROUTE"
+            ctrl.merge_back_recheck_remaining = 0
+            return None
+
+        signed_xtrk, _, _ = line_signed_cross_track(state.route.linestring, state.position)
+        heading_err = abs(_heading_error_to_destination(state))
+        immediate_hazard = bool(
+            (state.predicted_pair_loss_step is not None and state.predicted_pair_loss_step <= EMERGENCY_LOOKAHEAD_STEPS)
+            or (
+                state.predicted_weather_entry_step is not None
+                and state.predicted_weather_entry_step <= EMERGENCY_LOOKAHEAD_STEPS
+            )
+        )
+
+        if not ctrl.execute_called:
+            return {
+                "agent_id": str(agent_id),
+                "call_name": "EXECUTE_TURN",
+                "call_reason": "SECTOR_ENTRY",
+            }
+        if immediate_hazard:
+            return {
+                "agent_id": str(agent_id),
+                "call_name": "EMERGENCY_MANEUVER",
+                "call_reason": "IMMEDIATE_HAZARD",
+            }
+        if ctrl.stage == "MERGE_BACK_RECHECK":
+            if ctrl.merge_back_recheck_remaining > 0:
+                ctrl.merge_back_recheck_remaining -= 1
+                return None
+            if state.boundary_warning_active:
+                return {
+                    "agent_id": str(agent_id),
+                    "call_name": "MERGE_BACK",
+                    "call_reason": "BOUNDARY_LOOKAHEAD",
+                }
+            if heading_err > MERGE_BACK_REPEAT_ERROR_DEG:
+                return {
+                    "agent_id": str(agent_id),
+                    "call_name": "MERGE_BACK",
+                    "call_reason": "ALIGNMENT_REPEAT",
+                }
+            ctrl.stage = "WAIT_CLEAR"
+            return None
+        if ctrl.execute_called and state.boundary_warning_active:
+            return {
+                "agent_id": str(agent_id),
+                "call_name": "MERGE_BACK",
+                "call_reason": "BOUNDARY_LOOKAHEAD",
+            }
+        if (
+            ctrl.execute_called
+            and state.safe_streak >= CLEAR_STREAK_REQUIRED
+            and (
+                abs(signed_xtrk) > ROUTE_RECOVERY_XTRACK_UNITS
+                or heading_err > DESTINATION_ALIGNMENT_DEG
+            )
+        ):
+            return {
+                "agent_id": str(agent_id),
+                "call_name": "MERGE_BACK",
+                "call_reason": "SAFE_STREAK",
+            }
+        return None
+
+    def _recent_frame_paths(
+        self,
+        latest_frame_path: Optional[str],
+        *,
+        use_vision: bool,
+        count: int = 4,
+    ) -> List[str]:
+        if not latest_frame_path or not use_vision:
+            return []
+        latest = Path(latest_frame_path)
+        match = re.match(r"image_(\d+)\.png$", latest.name)
+        if not match:
+            return [str(latest)] if latest.exists() else []
+        step = int(match.group(1))
+        paths: List[str] = []
+        for value in range(step, max(-1, step - int(count)), -1):
+            candidate = latest.with_name(f"image_{value:03d}.png")
+            if candidate.exists():
+                paths.append(str(candidate))
+        return paths
+
+    def _graph_collect_state(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        core = state["core"]
+        step = int(state["step"])
+        annotations = self._entered_sector_annotations(core, step)
+        entered_agent_ids = [
+            agent_id
+            for agent_id in core.active_agent_ids
+            if core.get_agent(agent_id).has_entered_sector
+            and core.get_agent(agent_id).launched
+            and not core.get_agent(agent_id).finished
+        ]
+        frame_paths = self._recent_frame_paths(
+            state.get("latest_frame_path"),
+            use_vision=bool(state.get("use_vision", False)),
+        )
+        return {
+            **state,
+            "annotations": annotations,
+            "entered_agent_ids": entered_agent_ids,
+            "frame_paths": frame_paths,
+        }
+
+    def _graph_assign_stages(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        core = state["core"]
+        actionable: List[Dict[str, Any]] = []
+        for agent_id in state.get("entered_agent_ids", []):
+            decision = self._global_call_decision_for_agent(core, agent_id)
+            if decision is not None:
+                actionable.append(decision)
+        actionable.sort(key=lambda item: self._actionable_sort_key(core, item))
+        return {**state, "actionable": actionable}
+
+    def _graph_build_global_context(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        core = state["core"]
+        actionable = list(state.get("actionable", []))
+        threat_rows_by_agent: Dict[str, List[Dict[str, Any]]] = {}
+        preview_rows_by_agent: Dict[str, List[Dict[str, Any]]] = {}
+        for item in actionable:
+            agent_id = str(item["agent_id"])
+            call_name = str(item["call_name"])
+            threat_rows_by_agent[agent_id] = self._ranked_threats(core, agent_id, fixed_actions=None)
+            preview_rows_by_agent[agent_id] = self._preview_rows(
+                core,
+                agent_id,
+                call_name,
+                fixed_actions=None,
+            )
+        prompt_text = self.global_builder.build_prompt(
+            core,
+            step=int(state["step"]),
+            actionable=actionable,
+            entered_agent_ids=list(state.get("entered_agent_ids", [])),
+            threat_rows_by_agent=threat_rows_by_agent,
+            preview_rows_by_agent=preview_rows_by_agent,
+            recent_decisions=self.recent_decisions,
+            frame_paths=list(state.get("frame_paths", [])),
+        )
+        return {
+            **state,
+            "threat_rows_by_agent": threat_rows_by_agent,
+            "preview_rows_by_agent": preview_rows_by_agent,
+            "prompt_text": prompt_text,
+        }
+
+    def _graph_call_llm(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        actionable = list(state.get("actionable", []))
+        if not actionable:
+            return {**state, "llm_attempts": [], "parsed_payload": {}, "candidate_actions": {}}
+        image_paths = list(state.get("frame_paths", [])) if state.get("use_vision") else None
+        llm_result = ollama_invoke(str(state.get("prompt_text", "")), image_paths=image_paths)
+        return {**state, "llm_attempts": [llm_result]}
+
+    def _actions_from_payload(
+        self,
+        payload: Dict[str, Any],
+        expected_agent_ids: Sequence[str],
+    ) -> Tuple[Dict[str, Any], List[str]]:
+        answer = payload.get("answer") if isinstance(payload, dict) else {}
+        answer = answer if isinstance(answer, dict) else {}
+        actions = answer.get("actions") if isinstance(answer.get("actions"), dict) else {}
+        found: Dict[str, Any] = {}
+        missing: List[str] = []
+        for agent_id in expected_agent_ids:
+            action = actions.get(agent_id)
+            if isinstance(action, dict):
+                found[agent_id] = action
+            else:
+                missing.append(agent_id)
+        return found, missing
+
+    def _graph_parse_validate_retry(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        actionable = list(state.get("actionable", []))
+        expected_agent_ids = [str(item["agent_id"]) for item in actionable]
+        if not expected_agent_ids:
+            return {
+                **state,
+                "llm_attempts": list(state.get("llm_attempts", [])),
+                "parsed_payload": {},
+                "candidate_actions": {},
+                "missing_agent_ids": [],
+                "parse_status": "not_attempted",
+                "fallback_reason": "",
+            }
+        attempts = list(state.get("llm_attempts", []))
+        parsed_payload: Dict[str, Any] = {}
+        candidate_actions: Dict[str, Any] = {}
+        missing_agent_ids = list(expected_agent_ids)
+        parse_status = "not_attempted" if not expected_agent_ids else "invalid_json"
+        fallback_reason = ""
+
+        for attempt_index in range(self.retry_limit + 1):
+            if attempt_index > 0:
+                image_paths = list(state.get("frame_paths", [])) if state.get("use_vision") else None
+                attempts.append(ollama_invoke(str(state.get("prompt_text", "")), image_paths=image_paths))
+            result = attempts[-1] if attempts else {"llm_status": "skipped", "raw_text": "", "error": ""}
+            if result.get("llm_status") != "ok":
+                parse_status = "not_attempted"
+                fallback_reason = str(result.get("llm_status"))
+                continue
+            try:
+                parsed_payload = _extract_json(str(result.get("raw_text", "")))
+                candidate_actions, missing_agent_ids = self._actions_from_payload(
+                    parsed_payload,
+                    expected_agent_ids,
+                )
+                parse_status = "ok" if not missing_agent_ids else "missing_actions"
+                fallback_reason = "" if not missing_agent_ids else "missing_actions"
+                if not missing_agent_ids:
+                    break
+            except Exception:
+                parsed_payload = {}
+                candidate_actions = {}
+                missing_agent_ids = list(expected_agent_ids)
+                parse_status = "invalid_json"
+                fallback_reason = "parse_error"
+
+        return {
+            **state,
+            "llm_attempts": attempts,
+            "parsed_payload": parsed_payload,
+            "candidate_actions": candidate_actions,
+            "missing_agent_ids": missing_agent_ids,
+            "parse_status": parse_status,
+            "fallback_reason": fallback_reason,
+        }
+
+    def _raw_requested_turn(self, action_payload: Dict[str, Any]) -> int:
+        maneuver = action_payload.get("maneuver") if isinstance(action_payload.get("maneuver"), dict) else {}
+        raw_heading = maneuver.get("heading_change_deg", action_payload.get("heading_change_deg", 0))
+        try:
+            return _snap_to_allowed_bin(float(raw_heading))
+        except Exception:
+            return 0
+
+    def _graph_guardrail_actions(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        core = state["core"]
+        candidate_actions = dict(state.get("candidate_actions", {}))
+        final_actions: Dict[str, Dict[str, Any]] = {}
+        invalid_agent_ids: List[str] = []
+        stage_by_agent = {str(item["agent_id"]): str(item["call_name"]) for item in state.get("actionable", [])}
+        for agent_id, action_payload in candidate_actions.items():
+            if agent_id not in stage_by_agent:
+                continue
+            if not isinstance(action_payload, dict):
+                invalid_agent_ids.append(agent_id)
+                continue
+            call_name = stage_by_agent[agent_id]
+            requested_turn = self._raw_requested_turn(action_payload)
+            applied_turn = self._resolve_turn_for_call(core, agent_id, call_name, requested_turn)
+            rationale = action_payload.get("rationale", "")
+            final_actions[agent_id] = {
+                "call_name": call_name,
+                "heading_change_deg": int(applied_turn),
+                "requested_heading_change_deg": int(requested_turn),
+                "rationale": rationale if isinstance(rationale, str) else "",
+                "source": "llm",
+            }
+        missing = set(state.get("missing_agent_ids", []))
+        missing.update(invalid_agent_ids)
+        return {
+            **state,
+            "final_actions": final_actions,
+            "missing_agent_ids": sorted(missing),
+        }
+
+    def _graph_fallback_missing(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        core = state["core"]
+        final_actions = dict(state.get("final_actions", {}))
+        fallback_agents: List[str] = []
+        stage_by_agent = {str(item["agent_id"]): str(item["call_name"]) for item in state.get("actionable", [])}
+        for agent_id in stage_by_agent:
+            if agent_id in final_actions:
+                continue
+            call_name = stage_by_agent[agent_id]
+            fallback = self._fallback_answer(core, agent_id, call_name, fixed_actions=None)
+            requested_turn = int(fallback["answer"]["maneuver"]["heading_change_deg"])
+            applied_turn = self._resolve_turn_for_call(core, agent_id, call_name, requested_turn)
+            final_actions[agent_id] = {
+                "call_name": call_name,
+                "heading_change_deg": int(applied_turn),
+                "requested_heading_change_deg": int(requested_turn),
+                "rationale": "deterministic fallback choice",
+                "source": "fallback",
+            }
+            fallback_agents.append(agent_id)
+        return {**state, "final_actions": final_actions, "fallback_agents": fallback_agents}
+
+    def _normalized_global_payload(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        parsed_payload = state.get("parsed_payload", {})
+        answer = parsed_payload.get("answer") if isinstance(parsed_payload, dict) else {}
+        answer = answer if isinstance(answer, dict) else {}
+        scenario_summary = answer.get("scenario_summary", "")
+        actions = {}
+        for agent_id, action in sorted(state.get("final_actions", {}).items()):
+            actions[agent_id] = {
+                "call_name": action["call_name"],
+                "rationale": action.get("rationale", ""),
+                "source": action.get("source", ""),
+                "requested_heading_change_deg": int(action.get("requested_heading_change_deg", 0)),
+                "maneuver": {"heading_change_deg": int(action["heading_change_deg"])},
+            }
+        return {
+            "answer": {
+                "scenario_summary": scenario_summary if isinstance(scenario_summary, str) else "",
+                "actions": actions,
+            }
+        }
+
+    def _log_global_call(
+        self,
+        *,
+        step: int,
+        prompt_text: str,
+        raw_text: str,
+        normalized: Dict[str, Any],
+        debug: Dict[str, Any],
+        threat_rows_by_agent: Dict[str, List[Dict[str, Any]]],
+        preview_rows_by_agent: Dict[str, List[Dict[str, Any]]],
+    ) -> None:
+        _ensure_dir(self.save_dir)
+        tag = f"t{step:03d}_global_guidance"
+        self.last_tag = tag
+        self.last_prompt_text = prompt_text
+        self.last_raw_text = raw_text
+        prompt_path = os.path.join(self.save_dir, f"{tag}.prompt.txt")
+        response_path = os.path.join(self.save_dir, f"{tag}.response.txt")
+        normalized_path = os.path.join(self.save_dir, f"{tag}.normalized.json")
+        _save_text(prompt_path, prompt_text)
+        _save_text(response_path, raw_text)
+        payload = copy.deepcopy(normalized)
+        payload["threat_rows_by_agent"] = threat_rows_by_agent
+        payload["preview_rows_by_agent"] = preview_rows_by_agent
+        payload["debug"] = debug
+        self.last_normalized = payload
+        _save_json(normalized_path, payload)
+        with open(os.path.join(self.save_dir, "_index.jsonl"), "a", encoding="utf-8") as handle:
+            row = {
+                "tag": tag,
+                "step": step,
+                "run_id": self.run_id,
+                "episode_id": self.episode_id,
+                "agent_id": "GLOBAL",
+                "call_name": "GLOBAL_GUIDANCE",
+                "llm_status": debug.get("llm_status"),
+                "parse_status": debug.get("parse_status"),
+                "used_vision": debug.get("used_vision"),
+            }
+            handle.write(json.dumps(row) + "\n")
+
+    def _apply_controller_state(self, agent_id: str, call_name: str, call_reason: str, applied_turn: int) -> None:
+        ctrl = self._controller_state(agent_id)
+        ctrl.last_advice_turn = int(applied_turn)
+        ctrl.last_call_name = call_name
+        ctrl.last_merge_back_reason = call_reason or None
+        if call_name == "EXECUTE_TURN":
+            ctrl.execute_called = True
+            ctrl.stage = "WAIT_CLEAR"
+            ctrl.merge_back_recheck_remaining = 0
+        elif call_name == "EMERGENCY_MANEUVER":
+            ctrl.execute_called = True
+            ctrl.emergency_count += 1
+            ctrl.stage = "WAIT_CLEAR"
+            ctrl.merge_back_recheck_remaining = 0
+        elif call_name == "MERGE_BACK":
+            ctrl.merge_back_count += 1
+            ctrl.stage = "MERGE_BACK_RECHECK"
+            ctrl.merge_back_recheck_remaining = int(MERGE_BACK_RECHECK_STEPS)
+
+    def _graph_commit_and_log(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        step = int(state["step"])
+        actionable = list(state.get("actionable", []))
+        annotations = list(state.get("annotations", []))
+        if not actionable:
+            self.last_annotations = annotations
+            self.last_joint_actions = {}
+            return {**state, "actions": {}}
+
+        call_reason_by_agent = {
+            str(item["agent_id"]): str(item.get("call_reason", ""))
+            for item in actionable
+        }
+        actions = {
+            agent_id: int(action["heading_change_deg"])
+            for agent_id, action in sorted(state.get("final_actions", {}).items())
+        }
+        for agent_id, action in sorted(state.get("final_actions", {}).items()):
+            call_name = str(action["call_name"])
+            call_reason = call_reason_by_agent.get(agent_id, "")
+            self._apply_controller_state(agent_id, call_name, call_reason, int(action["heading_change_deg"]))
+            annotations.append(self._phase_label_text(agent_id, call_name, call_reason))
+
+        normalized = self._normalized_global_payload(state)
+        attempts = list(state.get("llm_attempts", []))
+        last_attempt = attempts[-1] if attempts else {"llm_status": "skipped", "raw_text": "", "error": ""}
+        debug = {
+            "llm_status": last_attempt.get("llm_status"),
+            "llm_error": last_attempt.get("error", ""),
+            "parse_status": state.get("parse_status"),
+            "fallback_reason": state.get("fallback_reason", ""),
+            "fallback_agents": list(state.get("fallback_agents", [])),
+            "retry_count": max(0, len(attempts) - 1),
+            "used_vision": bool(state.get("use_vision", False) and state.get("frame_paths")),
+            "frame_paths": list(state.get("frame_paths", [])) if state.get("use_vision") else [],
+            "eligible_agent_ids": [str(item["agent_id"]) for item in actionable],
+            "entered_agent_ids": list(state.get("entered_agent_ids", [])),
+            "stage_by_agent": {
+                str(item["agent_id"]): str(item["call_name"])
+                for item in actionable
+            },
+            "model": OLLAMA_MODEL,
+        }
+        self._log_global_call(
+            step=step,
+            prompt_text=str(state.get("prompt_text", "")),
+            raw_text=str(last_attempt.get("raw_text", "")),
+            normalized=normalized,
+            debug=debug,
+            threat_rows_by_agent=state.get("threat_rows_by_agent", {}),
+            preview_rows_by_agent=state.get("preview_rows_by_agent", {}),
+        )
+
+        self.recent_decisions.append(
+            {
+                "step": step,
+                "actions": {
+                    agent_id: {
+                        "call_name": state["final_actions"][agent_id]["call_name"],
+                        "heading_change_deg": int(turn_deg),
+                        "rationale": state["final_actions"][agent_id].get("rationale", ""),
+                    }
+                    for agent_id, turn_deg in actions.items()
+                },
+            }
+        )
+        self.recent_decisions = self.recent_decisions[-4:]
+        self.last_annotations = annotations
+        self.last_joint_actions = actions
+        return {**state, "actions": actions}
+
+    def update(
+        self,
+        core: "MultiAgentSectorCore",
+        *,
+        step: int,
+        latest_frame_path: Optional[str] = None,
+        use_vision: bool = False,
+    ) -> Dict[str, int]:
+        result = self.graph.invoke(
+            {
+                "core": core,
+                "step": int(step),
+                "latest_frame_path": latest_frame_path,
+                "use_vision": bool(use_vision),
+            }
+        )
+        return dict(result.get("actions", {}))

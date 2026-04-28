@@ -874,7 +874,7 @@ It sends a chat payload roughly like this:
 
 ```json
 {
-  "model": "llama3:8b",
+  "model": "qwen3.6",
   "stream": false,
   "messages": [
     {
@@ -897,7 +897,7 @@ Defaults come from `configs.py`.
 
 Important defaults:
 
-- model: `llama3:8b`
+- model: `qwen3.6`
 - temperature: `0.4`
 - top-p: `0.95`
 - max tokens: `4096`

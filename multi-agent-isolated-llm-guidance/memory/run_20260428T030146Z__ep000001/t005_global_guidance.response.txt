@@ -1,0 +1,28 @@
+{
+  "answer": {
+    "scenario_summary": "A3, A4, and A1 are in the sector with various distances and headings.",
+    "actions": {
+      "A1": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "Maintain current heading to ensure safe distance and minimize deviations.",
+        "maneuver": {
+          "heading_change_deg": 0
+        }
+      },
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "Turn left to align with safe trajectory and minimize risks.",
+        "maneuver": {
+          "heading_change_deg": 25
+        }
+      },
+      "A4": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "Turn right to ensure safe distance and comply with sector regulations.",
+        "maneuver": {
+          "heading_change_deg": -20
+        }
+      }
+    }
+  }
+}

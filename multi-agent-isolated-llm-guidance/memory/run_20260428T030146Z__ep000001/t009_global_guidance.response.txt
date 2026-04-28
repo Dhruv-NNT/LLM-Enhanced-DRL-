@@ -1,0 +1,21 @@
+{
+  "answer": {
+    "scenario_summary": "Aircraft A3 and A4 are in close proximity and require immediate attention to avoid collision.",
+    "actions": {
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "To avoid collision with A4 and maintain safe distance.",
+        "maneuver": {
+          "heading_change_deg": -10
+        }
+      },
+      "A4": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "To avoid collision with A3 and maintain safe distance.",
+        "maneuver": {
+          "heading_change_deg": 10
+        }
+      }
+    }
+  }
+}

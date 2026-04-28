@@ -1,0 +1,28 @@
+{
+  "answer": {
+    "scenario_summary": "Aircraft A2, A3, and A4 are in close proximity, with A3 and A4 having high pair loss values, indicating potential collision risks.",
+    "actions": {
+      "A2": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "To maintain safe distance and avoid potential collision with A3 and A4.",
+        "maneuver": {
+          "heading_change_deg": -5
+        }
+      },
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "To reduce pair loss and avoid potential collision with A4.",
+        "maneuver": {
+          "heading_change_deg": -10
+        }
+      },
+      "A4": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "To reduce pair loss and avoid potential collision with A3.",
+        "maneuver": {
+          "heading_change_deg": 10
+        }
+      }
+    }
+  }
+}

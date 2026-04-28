@@ -1,8 +1,0 @@
-{
-  "answer": {
-    "scenario_summary": "Recovering from merge back",
-    "technical_summary": "Biasing turn to destination side while avoiding nearby traffic and weather",
-    "rationale": "Safe recovery with respect to nearby traffic and weather",
-    "maneuver": { "heading_change_deg": -15 }
-  }
-}

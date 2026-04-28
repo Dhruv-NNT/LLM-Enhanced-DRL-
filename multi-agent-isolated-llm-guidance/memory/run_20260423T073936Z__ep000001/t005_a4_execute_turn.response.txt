@@ -1,8 +1,0 @@
-{
-  "answer": {
-    "scenario_summary": "Executing first avoidance turn",
-    "technical_summary": "A4 executing a -30 degree turn to avoid A2",
-    "rationale": "Initial avoidance maneuver to ensure safe separation from primary threat A2",
-    "maneuver": { "heading_change_deg": -30 }
-  }
-}

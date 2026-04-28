@@ -2,12 +2,13 @@
 
 from .core import MultiAgentSectorCore
 from .env import JointGuidanceEnv, MultiAgentParallelEnv
-from .llm import MultiAgentThreeCallController
+from .llm import GlobalLangGraphGuidanceController, MultiAgentThreeCallController
 from .utils import AssignedRoute, RouteSpec, WeatherCell, build_route_catalog, max_agents_possible
 
 __all__ = [
     "AssignedRoute",
     "JointGuidanceEnv",
+    "GlobalLangGraphGuidanceController",
     "MultiAgentParallelEnv",
     "MultiAgentSectorCore",
     "MultiAgentThreeCallController",

@@ -1,0 +1,21 @@
+{
+  "answer": {
+    "scenario_summary": "A3 and A4 are in close proximity and require immediate attention to avoid collision.",
+    "actions": {
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "To avoid collision with A4 and reduce risk.",
+        "maneuver": {
+          "heading_change_deg": -10
+        }
+      },
+      "A4": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "To increase distance from A3 and maintain safe separation.",
+        "maneuver": {
+          "heading_change_deg": 10
+        }
+      }
+    }
+  }
+}

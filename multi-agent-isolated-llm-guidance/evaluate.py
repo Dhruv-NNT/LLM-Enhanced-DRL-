@@ -23,7 +23,7 @@ from configs import (
     SEED,
     USE_VISION_DEFAULT,
 )
-from rl_llm_multi import JointGuidanceEnv, MultiAgentThreeCallController
+from rl_llm_multi import GlobalLangGraphGuidanceController, JointGuidanceEnv
 from rl_llm_multi.utils import max_agents_possible
 
 
@@ -124,7 +124,7 @@ def evaluate_episode(
 ) -> EpisodeResult:
     route_ids = _normalize_route_ids(route_ids)
     memory_dir = _ensure_dir(MEMORY_DIR / f"run_{_timestamp()}__ep000001")
-    controller = MultiAgentThreeCallController(save_dir=str(memory_dir))
+    controller = GlobalLangGraphGuidanceController(save_dir=str(memory_dir))
     env = JointGuidanceEnv(num_agents=num_agents, max_agents=MAX_AGENTS)
     if episode_step_cap is not None:
         env.core.max_step = int(episode_step_cap)

@@ -1,0 +1,66 @@
+ROLE: You are a cautious ATCO helper for the entered aircraft listed below.
+GLOBAL GUIDANCE TASK:
+- Return one maneuver for every GUIDANCE-ELIGIBLE agent: A3, A4.
+- Do not return actions for aircraft that have not entered the sector.
+- Use the simulator-generated candidate previews as the main decision evidence.
+- SAFE_R = 5.0 units.
+- The weather ellipse is forbidden airspace.
+OUTPUT RULES:
+- Return EXACTLY ONE JSON object and no extra text.
+- heading_change_deg must be one of {-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30}.
+- Positive is left, negative is right, 0 means hold current heading.
+STRICT JSON SHAPE:
+{
+  "answer": {
+    "scenario_summary": "<brief>",
+    "actions": {
+      "A1": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "<brief>",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+
+GUIDANCE-ELIGIBLE AGENTS THIS STEP:
+- A3: pos=(52.0,69.9) heading=-37.7 dest=(82.0,34.2) dist_dest=46.58 heading_err=-12.3 xtrack=+1.88 boundary_dist=5.11 pair_loss=5 weather_entry=None boundary_exit=None weather_clearance=16.60 safe_streak=0 call_name=EMERGENCY_MANEUVER call_reason=IMMEDIATE_HAZARD
+- A4: pos=(71.5,65.3) heading=+173.6 dest=(18.6,60.2) dist_dest=53.18 heading_err=+11.9 xtrack=-1.72 boundary_dist=4.59 pair_loss=5 weather_entry=None boundary_exit=None weather_clearance=25.19 safe_streak=0 call_name=EMERGENCY_MANEUVER call_reason=IMMEDIATE_HAZARD
+
+ENTERED TRAFFIC CONTEXT:
+- A1: pos=(55.7,43.1) heading=+161.3 dest=(23.2,54.4) dist_dest=34.41 heading_err=-0.5 xtrack=+0.05 boundary_dist=4.15 pair_loss=None weather_entry=None boundary_exit=None weather_clearance=17.78 safe_streak=9
+- A2: pos=(71.3,46.1) heading=+127.4 dest=(40.1,80.2) dist_dest=46.21 heading_err=+5.2 xtrack=-0.17 boundary_dist=3.40 pair_loss=None weather_entry=None boundary_exit=None weather_clearance=29.85 safe_streak=9
+- A3: pos=(52.0,69.9) heading=-37.7 dest=(82.0,34.2) dist_dest=46.58 heading_err=-12.3 xtrack=+1.88 boundary_dist=5.11 pair_loss=5 weather_entry=None boundary_exit=None weather_clearance=16.60 safe_streak=0
+- A4: pos=(71.5,65.3) heading=+173.6 dest=(18.6,60.2) dist_dest=53.18 heading_err=+11.9 xtrack=-1.72 boundary_dist=4.59 pair_loss=5 weather_entry=None boundary_exit=None weather_clearance=25.19 safe_streak=0
+
+GLOBAL WEATHER:
+- center=(36.3,63.3) orientation_deg=+91.0 motion_heading_deg=-170.4 speed_units_per_step=0.42
+- major_radius_nm=6.41 minor_radius_nm=4.27
+
+RANKED TRAFFIC THREATS:
+- A3: A4 dist=20.03 loss=5 min_sep=3.13; A2 dist=30.60 loss=None min_sep=11.04; A1 dist=26.97 loss=None min_sep=21.79
+- A4: A3 dist=20.03 loss=5 min_sep=3.13; A2 dist=19.17 loss=None min_sep=12.87; A1 dist=27.19 loss=None min_sep=25.23
+
+PER-AGENT TURN PREVIEWS:
+- A3:
+  turn=-30 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=5.18 | min_weather_clearance=15.64 | progress_to_destination=18.39 | cross_track_reduction=-3.09 | end_distance=28.19 | end_cross_track=4.97 | end_heading_error=30.2
+  turn=+5 | safe=0 | pair_loss=4 | weather_entry=None | boundary_exit=None | min_sep=4.86 | min_weather_clearance=16.74 | progress_to_destination=7.57 | cross_track_reduction=-2.06 | end_distance=39.02 | end_cross_track=3.94 | end_heading_error=20.8
+  turn=+10 | safe=0 | pair_loss=4 | weather_entry=None | boundary_exit=None | min_sep=4.47 | min_weather_clearance=16.86 | progress_to_destination=7.28 | cross_track_reduction=-2.73 | end_distance=39.30 | end_cross_track=4.61 | end_heading_error=26.7
+  turn=+30 | safe=0 | pair_loss=4 | weather_entry=None | boundary_exit=None | min_sep=4.46 | min_weather_clearance=17.27 | progress_to_destination=5.56 | cross_track_reduction=-5.14 | end_distance=41.02 | end_cross_track=7.01 | end_heading_error=49.8
+  turn=+15 | safe=0 | pair_loss=4 | weather_entry=None | boundary_exit=None | min_sep=4.21 | min_weather_clearance=16.98 | progress_to_destination=6.94 | cross_track_reduction=-3.37 | end_distance=39.64 | end_cross_track=5.25 | end_heading_error=32.6
+  turn=+25 | safe=0 | pair_loss=4 | weather_entry=None | boundary_exit=None | min_sep=4.21 | min_weather_clearance=17.18 | progress_to_destination=6.07 | cross_track_reduction=-4.58 | end_distance=40.51 | end_cross_track=6.46 | end_heading_error=44.2
+- A4:
+  turn=-30 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=8.27 | min_weather_clearance=26.25 | progress_to_destination=9.42 | cross_track_reduction=-9.00 | end_distance=43.76 | end_cross_track=10.72 | end_heading_error=54.2
+  turn=-25 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=7.41 | min_weather_clearance=25.25 | progress_to_destination=10.37 | cross_track_reduction=-8.03 | end_distance=42.81 | end_cross_track=9.75 | end_heading_error=48.2
+  turn=-20 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=6.54 | min_weather_clearance=24.35 | progress_to_destination=11.24 | cross_track_reduction=-7.00 | end_distance=41.95 | end_cross_track=8.72 | end_heading_error=42.0
+  turn=-15 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=5.67 | min_weather_clearance=23.55 | progress_to_destination=12.00 | cross_track_reduction=-5.92 | end_distance=41.18 | end_cross_track=7.64 | end_heading_error=35.7
+  turn=-10 | safe=0 | pair_loss=5 | weather_entry=None | boundary_exit=None | min_sep=4.80 | min_weather_clearance=25.78 | progress_to_destination=9.12 | cross_track_reduction=-3.42 | end_distance=44.06 | end_cross_track=5.14 | end_heading_error=26.7
+  turn=-5 | safe=0 | pair_loss=5 | weather_entry=None | boundary_exit=None | min_sep=3.95 | min_weather_clearance=25.44 | progress_to_destination=9.47 | cross_track_reduction=-2.59 | end_distance=43.71 | end_cross_track=4.31 | end_heading_error=20.7
+
+RECENT GLOBAL DECISION MEMORY:
+- step=5: A1:EXECUTE_TURN +0deg; A3:EXECUTE_TURN +25deg; A4:EXECUTE_TURN -20deg
+- step=6: A3:MERGE_BACK -5deg
+- step=7: A2:EXECUTE_TURN -5deg; A3:EMERGENCY_MANEUVER -10deg; A4:EMERGENCY_MANEUVER +10deg
+
+VISION FRAME CONTEXT:
+- none

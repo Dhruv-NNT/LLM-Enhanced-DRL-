@@ -1,0 +1,16 @@
+```
+{
+  "answer": {
+    "scenario_summary": "A3 is 48.7,72.0, heading -22.7, dest 82.0,34.2, dist 50.40, cross track +0.85",
+    "actions": {
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "reduce cross track error and progress towards destination",
+        "maneuver": {
+          "heading_change_deg": -5
+        }
+      }
+    }
+  }
+}
+```
