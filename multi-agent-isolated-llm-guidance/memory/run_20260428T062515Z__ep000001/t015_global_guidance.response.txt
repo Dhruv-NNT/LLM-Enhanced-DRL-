@@ -1,0 +1,19 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 and A3 are both experiencing immediate hazard conditions. A2's closest separation is with A3, and A3's closest separation is also with A2. Both aircraft are on diverging courses and require corrective action to avoid conflict.",
+    "actions": {
+      "A2": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "A2 is on a diverging course with A3 and is approaching a potential conflict. A -15 degree turn will reduce the separation between the aircraft while maintaining progress towards the destination.",
+        "maneuver": { "heading_change_deg": -15 }
+      },
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "A3 is on a diverging course with A2 and is approaching a potential conflict. A +5 degree turn will reduce the separation between the aircraft while maintaining progress towards the destination.",
+        "maneuver": { "heading_change_deg": 5 }
+      }
+    }
+  }
+}
+```

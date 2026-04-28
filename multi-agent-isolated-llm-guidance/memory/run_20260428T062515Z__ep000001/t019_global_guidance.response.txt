@@ -1,0 +1,14 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A3 is approaching a boundary and needs a heading adjustment to maintain safe separation and progress towards its destination. A2 is also approaching a boundary and needs a heading adjustment to maintain safe separation and progress towards its destination.",
+    "actions": {
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "A heading of +25 degrees offers a good balance of progress toward destination, cross-track reduction, and maintains safe separation. It also improves the aircraft's heading error.",
+        "maneuver": { "heading_change_deg": 25 }
+      }
+    }
+  }
+}
+```

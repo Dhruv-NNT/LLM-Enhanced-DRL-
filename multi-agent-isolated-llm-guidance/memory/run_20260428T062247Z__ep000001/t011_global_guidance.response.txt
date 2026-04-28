@@ -1,0 +1,14 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A3 is slightly off course and needs a heading adjustment to improve progress towards destination while maintaining safe separation from other traffic.",
+    "actions": {
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "A heading of +15 degrees provides the best combination of progress towards destination and reduction in cross-track error, while maintaining safe separation.  Other options either reduce progress or increase cross-track error.",
+        "maneuver": { "heading_change_deg": 15 }
+      }
+    }
+  }
+}
+```

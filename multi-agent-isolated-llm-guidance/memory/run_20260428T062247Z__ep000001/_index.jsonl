@@ -1,0 +1,8 @@
+{"tag": "t005_global_guidance", "step": 5, "run_id": null, "episode_id": null, "agent_id": "GLOBAL", "call_name": "GLOBAL_GUIDANCE", "llm_status": "ok", "parse_status": "missing_actions", "used_vision": false}
+{"tag": "t006_global_guidance", "step": 6, "run_id": null, "episode_id": null, "agent_id": "GLOBAL", "call_name": "GLOBAL_GUIDANCE", "llm_status": "ok", "parse_status": "ok", "used_vision": false}
+{"tag": "t007_global_guidance", "step": 7, "run_id": null, "episode_id": null, "agent_id": "GLOBAL", "call_name": "GLOBAL_GUIDANCE", "llm_status": "ok", "parse_status": "ok", "used_vision": false}
+{"tag": "t008_global_guidance", "step": 8, "run_id": null, "episode_id": null, "agent_id": "GLOBAL", "call_name": "GLOBAL_GUIDANCE", "llm_status": "ok", "parse_status": "ok", "used_vision": false}
+{"tag": "t011_global_guidance", "step": 11, "run_id": null, "episode_id": null, "agent_id": "GLOBAL", "call_name": "GLOBAL_GUIDANCE", "llm_status": "ok", "parse_status": "ok", "used_vision": false}
+{"tag": "t012_global_guidance", "step": 12, "run_id": null, "episode_id": null, "agent_id": "GLOBAL", "call_name": "GLOBAL_GUIDANCE", "llm_status": "ok", "parse_status": "ok", "used_vision": false}
+{"tag": "t014_global_guidance", "step": 14, "run_id": null, "episode_id": null, "agent_id": "GLOBAL", "call_name": "GLOBAL_GUIDANCE", "llm_status": "ok", "parse_status": "invalid_json", "used_vision": false}
+{"tag": "t015_global_guidance", "step": 15, "run_id": null, "episode_id": null, "agent_id": "GLOBAL", "call_name": "GLOBAL_GUIDANCE", "llm_status": "ok", "parse_status": "ok", "used_vision": false}

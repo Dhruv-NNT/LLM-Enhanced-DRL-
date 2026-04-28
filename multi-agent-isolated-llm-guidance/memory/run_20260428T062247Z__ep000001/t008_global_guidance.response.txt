@@ -1,0 +1,14 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 is slightly off course and needs a heading adjustment to improve progress towards its destination while maintaining safe separation from other aircraft.",
+    "actions": {
+      "A2": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "A turn of +10 degrees offers a good balance of progress towards destination and cross-track reduction, while maintaining safe separation and weather clearance. Larger turns are unsafe.",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+```

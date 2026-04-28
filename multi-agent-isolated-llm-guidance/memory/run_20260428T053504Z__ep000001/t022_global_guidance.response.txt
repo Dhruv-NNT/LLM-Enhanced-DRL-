@@ -1,0 +1,14 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A3 is approaching its destination and needs a small heading adjustment to maintain progress and avoid boundary infringement. A small left turn is selected.",
+    "actions": {
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "A small left turn will improve progress towards destination while remaining aligned and avoiding boundary infringement.",
+        "maneuver": { "heading_change_deg": -5 }
+      }
+    }
+  }
+}
+```

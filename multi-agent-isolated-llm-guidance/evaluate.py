@@ -90,15 +90,15 @@ def _annotate_frame(frame_path: Path, texts: Sequence[str]) -> None:
     with Image.open(frame_path).convert("RGBA") as img:
         draw = ImageDraw.Draw(img, "RGBA")
         try:
-            font = ImageFont.truetype("DejaVuSans-Bold.ttf", 22)
+            font = ImageFont.truetype("DejaVuSans-Bold.ttf", 14)
         except OSError:
             font = ImageFont.load_default()
 
-        left = 24
-        top = 24
-        pad_x = 16
-        pad_y = 10
-        gap_y = 10
+        left = 18
+        top = 18
+        pad_x = 10
+        pad_y = 6
+        gap_y = 6
         for text in texts:
             bbox = draw.textbbox((left, top), text, font=font)
             box = (
@@ -107,7 +107,7 @@ def _annotate_frame(frame_path: Path, texts: Sequence[str]) -> None:
                 bbox[2] + pad_x,
                 bbox[3] + pad_y,
             )
-            draw.rounded_rectangle(box, radius=12, fill=(220, 30, 30, 210))
+            draw.rounded_rectangle(box, radius=7, fill=(220, 30, 30, 210))
             draw.text((left, top), text, fill=(255, 255, 255, 255), font=font)
             top = box[3] + gap_y
         img.convert("RGB").save(frame_path)

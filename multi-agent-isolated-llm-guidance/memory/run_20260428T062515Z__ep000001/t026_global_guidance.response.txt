@@ -1,0 +1,19 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A3 is approaching a boundary and A4 is also approaching a boundary. A4's progress to destination is significantly lower than A3's, and a larger heading change is required to improve its trajectory.",
+    "actions": {
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "A3 is approaching a boundary and a small adjustment is needed to maintain safe separation and progress towards destination.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A4": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "A4 is approaching a boundary and requires a larger heading change to improve progress to destination and reduce cross-track deviation. A -10 degree turn offers a good balance between progress and safety.",
+        "maneuver": { "heading_change_deg": -10 }
+      }
+    }
+  }
+}
+```

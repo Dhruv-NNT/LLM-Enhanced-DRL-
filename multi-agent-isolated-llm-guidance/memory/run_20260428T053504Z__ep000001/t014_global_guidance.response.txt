@@ -1,0 +1,14 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A3 is approaching the boundary and needs a small correction to maintain safe separation and progress towards destination.",
+    "actions": {
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "A small turn of +5 degrees will improve progress towards destination while reducing cross-track deviation and maintaining safe separation from other traffic.",
+        "maneuver": { "heading_change_deg": 5 }
+      }
+    }
+  }
+}
+```

@@ -1,0 +1,14 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 is slightly off course and needs a small correction to improve progress towards destination while maintaining safe separation.",
+    "actions": {
+      "A2": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "A turn of +10 degrees provides a good balance of progress towards destination and cross-track reduction, while maintaining safe separation and weather clearance. Larger turns are unsafe.",
+        "maneuver": { "heading_change_deg": 10 }
+      }
+    }
+  }
+}
+```

@@ -415,6 +415,15 @@ def plot_sector() -> plt.Figure:
     waypoint_x = [coords[0] for coords in waypoint_map.values()]
     waypoint_y = [coords[1] for coords in waypoint_map.values()]
     ax.scatter(waypoint_x, waypoint_y, c="maroon", s=5, alpha=1.0)
+    for name, coords in waypoint_map.items():
+        ax.text(
+            coords[0] + 0.25,
+            coords[1] + 0.25,
+            name,
+            color="black",
+            fontsize=8,
+            alpha=0.85,
+        )
 
     for route in build_route_catalog():
         xs = [point[0] for point in route.points]

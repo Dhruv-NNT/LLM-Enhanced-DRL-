@@ -1,0 +1,14 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A1 is entering the sector and needs a heading adjustment. A turn of +10 degrees provides a good balance of progress towards destination and separation from other traffic.",
+    "actions": {
+      "A1": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "To facilitate entry into the sector and maintain safe separation from surrounding traffic.",
+        "maneuver": { "heading_change_deg": +10 }
+      }
+    }
+  }
+}
+```

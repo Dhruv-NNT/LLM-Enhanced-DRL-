@@ -1,0 +1,19 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 is slightly off course and needs a heading adjustment to improve progress towards destination and reduce cross-track deviation. A3 is also off course and needs a heading adjustment to improve progress towards destination and reduce cross-track deviation.",
+    "actions": {
+      "A2": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "A heading change of -15 degrees will provide a good balance of progress towards destination and cross-track reduction, while maintaining safe separation from other traffic.",
+        "maneuver": { "heading_change_deg": -15 }
+      },
+      "A3": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "A heading change of +20 degrees will provide a good balance of progress towards destination and cross-track reduction, while maintaining safe separation from other traffic.",
+        "maneuver": { "heading_change_deg": 20 }
+      }
+    }
+  }
+}
+```

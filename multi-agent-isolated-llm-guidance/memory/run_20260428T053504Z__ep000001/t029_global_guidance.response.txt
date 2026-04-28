@@ -1,0 +1,14 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is approaching its destination and needs a heading adjustment to reduce cross-track error and maintain progress. The aircraft is near the boundary.",
+    "actions": {
+      "A4": {
+        "call_name": "EXECUTE_TURN",
+        "rationale": "A turn of -15 degrees offers a good balance of progress towards the destination and cross-track reduction while maintaining sufficient weather clearance. It's a continuation of the previous heading adjustments.",
+        "maneuver": { "heading_change_deg": -15 }
+      }
+    }
+  }
+}
+```
