@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, TYPE_CHECKING
 
+from shapely.geometry import Point
+
 from configs import (
     ACTION_BINS,
     CLEAR_STREAK_REQUIRED,
@@ -36,7 +38,7 @@ from configs import (
     SAFE_R,
     TURN_PREVIEW_STEPS,
 )
-from .utils import line_signed_cross_track
+from .utils import heading_from_line, line_signed_cross_track, load_waypoint_map
 
 if TYPE_CHECKING:  # pragma: no cover
     from .core import AgentState, MultiAgentSectorCore
@@ -55,6 +57,18 @@ class AgentControllerState:
     last_advice_turn: int = 0
     last_call_name: Optional[str] = None
     last_merge_back_reason: Optional[str] = None
+
+
+@dataclass
+class HLTPPlan:
+    agent_id: str
+    first_waypoint_name: str
+    merge_back_waypoint_name: str
+    short_context: str
+    source: str
+    created_step: int
+    conflict_partner_ids: Tuple[str, ...]
+    rationale: str = ""
 
 
 class MultiAgentPromptBuilder:
@@ -253,6 +267,103 @@ class MultiAgentPromptBuilder:
                 f"end_cross_track_abs={float(row.get('end_cross_track_abs', 999.0)):.2f} | "
                 f"end_heading_error_to_dest_deg={float(row['end_heading_error_to_dest_deg']):.1f}"
             )
+        return "\n".join(lines)
+
+
+class HLTPPromptBuilder:
+    """Build text-only high-level tactical planning prompts."""
+
+    def build_prompt(
+        self,
+        core: "MultiAgentSectorCore",
+        *,
+        step: int,
+        contexts: Sequence[Dict[str, Any]],
+        frame_paths: Sequence[str],
+    ) -> str:
+        sections = [
+            self._instructions_text(step),
+            self._agent_context_text(contexts),
+            self._vision_placeholder_text(frame_paths),
+        ]
+        return "\n\n".join(section for section in sections if section)
+
+    def _instructions_text(self, step: int) -> str:
+        return (
+            "ROLE: You are a high-level tactical planner (HLTP) for aircraft that just entered the sector.\n"
+            "TASK:\n"
+            f"- Look ahead from current step {int(step)} to step 60.\n"
+            "- If two aircraft are in conflict, aviation convention says both should turn right.\n"
+            "- For each listed aircraft, choose exactly two waypoint names.\n"
+            "- first_waypoint_name must be a named waypoint on the right side of the aircraft's original flight plan.\n"
+            "- merge_back_waypoint_name must be a later named waypoint on the aircraft's original route.\n"
+            "- This is advisory high-level context only; low-level safety guidance may override it.\n"
+            "OUTPUT RULES:\n"
+            "- Return EXACTLY ONE JSON object and no extra text.\n"
+            "- Use only waypoint names shown in the candidate lists.\n"
+            "STRICT JSON SHAPE:\n"
+            "{\n"
+            "  \"answer\": {\n"
+            "    \"plans\": {\n"
+            "      \"A1\": {\n"
+            "        \"first_waypoint_name\": \"MUMSO\",\n"
+            "        \"merge_back_waypoint_name\": \"MABAL\",\n"
+            "        \"rationale\": \"<brief>\"\n"
+            "      }\n"
+            "    }\n"
+            "  }\n"
+            "}"
+        )
+
+    def _agent_context_text(self, contexts: Sequence[Dict[str, Any]]) -> str:
+        lines = ["HLTP AIRCRAFT CONTEXT:"]
+        if not contexts:
+            lines.append("- none")
+            return "\n".join(lines)
+        for context in contexts:
+            agent_id = str(context["agent_id"])
+            state = context["state"]
+            conflict = context["conflict"]
+            lines.append(
+                (
+                    f"- {agent_id}: pos=({state['position'][0]:.1f},{state['position'][1]:.1f}) "
+                    f"heading={state['heading_deg']:+.1f} route={'->'.join(context['route_waypoint_names'])}"
+                )
+            )
+            lines.append(
+                (
+                    f"  conflict_partners={','.join(context['conflict_partner_ids'])} "
+                    f"loss_step={conflict['loss_step']} min_sep={conflict['min_sep']:.2f} "
+                    f"conflict_point=({conflict['point'][0]:.1f},{conflict['point'][1]:.1f})"
+                )
+            )
+            lines.append("  right-side first waypoint candidates:")
+            for row in context["right_waypoint_candidates"]:
+                lines.append(
+                    (
+                        f"    - {row['name']}: pos=({row['point'][0]:.1f},{row['point'][1]:.1f}) "
+                        f"distance_to_conflict={row['distance_to_conflict']:.2f} "
+                        f"right_offset={abs(row['side_offset']):.2f}"
+                    )
+                )
+            lines.append("  original-route merge-back candidates:")
+            for row in context["merge_back_candidates"]:
+                lines.append(
+                    (
+                        f"    - {row['name']}: pos=({row['point'][0]:.1f},{row['point'][1]:.1f}) "
+                        f"route_progress={row['route_progress']:.2f}"
+                    )
+                )
+        return "\n".join(lines)
+
+    def _vision_placeholder_text(self, frame_paths: Sequence[str]) -> str:
+        lines = ["VISION HLTP CONTEXT:"]
+        if not frame_paths:
+            lines.append("- none")
+        else:
+            lines.append("- placeholder only; HLTP is currently text-only and does not inspect frames.")
+            for idx, frame_path in enumerate(frame_paths):
+                lines.append(f"- frame_{idx}: {os.path.basename(frame_path)}")
         return "\n".join(lines)
 
 
@@ -1087,6 +1198,7 @@ class GlobalPromptBuilder:
         step: int,
         actionable: List[Dict[str, Any]],
         entered_agent_ids: List[str],
+        hltp_plans: Dict[str, Dict[str, Any]],
         threat_rows_by_agent: Dict[str, List[Dict[str, Any]]],
         preview_rows_by_agent: Dict[str, List[Dict[str, Any]]],
         recent_decisions: Sequence[Dict[str, Any]],
@@ -1097,6 +1209,7 @@ class GlobalPromptBuilder:
             self._merge_back_priority_text(actionable),
             self._eligible_agents_text(core, actionable),
             self._entered_context_text(core, entered_agent_ids),
+            self._hltp_plans_text(hltp_plans),
             self._weather_text(core),
             self._threats_text(threat_rows_by_agent),
             self._preview_text(preview_rows_by_agent),
@@ -1189,6 +1302,20 @@ class GlobalPromptBuilder:
             return "\n".join(lines)
         for agent_id in entered_agent_ids:
             lines.append(f"- {self._agent_state_line(core, agent_id)}")
+        return "\n".join(lines)
+
+    def _hltp_plans_text(self, hltp_plans: Dict[str, Dict[str, Any]]) -> str:
+        lines = ["HIGH-LEVEL TACTICAL PLANS:"]
+        if not hltp_plans:
+            lines.append("- none")
+            return "\n".join(lines)
+        for agent_id, plan in sorted(hltp_plans.items()):
+            context = str(plan.get("short_context", "")).strip()
+            if not context:
+                continue
+            lines.append(f"- {agent_id}: {context}. Advisory only; current safety logic may override.")
+        if len(lines) == 1:
+            lines.append("- none")
         return "\n".join(lines)
 
     def _weather_text(self, core: "MultiAgentSectorCore") -> str:
@@ -1293,8 +1420,10 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
     ) -> None:
         super().__init__(save_dir=save_dir, memory_path=memory_path)
         self.global_builder = GlobalPromptBuilder() if builder is None else builder
+        self.hltp_builder = HLTPPromptBuilder()
         self.retry_limit = int(retry_limit)
         self.recent_decisions: List[Dict[str, Any]] = []
+        self.hltp_plans: Dict[str, HLTPPlan] = {}
         self.graph = self._build_graph()
 
     def _build_graph(self):
@@ -1308,6 +1437,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
 
         graph = StateGraph(dict)
         graph.add_node("collect_state", self._graph_collect_state)
+        graph.add_node("hltp_on_sector_entry", self._graph_hltp_on_sector_entry)
         graph.add_node("assign_stages", self._graph_assign_stages)
         graph.add_node("build_global_context", self._graph_build_global_context)
         graph.add_node("call_llm", self._graph_call_llm)
@@ -1316,7 +1446,8 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         graph.add_node("fallback_missing", self._graph_fallback_missing)
         graph.add_node("commit_and_log", self._graph_commit_and_log)
         graph.set_entry_point("collect_state")
-        graph.add_edge("collect_state", "assign_stages")
+        graph.add_edge("collect_state", "hltp_on_sector_entry")
+        graph.add_edge("hltp_on_sector_entry", "assign_stages")
         graph.add_edge("assign_stages", "build_global_context")
         graph.add_edge("build_global_context", "call_llm")
         graph.add_edge("call_llm", "parse_validate_retry")
@@ -1329,6 +1460,562 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
     def reset(self) -> None:
         super().reset()
         self.recent_decisions = []
+        self.hltp_plans = {}
+
+    def _hltp_plan_to_dict(self, plan: HLTPPlan) -> Dict[str, Any]:
+        return {
+            "agent_id": plan.agent_id,
+            "first_waypoint_name": plan.first_waypoint_name,
+            "merge_back_waypoint_name": plan.merge_back_waypoint_name,
+            "short_context": plan.short_context,
+            "source": plan.source,
+            "created_step": int(plan.created_step),
+            "conflict_partner_ids": list(plan.conflict_partner_ids),
+            "rationale": plan.rationale,
+        }
+
+    def _active_hltp_plan_dicts(self, agent_ids: Optional[Sequence[str]] = None) -> Dict[str, Dict[str, Any]]:
+        allowed = None if agent_ids is None else set(str(agent_id) for agent_id in agent_ids)
+        return {
+            agent_id: self._hltp_plan_to_dict(plan)
+            for agent_id, plan in sorted(self.hltp_plans.items())
+            if allowed is None or agent_id in allowed
+        }
+
+    def _route_side_offset(
+        self,
+        line: Any,
+        point: Tuple[float, float],
+    ) -> Tuple[float, float]:
+        route_progress = float(line.project(Point(point)))
+        foot = line.interpolate(route_progress)
+        route_heading = heading_from_line(line, route_progress)
+        tx, ty = math.cos(route_heading), math.sin(route_heading)
+        dx, dy = float(point[0]) - float(foot.x), float(point[1]) - float(foot.y)
+        side_offset = tx * dy - ty * dx
+        return float(side_offset), float(route_progress)
+
+    def _hltp_pair_conflicts(
+        self,
+        core: "MultiAgentSectorCore",
+        *,
+        horizon_steps: int,
+    ) -> Dict[Tuple[str, str], Dict[str, Any]]:
+        sim = core.clone()
+        summaries: Dict[Tuple[str, str], Dict[str, Any]] = {}
+        for tick in range(1, int(max(1, horizon_steps)) + 1):
+            sim.step({}, compute_predictions=False)
+            for pair_key, distance in sim.last_pairwise_separations.items():
+                agent_a, agent_b = pair_key
+                key = _pair_key(agent_a, agent_b)
+                state_a = sim.agent_states.get(agent_a)
+                state_b = sim.agent_states.get(agent_b)
+                if state_a is None or state_b is None:
+                    continue
+                midpoint = (
+                    0.5 * (float(state_a.position[0]) + float(state_b.position[0])),
+                    0.5 * (float(state_a.position[1]) + float(state_b.position[1])),
+                )
+                summary = summaries.setdefault(
+                    key,
+                    {
+                        "agent_ids": key,
+                        "min_sep": float("inf"),
+                        "min_step": None,
+                        "loss_step": None,
+                        "point": midpoint,
+                    },
+                )
+                if float(distance) < float(summary["min_sep"]):
+                    summary["min_sep"] = float(distance)
+                    summary["min_step"] = tick
+                    if summary["loss_step"] is None:
+                        summary["point"] = midpoint
+                if float(distance) < core.safe_r and summary["loss_step"] is None:
+                    summary["loss_step"] = tick
+                    summary["point"] = midpoint
+            if sim.last_team_done or sim.last_team_truncated:
+                break
+        return {
+            key: value
+            for key, value in summaries.items()
+            if value.get("loss_step") is not None
+        }
+
+    def _best_hltp_conflict_for_agent(
+        self,
+        conflicts: Dict[Tuple[str, str], Dict[str, Any]],
+        agent_id: str,
+    ) -> Optional[Dict[str, Any]]:
+        candidates = [
+            conflict
+            for pair, conflict in conflicts.items()
+            if str(agent_id) in pair
+        ]
+        if not candidates:
+            return None
+        return min(
+            candidates,
+            key=lambda item: (
+                999 if item.get("loss_step") is None else int(item["loss_step"]),
+                float(item.get("min_sep", 999.0)),
+            ),
+        )
+
+    def _hltp_right_waypoint_candidates(
+        self,
+        core: "MultiAgentSectorCore",
+        agent_id: str,
+        conflict_point: Tuple[float, float],
+    ) -> List[Dict[str, Any]]:
+        state = core.get_agent(agent_id)
+        line = state.route.linestring
+        current_progress = float(line.project(Point(state.position)))
+        conflict_progress = float(line.project(Point(conflict_point)))
+        rows: List[Dict[str, Any]] = []
+        for name, point in load_waypoint_map().items():
+            side_offset, route_progress = self._route_side_offset(line, point)
+            if route_progress + 1e-6 < current_progress:
+                continue
+            if side_offset >= -0.10:
+                continue
+            distance_to_conflict = float(
+                math.hypot(float(point[0]) - conflict_point[0], float(point[1]) - conflict_point[1])
+            )
+            rows.append(
+                {
+                    "name": str(name),
+                    "point": (float(point[0]), float(point[1])),
+                    "route_progress": float(route_progress),
+                    "side_offset": float(side_offset),
+                    "distance_to_conflict": distance_to_conflict,
+                    "progress_delta_to_conflict": abs(float(route_progress) - conflict_progress),
+                }
+            )
+        rows.sort(
+            key=lambda row: (
+                float(row["distance_to_conflict"]),
+                float(row["progress_delta_to_conflict"]),
+                abs(float(row["side_offset"])),
+                str(row["name"]),
+            )
+        )
+        return rows[:8]
+
+    def _hltp_merge_back_candidates(
+        self,
+        core: "MultiAgentSectorCore",
+        agent_id: str,
+        conflict_point: Tuple[float, float],
+    ) -> List[Dict[str, Any]]:
+        state = core.get_agent(agent_id)
+        line = state.route.linestring
+        waypoint_map = load_waypoint_map()
+        current_progress = float(line.project(Point(state.position)))
+        conflict_progress = float(line.project(Point(conflict_point)))
+        minimum_progress = max(current_progress, conflict_progress)
+        rows: List[Dict[str, Any]] = []
+        for name in state.route.waypoint_names:
+            if name not in waypoint_map:
+                continue
+            point = waypoint_map[name]
+            route_progress = float(line.project(Point(point)))
+            if route_progress + 1e-6 < minimum_progress:
+                continue
+            rows.append(
+                {
+                    "name": str(name),
+                    "point": (float(point[0]), float(point[1])),
+                    "route_progress": float(route_progress),
+                }
+            )
+        if not rows:
+            for name in reversed(state.route.waypoint_names):
+                if name not in waypoint_map:
+                    continue
+                point = waypoint_map[name]
+                route_progress = float(line.project(Point(point)))
+                if route_progress + 1e-6 >= current_progress:
+                    rows.append(
+                        {
+                            "name": str(name),
+                            "point": (float(point[0]), float(point[1])),
+                            "route_progress": float(route_progress),
+                        }
+                    )
+                    break
+        rows.sort(key=lambda row: (float(row["route_progress"]), str(row["name"])))
+        return rows[:6]
+
+    def _hltp_context_for_agent(
+        self,
+        core: "MultiAgentSectorCore",
+        agent_id: str,
+        conflict: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        state = core.get_agent(agent_id)
+        conflict_point = tuple(conflict["point"])
+        right_candidates = self._hltp_right_waypoint_candidates(core, agent_id, conflict_point)
+        merge_candidates = self._hltp_merge_back_candidates(core, agent_id, conflict_point)
+        if not right_candidates or not merge_candidates:
+            return None
+        partner_ids = tuple(
+            other_id
+            for other_id in conflict["agent_ids"]
+            if str(other_id) != str(agent_id)
+        )
+        return {
+            "agent_id": str(agent_id),
+            "state": {
+                "position": tuple(float(value) for value in state.position),
+                "heading_deg": float(math.degrees(state.heading_rad)),
+            },
+            "route_waypoint_names": list(state.route.waypoint_names),
+            "conflict_partner_ids": list(partner_ids),
+            "conflict": {
+                "agent_ids": list(conflict["agent_ids"]),
+                "loss_step": conflict.get("loss_step"),
+                "min_sep": float(conflict.get("min_sep", 999.0)),
+                "point": tuple(float(value) for value in conflict_point),
+            },
+            "right_waypoint_candidates": right_candidates,
+            "merge_back_candidates": merge_candidates,
+        }
+
+    def _hltp_contexts_for_step(
+        self,
+        core: "MultiAgentSectorCore",
+        *,
+        step: int,
+        newly_entered: Optional[Sequence[str]] = None,
+        conflicts: Optional[Dict[Tuple[str, str], Dict[str, Any]]] = None,
+    ) -> Dict[str, Dict[str, Any]]:
+        newly_entered = list(
+            self._newly_entered_hltp_agent_ids(core, step)
+            if newly_entered is None
+            else newly_entered
+        )
+        if not newly_entered:
+            return {}
+
+        if conflicts is None:
+            conflicts = self._hltp_pair_conflicts(core, horizon_steps=max(1, 60 - int(step)))
+        selected: Dict[str, Dict[str, Any]] = {}
+        for agent_id in newly_entered:
+            conflict = self._best_hltp_conflict_for_agent(conflicts, agent_id)
+            if conflict is None:
+                continue
+            selected[agent_id] = conflict
+            for partner_id in conflict["agent_ids"]:
+                partner_id = str(partner_id)
+                if partner_id == agent_id or partner_id in self.hltp_plans or partner_id in selected:
+                    continue
+                partner_state = core.get_agent(partner_id)
+                if partner_state.launched and partner_state.has_entered_sector and not partner_state.finished:
+                    selected[partner_id] = conflict
+
+        contexts: Dict[str, Dict[str, Any]] = {}
+        for agent_id, conflict in selected.items():
+            context = self._hltp_context_for_agent(core, agent_id, conflict)
+            if context is not None:
+                contexts[agent_id] = context
+        return contexts
+
+    def _newly_entered_hltp_agent_ids(
+        self,
+        core: "MultiAgentSectorCore",
+        step: int,
+    ) -> List[str]:
+        return [
+            agent_id
+            for agent_id in core.active_agent_ids
+            if core.get_agent(agent_id).sector_entry_step is not None
+            and int(core.get_agent(agent_id).sector_entry_step) == int(step)
+            and agent_id not in self.hltp_plans
+        ]
+
+    def _fallback_hltp_plan(
+        self,
+        *,
+        context: Dict[str, Any],
+        step: int,
+        source: str = "fallback",
+        rationale: str = "deterministic right-side waypoint fallback",
+    ) -> HLTPPlan:
+        first = context["right_waypoint_candidates"][0]
+        first_progress = float(first["route_progress"])
+        merge_candidates = [
+            row
+            for row in context["merge_back_candidates"]
+            if float(row["route_progress"]) + 1e-6 >= first_progress
+        ]
+        merge = merge_candidates[0] if merge_candidates else context["merge_back_candidates"][0]
+        short_context = f"HLTP {first['name']}->{merge['name']}"
+        return HLTPPlan(
+            agent_id=str(context["agent_id"]),
+            first_waypoint_name=str(first["name"]),
+            merge_back_waypoint_name=str(merge["name"]),
+            short_context=short_context,
+            source=source,
+            created_step=int(step),
+            conflict_partner_ids=tuple(str(value) for value in context["conflict_partner_ids"]),
+            rationale=rationale,
+        )
+
+    def _hltp_plan_from_payload(
+        self,
+        *,
+        agent_id: str,
+        payload: Dict[str, Any],
+        context: Dict[str, Any],
+        step: int,
+    ) -> Optional[HLTPPlan]:
+        first_name = str(payload.get("first_waypoint_name", "")).strip()
+        merge_name = str(payload.get("merge_back_waypoint_name", "")).strip()
+        right_names = {str(row["name"]) for row in context["right_waypoint_candidates"]}
+        merge_names = {str(row["name"]) for row in context["merge_back_candidates"]}
+        if first_name not in right_names or merge_name not in merge_names:
+            return None
+        rationale = payload.get("rationale", "")
+        short_context = f"HLTP {first_name}->{merge_name}"
+        return HLTPPlan(
+            agent_id=str(agent_id),
+            first_waypoint_name=first_name,
+            merge_back_waypoint_name=merge_name,
+            short_context=short_context,
+            source="llm",
+            created_step=int(step),
+            conflict_partner_ids=tuple(str(value) for value in context["conflict_partner_ids"]),
+            rationale=rationale if isinstance(rationale, str) else "",
+        )
+
+    def _extract_hltp_plans_from_payload(
+        self,
+        payload: Dict[str, Any],
+        expected_agent_ids: Sequence[str],
+    ) -> Tuple[Dict[str, Dict[str, Any]], List[str]]:
+        answer = payload.get("answer") if isinstance(payload, dict) else {}
+        answer = answer if isinstance(answer, dict) else {}
+        plans = answer.get("plans") if isinstance(answer.get("plans"), dict) else {}
+        found: Dict[str, Dict[str, Any]] = {}
+        missing: List[str] = []
+        for agent_id in expected_agent_ids:
+            plan = plans.get(agent_id)
+            if isinstance(plan, dict):
+                found[agent_id] = plan
+            else:
+                missing.append(agent_id)
+        return found, missing
+
+    def _apply_hltp_annotations(
+        self,
+        core: "MultiAgentSectorCore",
+        *,
+        step: int,
+        annotations: Sequence[str],
+        plans: Dict[str, HLTPPlan],
+    ) -> List[str]:
+        updated = list(annotations)
+        for agent_id, plan in plans.items():
+            state = core.get_agent(agent_id)
+            if state.sector_entry_step is None or int(state.sector_entry_step) != int(step):
+                continue
+            plain = f"{agent_id}: ENTERED SECTOR"
+            with_plan = f"{agent_id}: ENTERED SECTOR: {plan.short_context}"
+            replaced = False
+            for idx, text in enumerate(updated):
+                if text == plain:
+                    updated[idx] = with_plan
+                    replaced = True
+                    break
+            if not replaced:
+                updated.append(with_plan)
+        return updated
+
+    def _apply_no_hltp_conflict_annotations(
+        self,
+        core: "MultiAgentSectorCore",
+        *,
+        step: int,
+        annotations: Sequence[str],
+        agent_ids: Sequence[str],
+    ) -> List[str]:
+        updated = list(annotations)
+        for agent_id in agent_ids:
+            state = core.get_agent(agent_id)
+            if state.sector_entry_step is None or int(state.sector_entry_step) != int(step):
+                continue
+            plain = f"{agent_id}: ENTERED SECTOR"
+            with_reason = f"{agent_id}: ENTERED SECTOR: HLTP NO CONFLICT DETECTED"
+            replaced = False
+            for idx, text in enumerate(updated):
+                if text == plain:
+                    updated[idx] = with_reason
+                    replaced = True
+                    break
+            if not replaced and not any(text.startswith(f"{agent_id}: ENTERED SECTOR:") for text in updated):
+                updated.append(with_reason)
+        return updated
+
+    def _log_hltp_call(
+        self,
+        *,
+        step: int,
+        prompt_text: str,
+        raw_text: str,
+        normalized: Dict[str, Any],
+        contexts_by_agent: Dict[str, Dict[str, Any]],
+        debug: Dict[str, Any],
+    ) -> None:
+        _ensure_dir(self.save_dir)
+        tag = f"t{step:03d}_hltp"
+        prompt_path = os.path.join(self.save_dir, f"{tag}.prompt.txt")
+        response_path = os.path.join(self.save_dir, f"{tag}.response.txt")
+        normalized_path = os.path.join(self.save_dir, f"{tag}.normalized.json")
+        _save_text(prompt_path, prompt_text)
+        _save_text(response_path, raw_text)
+        payload = copy.deepcopy(normalized)
+        payload["contexts_by_agent"] = contexts_by_agent
+        payload["debug"] = debug
+        _save_json(normalized_path, payload)
+        with open(os.path.join(self.save_dir, "_index.jsonl"), "a", encoding="utf-8") as handle:
+            row = {
+                "tag": tag,
+                "step": step,
+                "run_id": self.run_id,
+                "episode_id": self.episode_id,
+                "agent_id": "HLTP",
+                "call_name": "HLTP",
+                "llm_status": debug.get("llm_status"),
+                "parse_status": debug.get("parse_status"),
+                "used_vision": False,
+            }
+            handle.write(json.dumps(row) + "\n")
+
+    def _graph_hltp_on_sector_entry(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        core = state["core"]
+        step = int(state["step"])
+        newly_entered = self._newly_entered_hltp_agent_ids(core, step)
+        conflicts = (
+            self._hltp_pair_conflicts(core, horizon_steps=max(1, 60 - step))
+            if newly_entered
+            else {}
+        )
+        contexts_by_agent = self._hltp_contexts_for_step(
+            core,
+            step=step,
+            newly_entered=newly_entered,
+            conflicts=conflicts,
+        )
+        no_conflict_agent_ids = [
+            agent_id
+            for agent_id in newly_entered
+            if self._best_hltp_conflict_for_agent(conflicts, agent_id) is None
+        ]
+        annotations = self._apply_no_hltp_conflict_annotations(
+            core,
+            step=step,
+            annotations=list(state.get("annotations", [])),
+            agent_ids=no_conflict_agent_ids,
+        )
+        if not contexts_by_agent:
+            return {
+                **state,
+                "annotations": annotations,
+                "hltp_plans_created": {},
+                "hltp_no_conflict_agent_ids": no_conflict_agent_ids,
+            }
+
+        prompt_text = self.hltp_builder.build_prompt(
+            core,
+            step=step,
+            contexts=list(contexts_by_agent.values()),
+            frame_paths=list(state.get("frame_paths", [])),
+        )
+        llm_result = ollama_invoke(prompt_text, image_paths=None)
+        expected_agent_ids = sorted(contexts_by_agent)
+        parsed_payload: Dict[str, Any] = {}
+        candidate_plans: Dict[str, Dict[str, Any]] = {}
+        missing_agent_ids = list(expected_agent_ids)
+        parse_status = "not_attempted"
+        fallback_agents: List[str] = []
+
+        if llm_result.get("llm_status") == "ok":
+            try:
+                parsed_payload = _extract_json(str(llm_result.get("raw_text", "")))
+                candidate_plans, missing_agent_ids = self._extract_hltp_plans_from_payload(
+                    parsed_payload,
+                    expected_agent_ids,
+                )
+                parse_status = "ok" if not missing_agent_ids else "missing_plans"
+            except Exception:
+                parsed_payload = {}
+                candidate_plans = {}
+                missing_agent_ids = list(expected_agent_ids)
+                parse_status = "invalid_json"
+
+        final_plans: Dict[str, HLTPPlan] = {}
+        invalid_agent_ids: List[str] = []
+        for agent_id, plan_payload in candidate_plans.items():
+            plan = self._hltp_plan_from_payload(
+                agent_id=agent_id,
+                payload=plan_payload,
+                context=contexts_by_agent[agent_id],
+                step=step,
+            )
+            if plan is None:
+                invalid_agent_ids.append(agent_id)
+                continue
+            final_plans[agent_id] = plan
+
+        for agent_id in sorted(set(missing_agent_ids).union(invalid_agent_ids)):
+            final_plans[agent_id] = self._fallback_hltp_plan(
+                context=contexts_by_agent[agent_id],
+                step=step,
+            )
+            fallback_agents.append(agent_id)
+
+        for agent_id, plan in final_plans.items():
+            self.hltp_plans[agent_id] = plan
+
+        normalized = {
+            "answer": {
+                "plans": {
+                    agent_id: self._hltp_plan_to_dict(plan)
+                    for agent_id, plan in sorted(final_plans.items())
+                }
+            }
+        }
+        debug = {
+            "llm_status": llm_result.get("llm_status"),
+            "llm_error": llm_result.get("error", ""),
+            "parse_status": parse_status,
+            "fallback_agents": fallback_agents,
+            "eligible_agent_ids": expected_agent_ids,
+            "used_vision": False,
+            "frame_paths": [],
+            "model": OLLAMA_MODEL,
+        }
+        self._log_hltp_call(
+            step=step,
+            prompt_text=prompt_text,
+            raw_text=str(llm_result.get("raw_text", "")),
+            normalized=normalized,
+            contexts_by_agent=contexts_by_agent,
+            debug=debug,
+        )
+        annotations = self._apply_hltp_annotations(
+            core,
+            step=step,
+            annotations=annotations,
+            plans=final_plans,
+        )
+        return {
+            **state,
+            "annotations": annotations,
+            "hltp_plans_created": normalized["answer"]["plans"],
+            "hltp_no_conflict_agent_ids": no_conflict_agent_ids,
+        }
 
     def _global_call_decision_for_agent(
         self,
@@ -1478,6 +2165,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             step=int(state["step"]),
             actionable=actionable,
             entered_agent_ids=list(state.get("entered_agent_ids", [])),
+            hltp_plans=self._active_hltp_plan_dicts(state.get("entered_agent_ids", [])),
             threat_rows_by_agent=threat_rows_by_agent,
             preview_rows_by_agent=preview_rows_by_agent,
             recent_decisions=self.recent_decisions,
@@ -1487,6 +2175,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             **state,
             "threat_rows_by_agent": threat_rows_by_agent,
             "preview_rows_by_agent": preview_rows_by_agent,
+            "hltp_plans": self._active_hltp_plan_dicts(state.get("entered_agent_ids", [])),
             "prompt_text": prompt_text,
         }
 
@@ -1664,6 +2353,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         debug: Dict[str, Any],
         threat_rows_by_agent: Dict[str, List[Dict[str, Any]]],
         preview_rows_by_agent: Dict[str, List[Dict[str, Any]]],
+        hltp_plans: Dict[str, Dict[str, Any]],
     ) -> None:
         _ensure_dir(self.save_dir)
         tag = f"t{step:03d}_global_guidance"
@@ -1678,6 +2368,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         payload = copy.deepcopy(normalized)
         payload["threat_rows_by_agent"] = threat_rows_by_agent
         payload["preview_rows_by_agent"] = preview_rows_by_agent
+        payload["hltp_plans"] = hltp_plans
         payload["debug"] = debug
         self.last_normalized = payload
         _save_json(normalized_path, payload)
@@ -1755,6 +2446,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
                 str(item["agent_id"]): str(item["call_name"])
                 for item in actionable
             },
+            "hltp_plans": state.get("hltp_plans", {}),
             "model": OLLAMA_MODEL,
         }
         self._log_global_call(
@@ -1765,6 +2457,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             debug=debug,
             threat_rows_by_agent=state.get("threat_rows_by_agent", {}),
             preview_rows_by_agent=state.get("preview_rows_by_agent", {}),
+            hltp_plans=state.get("hltp_plans", {}),
         )
 
         self.recent_decisions.append(
