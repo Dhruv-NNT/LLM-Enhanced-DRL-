@@ -17,6 +17,7 @@ from configs import (
     MAX_AGENTS,
     MEMORY_DIR,
     NUM_AGENTS_DEFAULT,
+    NUM_WEATHER_CELLS_DEFAULT,
     PLOT_DIR,
     ROUTE_IDS_DEFAULT,
     RUN_MODES,
@@ -31,6 +32,7 @@ from rl_llm_multi.utils import max_agents_possible
 class EpisodeResult:
     mode: str
     num_agents: int
+    num_weather_cells: int
     seed: Optional[int]
     route_ids: Optional[List[str]]
     steps: int
@@ -64,6 +66,13 @@ def _validate_num_agents(num_agents: int) -> int:
     if num_agents < 1 or num_agents > capacity:
         raise ValueError(f"num_agents must satisfy 1 <= num_agents <= {capacity}, got {num_agents}")
     return int(num_agents)
+
+
+def _validate_num_weather_cells(num_weather_cells: int) -> int:
+    value = int(num_weather_cells)
+    if value not in (1, 2):
+        raise ValueError(f"num_weather_cells must be 1 or 2, got {num_weather_cells}")
+    return value
 
 
 def _write_gif(frame_dir: Path, gif_path: Path, duration_ms: int = FRAME_DURATION_MS) -> None:
@@ -121,15 +130,26 @@ def evaluate_episode(
     output_dir: Path,
     episode_step_cap: Optional[int] = None,
     use_vision: bool = USE_VISION_DEFAULT,
+    num_weather_cells: int = NUM_WEATHER_CELLS_DEFAULT,
 ) -> EpisodeResult:
     route_ids = _normalize_route_ids(route_ids)
+    num_weather_cells = _validate_num_weather_cells(num_weather_cells)
     memory_dir = _ensure_dir(MEMORY_DIR / f"run_{_timestamp()}__ep000001")
     controller = GlobalLangGraphGuidanceController(save_dir=str(memory_dir))
-    env = JointGuidanceEnv(num_agents=num_agents, max_agents=MAX_AGENTS)
+    env = JointGuidanceEnv(
+        num_agents=num_agents,
+        max_agents=MAX_AGENTS,
+        num_weather_cells=num_weather_cells,
+    )
     if episode_step_cap is not None:
         env.core.max_step = int(episode_step_cap)
 
-    env.reset(seed=seed, num_agents=num_agents, route_ids=route_ids)
+    env.reset(
+        seed=seed,
+        num_agents=num_agents,
+        route_ids=route_ids,
+        num_weather_cells=num_weather_cells,
+    )
     controller.reset()
     env.render(folder=str(output_dir))
 
@@ -156,6 +176,7 @@ def evaluate_episode(
     return EpisodeResult(
         mode="LLM_ONLY",
         num_agents=num_agents,
+        num_weather_cells=num_weather_cells,
         seed=seed,
         route_ids=route_ids,
         steps=env.core.n_step,
@@ -179,6 +200,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gif-name", type=str, default=None)
     parser.add_argument("--episode-step-cap", type=int, default=None)
     parser.add_argument("--use-vision", action="store_true", default=USE_VISION_DEFAULT)
+    parser.add_argument("--num-weather-cells", type=int, choices=(1, 2), default=NUM_WEATHER_CELLS_DEFAULT)
     return parser.parse_args()
 
 
@@ -196,6 +218,7 @@ def main() -> None:
         output_dir=output_dir,
         episode_step_cap=args.episode_step_cap,
         use_vision=args.use_vision,
+        num_weather_cells=args.num_weather_cells,
     )
 
     gif_name = args.gif_name or f"llm_only_{_timestamp()}.gif"
@@ -207,7 +230,7 @@ def main() -> None:
         json.dump(asdict(result), handle, indent=2)
 
     print(
-        "mode={} steps={} reward={:.3f} success={} truncated={} failure_reason={} used_vision={} gif={}".format(
+        "mode={} steps={} reward={:.3f} success={} truncated={} failure_reason={} used_vision={} weather_cells={} gif={}".format(
             result.mode,
             result.steps,
             result.total_reward,
@@ -215,6 +238,7 @@ def main() -> None:
             int(result.truncated),
             result.failure_reason,
             int(result.used_vision),
+            result.num_weather_cells,
             gif_path,
         )
     )

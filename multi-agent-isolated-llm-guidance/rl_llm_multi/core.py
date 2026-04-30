@@ -23,6 +23,7 @@ from configs import (
     HAZARD_LOOKAHEAD_STEPS,
     MAX_AGENTS,
     MAX_STEP,
+    NUM_WEATHER_CELLS_DEFAULT,
     PAIR_RISK_BUFFER,
     ROUTE_RECOVERY_XTRACK_UNITS,
     SAFE_R,
@@ -104,6 +105,7 @@ class MultiAgentSectorCore:
         goal_radius: float = GOAL_RADIUS,
         max_step: int = MAX_STEP,
         speed: float = AGENT_SPEED,
+        num_weather_cells: int = NUM_WEATHER_CELLS_DEFAULT,
     ) -> None:
         self.num_agents = int(num_agents)
         self.max_agents = int(max_agents)
@@ -111,12 +113,14 @@ class MultiAgentSectorCore:
         self.goal_radius = float(goal_radius)
         self.max_step = int(max_step)
         self.speed = float(speed)
+        self.num_weather_cells = self._validate_num_weather_cells(num_weather_cells)
         self.weather_clearance_buffer_units = nm_to_grid_mean(WEATHER_CLEARANCE_BUFFER_NM)
         self.sector_polygon = load_sector_polygon()
         self.possible_agents = possible_agent_ids(self.max_agents)
 
         self.assignments: List[AssignedRoute] = []
         self.agent_states: Dict[str, AgentState] = {}
+        self.weather_cells: List[WeatherCell] = []
         self.weather_cell: Optional[WeatherCell] = None
         self.n_step = 0
         self.reward = 0.0
@@ -129,6 +133,16 @@ class MultiAgentSectorCore:
         self.risky_pairs: List[Dict[str, Any]] = []
         self.rng = random.Random()
 
+    @staticmethod
+    def _validate_num_weather_cells(value: int) -> int:
+        num_cells = int(value)
+        if num_cells not in (1, 2):
+            raise ValueError(f"num_weather_cells must be 1 or 2, got {value}")
+        return num_cells
+
+    def _sync_primary_weather_cell(self) -> None:
+        self.weather_cell = self.weather_cells[0] if self.weather_cells else None
+
     def clone(self) -> "MultiAgentSectorCore":
         return copy.deepcopy(self)
 
@@ -138,12 +152,16 @@ class MultiAgentSectorCore:
         seed: Optional[int] = None,
         num_agents: Optional[int] = None,
         route_ids: Optional[Sequence[str]] = None,
+        num_weather_cells: Optional[int] = None,
     ) -> Tuple[Dict[str, np.ndarray], Dict[str, Any]]:
         if num_agents is not None:
             self.num_agents = int(num_agents)
+        if num_weather_cells is not None:
+            self.num_weather_cells = self._validate_num_weather_cells(num_weather_cells)
         self.rng = random.Random(seed)
         self.assignments = assign_routes(self.num_agents, seed=seed, route_ids=route_ids)
         self.agent_states = {}
+        self.weather_cells = []
         self.weather_cell = None
         self.n_step = 0
         self.reward = 0.0
@@ -172,7 +190,8 @@ class MultiAgentSectorCore:
                 active=launched,
             )
 
-        self.weather_cell = self._init_weather()
+        self.weather_cells = self._init_weather_cells()
+        self._sync_primary_weather_cell()
         self._update_hazard_predictions()
         observations = self.get_active_observations()
         infos = self.get_infos()
@@ -277,22 +296,29 @@ class MultiAgentSectorCore:
         return float(self.sector_polygon.exterior.distance(Point(state.position)))
 
     def weather_signed_clearance(self, position: Tuple[float, float]) -> float:
-        if self.weather_cell is None:
+        if not self.weather_cells:
             return float("inf")
-        return weather_signed_clearance(self.weather_cell, position)
+        return min(weather_signed_clearance(cell, position) for cell in self.weather_cells)
 
     def weather_center_distance(self, position: Tuple[float, float]) -> float:
-        if self.weather_cell is None:
+        if not self.weather_cells:
             return float("inf")
-        return float(np.linalg.norm(np.array(position) - np.array(self.weather_cell.center)))
+        return min(
+            float(np.linalg.norm(np.array(position) - np.array(cell.center)))
+            for cell in self.weather_cells
+        )
 
     def weather_relative_bearing_deg(self, state: AgentState) -> float:
-        if self.weather_cell is None:
+        if not self.weather_cells:
             return 0.0
+        nearest = min(
+            self.weather_cells,
+            key=lambda cell: float(np.linalg.norm(np.array(state.position) - np.array(cell.center))),
+        )
         absolute = math.degrees(
             math.atan2(
-                self.weather_cell.center[1] - state.position[1],
-                self.weather_cell.center[0] - state.position[0],
+                nearest.center[1] - state.position[1],
+                nearest.center[0] - state.position[0],
             )
         )
         own_deg = math.degrees(state.heading_rad)
@@ -316,12 +342,24 @@ class MultiAgentSectorCore:
             positions.append((x_val, y_val))
         return positions
 
-    def _init_weather(self) -> WeatherCell:
-        launches = [
-            state.position
-            for state in self.agent_states.values()
-            if state.launched
+    def _init_weather_cells(self) -> List[WeatherCell]:
+        shared_motion_heading_rad = self.rng.uniform(-math.pi, math.pi)
+        return [
+            self._init_weather_cell(
+                cell_id=f"W{idx + 1}",
+                motion_heading_rad=shared_motion_heading_rad,
+            )
+            for idx in range(self.num_weather_cells)
         ]
+
+    def _init_weather(self) -> WeatherCell:
+        return self._init_weather_cell(
+            cell_id="W1",
+            motion_heading_rad=self.rng.uniform(-math.pi, math.pi),
+        )
+
+    def _init_weather_cell(self, *, cell_id: str, motion_heading_rad: float) -> WeatherCell:
+        launches = [state.position for state in self.agent_states.values()]
         destinations = [tuple(assignment.route.points[-1]) for assignment in self.assignments]
         min_x, min_y, max_x, max_y = self.sector_polygon.bounds
 
@@ -329,7 +367,6 @@ class MultiAgentSectorCore:
             major_radius_nm = self.rng.uniform(WEATHER_MAJOR_RADIUS_NM_MIN, WEATHER_MAJOR_RADIUS_NM_MAX)
             minor_ratio = self.rng.uniform(WEATHER_MINOR_RATIO_MIN, WEATHER_MINOR_RATIO_MAX)
             angle_rad = self.rng.uniform(0.0, math.pi)
-            motion_heading_rad = self.rng.uniform(-math.pi, math.pi)
             speed_units = nm_to_grid_mean(
                 self.rng.uniform(WEATHER_SPEED_NM_PER_STEP_MIN, WEATHER_SPEED_NM_PER_STEP_MAX)
             )
@@ -348,6 +385,7 @@ class MultiAgentSectorCore:
                 motion_heading_rad=motion_heading_rad,
                 speed_units_per_step=speed_units,
                 major_growth_nm_per_step=growth_nm,
+                cell_id=cell_id,
             )
             if not self._weather_geometry_valid(cell):
                 continue
@@ -363,68 +401,66 @@ class MultiAgentSectorCore:
         poly = weather_polygon(cell)
         return bool(poly.within(self.sector_polygon))
 
-    def _advance_weather(self) -> None:
-        if self.weather_cell is None:
-            return
+    def _weather_destinations_clear(self, cell: WeatherCell) -> bool:
+        destinations = [tuple(assignment.route.points[-1]) for assignment in self.assignments]
+        return all(
+            weather_polygon(cell).distance(Point(dest)) > self.goal_radius
+            for dest in destinations
+        )
 
-        cell = copy.deepcopy(self.weather_cell)
-        growth_nm = cell.major_growth_nm_per_step
-        next_major_nm = cell.major_radius_nm + growth_nm
-        if next_major_nm < WEATHER_MAJOR_RADIUS_NM_MIN or next_major_nm > WEATHER_MAJOR_RADIUS_NM_MAX:
-            growth_nm *= -1.0
-            next_major_nm = min(
-                WEATHER_MAJOR_RADIUS_NM_MAX,
-                max(WEATHER_MAJOR_RADIUS_NM_MIN, cell.major_radius_nm + growth_nm),
-            )
+    def _next_weather_size(self, cell: WeatherCell) -> Tuple[float, float, bool]:
+        if cell.growth_stopped or abs(float(cell.major_growth_nm_per_step)) <= 1e-9:
+            return float(cell.major_radius_nm), 0.0, bool(cell.growth_stopped)
+        growth_nm = float(cell.major_growth_nm_per_step)
+        next_major_nm = float(cell.major_radius_nm) + growth_nm
+        if next_major_nm >= WEATHER_MAJOR_RADIUS_NM_MAX:
+            return float(WEATHER_MAJOR_RADIUS_NM_MAX), 0.0, True
+        if next_major_nm <= WEATHER_MAJOR_RADIUS_NM_MIN:
+            return float(WEATHER_MAJOR_RADIUS_NM_MIN), 0.0, True
+        return float(next_major_nm), growth_nm, False
 
+    def _advance_weather_cell(self, cell: WeatherCell) -> WeatherCell:
+        current = copy.deepcopy(cell)
+        if current.movement_stopped:
+            current.speed_units_per_step = 0.0
+            current.major_growth_nm_per_step = 0.0
+            current.growth_stopped = True
+            return current
+
+        next_major_nm, next_growth_nm, growth_stopped = self._next_weather_size(current)
         proposed_center = (
-            cell.center[0] + cell.speed_units_per_step * math.cos(cell.motion_heading_rad),
-            cell.center[1] + cell.speed_units_per_step * math.sin(cell.motion_heading_rad),
+            current.center[0] + current.speed_units_per_step * math.cos(current.motion_heading_rad),
+            current.center[1] + current.speed_units_per_step * math.sin(current.motion_heading_rad),
         )
         proposed = WeatherCell(
             center=proposed_center,
             major_radius_nm=next_major_nm,
-            minor_ratio=cell.minor_ratio,
-            angle_rad=cell.angle_rad,
-            motion_heading_rad=cell.motion_heading_rad,
-            speed_units_per_step=cell.speed_units_per_step,
-            major_growth_nm_per_step=growth_nm,
+            minor_ratio=current.minor_ratio,
+            angle_rad=current.angle_rad,
+            motion_heading_rad=current.motion_heading_rad,
+            speed_units_per_step=current.speed_units_per_step,
+            major_growth_nm_per_step=next_growth_nm,
+            cell_id=current.cell_id,
+            growth_stopped=growth_stopped,
+            movement_stopped=False,
         )
+        if self._weather_geometry_valid(proposed) and self._weather_destinations_clear(proposed):
+            return proposed
 
-        destinations = [tuple(assignment.route.points[-1]) for assignment in self.assignments]
-        if self._weather_geometry_valid(proposed) and all(
-            weather_polygon(proposed).distance(Point(dest)) > self.goal_radius for dest in destinations
-        ):
-            self.weather_cell = proposed
-            return
+        current.speed_units_per_step = 0.0
+        current.major_growth_nm_per_step = 0.0
+        current.growth_stopped = True
+        current.movement_stopped = True
+        return current
 
-        bounced_heading = self._wrap_angle(cell.motion_heading_rad + math.pi)
-        bounced_growth = -growth_nm
-        bounced_major_nm = min(
-            WEATHER_MAJOR_RADIUS_NM_MAX,
-            max(WEATHER_MAJOR_RADIUS_NM_MIN, cell.major_radius_nm + bounced_growth),
-        )
-        bounced_center = (
-            cell.center[0] + cell.speed_units_per_step * math.cos(bounced_heading),
-            cell.center[1] + cell.speed_units_per_step * math.sin(bounced_heading),
-        )
-        bounced = WeatherCell(
-            center=bounced_center,
-            major_radius_nm=bounced_major_nm,
-            minor_ratio=cell.minor_ratio,
-            angle_rad=cell.angle_rad,
-            motion_heading_rad=bounced_heading,
-            speed_units_per_step=cell.speed_units_per_step,
-            major_growth_nm_per_step=bounced_growth,
-        )
-        if self._weather_geometry_valid(bounced) and all(
-            weather_polygon(bounced).distance(Point(dest)) > self.goal_radius for dest in destinations
-        ):
-            self.weather_cell = bounced
-            return
-
-        self.weather_cell.motion_heading_rad = bounced_heading
-        self.weather_cell.major_growth_nm_per_step = bounced_growth
+    def _advance_weather(self) -> None:
+        if not self.weather_cells:
+            if self.weather_cell is not None:
+                self.weather_cells = [self.weather_cell]
+            else:
+                return
+        self.weather_cells = [self._advance_weather_cell(cell) for cell in self.weather_cells]
+        self._sync_primary_weather_cell()
 
     def _update_hazard_predictions(self, *, horizon_steps: int = HAZARD_LOOKAHEAD_STEPS) -> None:
         active_ids = list(self.active_agent_ids)
@@ -768,20 +804,33 @@ class MultiAgentSectorCore:
         return np.array(blocks, dtype=np.float64)
 
     def weather_dict(self) -> Optional[Dict[str, Any]]:
-        if self.weather_cell is None:
+        if not self.weather_cells:
             return None
-        major_units, minor_units = weather_axis_units(self.weather_cell)
+
+        def cell_dict(cell: WeatherCell) -> Dict[str, Any]:
+            major_units, minor_units = weather_axis_units(cell)
+            return {
+                "cell_id": str(cell.cell_id),
+                "center": list(cell.center),
+                "major_radius_nm": float(cell.major_radius_nm),
+                "minor_radius_nm": float(cell.minor_radius_nm),
+                "major_radius_units": float(major_units),
+                "minor_radius_units": float(minor_units),
+                "minor_ratio": float(cell.minor_ratio),
+                "angle_rad": float(cell.angle_rad),
+                "motion_heading_rad": float(cell.motion_heading_rad),
+                "speed_units_per_step": float(cell.speed_units_per_step),
+                "major_growth_nm_per_step": float(cell.major_growth_nm_per_step),
+                "growth_stopped": bool(cell.growth_stopped),
+                "movement_stopped": bool(cell.movement_stopped),
+            }
+
+        cells = [cell_dict(cell) for cell in self.weather_cells]
+        primary = cells[0]
         return {
-            "center": list(self.weather_cell.center),
-            "major_radius_nm": float(self.weather_cell.major_radius_nm),
-            "minor_radius_nm": float(self.weather_cell.minor_radius_nm),
-            "major_radius_units": float(major_units),
-            "minor_radius_units": float(minor_units),
-            "minor_ratio": float(self.weather_cell.minor_ratio),
-            "angle_rad": float(self.weather_cell.angle_rad),
-            "motion_heading_rad": float(self.weather_cell.motion_heading_rad),
-            "speed_units_per_step": float(self.weather_cell.speed_units_per_step),
-            "major_growth_nm_per_step": float(self.weather_cell.major_growth_nm_per_step),
+            **primary,
+            "cells": cells,
+            "num_weather_cells": len(cells),
         }
 
     def get_infos(self) -> Dict[str, Any]:
@@ -837,30 +886,56 @@ class MultiAgentSectorCore:
                     weight="bold",
                 )
 
-        if self.weather_cell is not None:
-            major_units, minor_units = weather_axis_units(self.weather_cell)
+        weather_colors = [
+            ("#dc2626", (220 / 255.0, 38 / 255.0, 38 / 255.0, 0.18), "#991b1b"),
+            ("#ea580c", (234 / 255.0, 88 / 255.0, 12 / 255.0, 0.16), "#9a3412"),
+        ]
+        for idx, cell in enumerate(self.weather_cells):
+            edge_color, face_color, arrow_color = weather_colors[idx % len(weather_colors)]
+            major_units, minor_units = weather_axis_units(cell)
             weather_patch = Ellipse(
-                xy=self.weather_cell.center,
+                xy=cell.center,
                 width=2.0 * major_units,
                 height=2.0 * minor_units,
-                angle=math.degrees(self.weather_cell.angle_rad),
-                edgecolor="#dc2626",
-                facecolor=(220 / 255.0, 38 / 255.0, 38 / 255.0, 0.18),
+                angle=math.degrees(cell.angle_rad),
+                edgecolor=edge_color,
+                facecolor=face_color,
                 linewidth=2.0,
             )
             ax.add_patch(weather_patch)
-            trail = weather_trail(self.weather_cell, WEATHER_TRAIL_STEPS)
+            ax.text(
+                cell.center[0],
+                cell.center[1],
+                str(cell.cell_id),
+                color=arrow_color,
+                fontsize=8,
+                weight="bold",
+                ha="center",
+                va="center",
+            )
+            if cell.movement_stopped or abs(float(cell.speed_units_per_step)) <= 1e-9:
+                ax.scatter(cell.center[0], cell.center[1], c=arrow_color, s=28, marker="x")
+                ax.text(
+                    cell.center[0] + 1.0,
+                    cell.center[1] - 1.0,
+                    "STOP",
+                    color=arrow_color,
+                    fontsize=7,
+                    weight="bold",
+                )
+                continue
+            trail = weather_trail(cell, WEATHER_TRAIL_STEPS)
             trail_x = [point[0] for point in trail]
             trail_y = [point[1] for point in trail]
-            ax.plot(trail_x, trail_y, color="#dc2626", alpha=0.35, linewidth=1.0, linestyle=":")
-            arrow_dx = 3.0 * self.weather_cell.speed_units_per_step * math.cos(self.weather_cell.motion_heading_rad)
-            arrow_dy = 3.0 * self.weather_cell.speed_units_per_step * math.sin(self.weather_cell.motion_heading_rad)
+            ax.plot(trail_x, trail_y, color=edge_color, alpha=0.35, linewidth=1.0, linestyle=":")
+            arrow_dx = 3.0 * cell.speed_units_per_step * math.cos(cell.motion_heading_rad)
+            arrow_dy = 3.0 * cell.speed_units_per_step * math.sin(cell.motion_heading_rad)
             ax.arrow(
-                self.weather_cell.center[0],
-                self.weather_cell.center[1],
+                cell.center[0],
+                cell.center[1],
                 arrow_dx,
                 arrow_dy,
-                color="#991b1b",
+                color=arrow_color,
                 width=0.08,
                 head_width=1.5,
                 length_includes_head=True,

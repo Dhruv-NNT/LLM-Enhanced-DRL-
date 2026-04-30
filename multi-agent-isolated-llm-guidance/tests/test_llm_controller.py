@@ -9,6 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import matplotlib.pyplot as plt
 from shapely.geometry import LineString
 
 
@@ -16,11 +17,18 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
-from configs import MAX_AGENTS, SAFE_R  # noqa: E402
+from configs import (  # noqa: E402
+    MAX_AGENTS,
+    SAFE_R,
+    WEATHER_MAJOR_RADIUS_NM_MAX,
+    WEATHER_MAJOR_RADIUS_NM_MIN,
+)
 from rl_llm_multi import (  # noqa: E402
     GlobalLangGraphGuidanceController,
     JointGuidanceEnv,
+    MultiAgentSectorCore,
     MultiAgentThreeCallController,
+    WeatherCell,
 )
 
 
@@ -68,6 +76,7 @@ def _make_state(
     predicted_weather_clearance: float = 999.0,
     safe_streak: int = 0,
     boundary_warning_active: bool = False,
+    weather_predicted: bool = False,
     hazard_predicted: bool = False,
     launched: bool = True,
     finished: bool = False,
@@ -87,6 +96,7 @@ def _make_state(
         predicted_boundary_exit_step=predicted_boundary_exit_step,
         predicted_min_sep=float(predicted_min_sep),
         predicted_weather_clearance=float(predicted_weather_clearance),
+        weather_predicted=bool(weather_predicted),
         hazard_predicted=bool(hazard_predicted),
         launched=bool(launched),
         finished=bool(finished),
@@ -104,6 +114,7 @@ class FakeCore:
             state.agent_id for state in states if state.launched and not state.finished
         ]
         self.safe_r = SAFE_R
+        self.weather_clearance_buffer_units = 2.0
         self.n_step = 5
 
     def get_agent(self, agent_id: str) -> SimpleNamespace:
@@ -250,6 +261,28 @@ class ControllerTests(unittest.TestCase):
         ordered = sorted(rows, key=lambda row: controller._candidate_sort_key_for_call("MERGE_BACK", row))
 
         self.assertEqual([row["heading_change_deg"] for row in ordered], [10, 0, 15])
+
+    def test_preview_marks_weather_buffer_breach_unsafe(self) -> None:
+        controller = MultiAgentThreeCallController()
+        core = FakeCore([_make_state("A1", position=(10.0, 10.0), has_entered_sector=True)])
+        with patch.object(controller, "_allowed_turns", return_value=[0]), patch.object(
+            controller,
+            "_simulate_joint_horizon",
+            return_value={
+                "pair_loss_step": {"A1": None},
+                "weather_entry_step": {"A1": None},
+                "boundary_exit_step": {"A1": None},
+                "per_agent_min_sep": {"A1": SAFE_R + 1.0},
+                "min_weather_clearance": {"A1": core.weather_clearance_buffer_units - 0.1},
+                "end_heading_error_to_dest_deg": {"A1": 0.0},
+                "end_distance_to_destination": {"A1": 70.0},
+                "end_cross_track_abs": {"A1": 0.0},
+            },
+        ):
+            rows = controller._preview_rows(core, "A1", "EXECUTE_TURN")
+
+        self.assertFalse(rows[0]["safe_over_preview"])
+        self.assertFalse(rows[0]["weather_buffer_ok"])
 
     def test_prompt_is_local_and_mentions_primary_and_other_threats(self) -> None:
         controller = MultiAgentThreeCallController()
@@ -625,6 +658,142 @@ class ControllerTests(unittest.TestCase):
 
         self.assertEqual(actions, {"A1": 0})
 
+    def test_default_core_uses_one_weather_cell(self) -> None:
+        core = MultiAgentSectorCore(num_agents=2)
+        core.reset(seed=42)
+
+        self.assertEqual(len(core.weather_cells), 1)
+        self.assertIs(core.weather_cell, core.weather_cells[0])
+        self.assertEqual(core.weather_dict()["num_weather_cells"], 1)
+        self.assertEqual(len(core.weather_dict()["cells"]), 1)
+
+    def test_two_weather_cells_initialize_with_shared_motion_heading(self) -> None:
+        core = MultiAgentSectorCore(num_agents=2, num_weather_cells=2)
+        core.reset(seed=42, num_weather_cells=2)
+
+        self.assertEqual(len(core.weather_cells), 2)
+        self.assertEqual([cell.cell_id for cell in core.weather_cells], ["W1", "W2"])
+        self.assertAlmostEqual(
+            core.weather_cells[0].motion_heading_rad,
+            core.weather_cells[1].motion_heading_rad,
+        )
+        self.assertEqual(len(core.weather_dict()["cells"]), 2)
+
+    def test_weather_growth_clamps_and_stops_at_max(self) -> None:
+        core = MultiAgentSectorCore(num_agents=1)
+        core.reset(seed=42)
+        cell = core.weather_cell
+        cell.major_radius_nm = WEATHER_MAJOR_RADIUS_NM_MAX - 0.05
+        cell.major_growth_nm_per_step = 0.5
+        cell.speed_units_per_step = 0.0
+
+        with patch.object(core, "_weather_geometry_valid", return_value=True), patch.object(
+            core,
+            "_weather_destinations_clear",
+            return_value=True,
+        ):
+            advanced = core._advance_weather_cell(cell)
+
+        self.assertEqual(advanced.major_radius_nm, WEATHER_MAJOR_RADIUS_NM_MAX)
+        self.assertEqual(advanced.major_growth_nm_per_step, 0.0)
+        self.assertTrue(advanced.growth_stopped)
+
+    def test_weather_shrink_clamps_and_stops_at_min(self) -> None:
+        core = MultiAgentSectorCore(num_agents=1)
+        core.reset(seed=42)
+        cell = core.weather_cell
+        cell.major_radius_nm = WEATHER_MAJOR_RADIUS_NM_MIN + 0.05
+        cell.major_growth_nm_per_step = -0.5
+        cell.speed_units_per_step = 0.0
+
+        with patch.object(core, "_weather_geometry_valid", return_value=True), patch.object(
+            core,
+            "_weather_destinations_clear",
+            return_value=True,
+        ):
+            advanced = core._advance_weather_cell(cell)
+
+        self.assertEqual(advanced.major_radius_nm, WEATHER_MAJOR_RADIUS_NM_MIN)
+        self.assertEqual(advanced.major_growth_nm_per_step, 0.0)
+        self.assertTrue(advanced.growth_stopped)
+
+    def test_weather_boundary_hit_freezes_position_and_stops_movement(self) -> None:
+        core = MultiAgentSectorCore(num_agents=1)
+        core.reset(seed=42)
+        cell = core.weather_cell
+        start_center = tuple(cell.center)
+
+        with patch.object(core, "_weather_geometry_valid", return_value=False):
+            advanced = core._advance_weather_cell(cell)
+
+        self.assertEqual(tuple(advanced.center), start_center)
+        self.assertEqual(advanced.speed_units_per_step, 0.0)
+        self.assertEqual(advanced.major_growth_nm_per_step, 0.0)
+        self.assertTrue(advanced.movement_stopped)
+
+    def test_weather_signed_clearance_uses_most_dangerous_cell(self) -> None:
+        core = MultiAgentSectorCore(num_agents=1)
+        core.reset(seed=42)
+        core.weather_cells = [
+            WeatherCell((10.0, 10.0), 2.5, 0.8, 0.0, 0.0, 0.0, 0.0, cell_id="W1"),
+            WeatherCell((50.0, 50.0), 15.0, 0.8, 0.0, 0.0, 0.0, 0.0, cell_id="W2"),
+        ]
+        core._sync_primary_weather_cell()
+
+        self.assertLess(core.weather_signed_clearance((50.0, 50.0)), 0.0)
+
+    def test_aircraft_entering_second_weather_cell_triggers_failure(self) -> None:
+        core = MultiAgentSectorCore(num_agents=1, num_weather_cells=2)
+        core.reset(seed=42, num_weather_cells=2)
+        state = core.get_agent("A1")
+        state.position = (50.0, 50.0)
+        state.heading_rad = 0.0
+        state.launched = True
+        state.active = True
+        state.has_entered_sector = True
+        state.inside_sector = True
+        core.weather_cells = [
+            WeatherCell((10.0, 10.0), 2.5, 0.8, 0.0, 0.0, 0.0, 0.0, cell_id="W1", movement_stopped=True),
+            WeatherCell((52.0, 50.0), 15.0, 0.8, 0.0, 0.0, 0.0, 0.0, cell_id="W2", movement_stopped=True),
+        ]
+        core._sync_primary_weather_cell()
+
+        _, _, terminations, _, info = core.step({})
+
+        self.assertTrue(any(terminations.values()))
+        self.assertEqual(info["failure_reason"], "weather")
+
+    def test_global_prompt_includes_both_weather_cells(self) -> None:
+        core = MultiAgentSectorCore(num_agents=2, num_weather_cells=2)
+        core.reset(seed=42, num_weather_cells=2)
+        controller = GlobalLangGraphGuidanceController()
+        prompt = controller.global_builder.build_prompt(
+            core,
+            step=0,
+            actionable=[],
+            entered_agent_ids=[],
+            hltp_plans={},
+            threat_rows_by_agent={},
+            preview_rows_by_agent={},
+            recent_decisions=[],
+            frame_paths=[],
+        )
+
+        self.assertIn("W1", prompt)
+        self.assertIn("W2", prompt)
+        self.assertIn("any listed cell is forbidden airspace", prompt)
+
+    def test_render_labels_two_weather_cells(self) -> None:
+        core = MultiAgentSectorCore(num_agents=2, num_weather_cells=2)
+        core.reset(seed=42, num_weather_cells=2)
+        fig = core.render(show=False)
+        try:
+            labels = {text.get_text() for text in fig.gca().texts}
+            self.assertIn("W1", labels)
+            self.assertIn("W2", labels)
+        finally:
+            plt.close(fig)
+
     def test_global_controller_vision_uses_current_plus_previous_three_frames(self) -> None:
         core = FakeCore([_make_state("A1", position=(10.0, 10.0), has_entered_sector=True)])
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -693,52 +862,71 @@ class ControllerTests(unittest.TestCase):
 
     def test_global_controller_smoke_runs_with_two_and_four_agents(self) -> None:
         for num_agents in (2, 4):
-            with self.subTest(num_agents=num_agents):
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    env = JointGuidanceEnv(num_agents=num_agents, max_agents=MAX_AGENTS)
-                    env.reset(seed=42, num_agents=num_agents, route_ids=None)
-                    controller = GlobalLangGraphGuidanceController(save_dir=tmpdir)
-                    controller.reset()
-                    with patch(
-                        "rl_llm_multi.llm.ollama_invoke",
-                        return_value={
-                            "llm_status": "ok",
-                            "raw_text": _global_answer_json({f"A{idx}": 0 for idx in range(1, MAX_AGENTS + 1)}),
-                            "error": "",
-                            "used_vision": False,
-                        },
-                    ):
-                        for _ in range(3):
-                            actions = controller.choose_llm_actions(env.core, step=env.n_step)
-                            self.assertIsInstance(actions, dict)
-                            _, _, done, truncated, _ = env.step(actions)
-                            if done or truncated:
-                                break
+            for num_weather_cells in (1, 2):
+                with self.subTest(num_agents=num_agents, num_weather_cells=num_weather_cells):
+                    with tempfile.TemporaryDirectory() as tmpdir:
+                        env = JointGuidanceEnv(
+                            num_agents=num_agents,
+                            max_agents=MAX_AGENTS,
+                            num_weather_cells=num_weather_cells,
+                        )
+                        env.reset(
+                            seed=42,
+                            num_agents=num_agents,
+                            route_ids=None,
+                            num_weather_cells=num_weather_cells,
+                        )
+                        controller = GlobalLangGraphGuidanceController(save_dir=tmpdir)
+                        controller.reset()
+                        with patch(
+                            "rl_llm_multi.llm.ollama_invoke",
+                            return_value={
+                                "llm_status": "ok",
+                                "raw_text": _global_answer_json({f"A{idx}": 0 for idx in range(1, MAX_AGENTS + 1)}),
+                                "error": "",
+                                "used_vision": False,
+                            },
+                        ):
+                            for _ in range(3):
+                                actions = controller.choose_llm_actions(env.core, step=env.n_step)
+                                self.assertIsInstance(actions, dict)
+                                _, _, done, truncated, _ = env.step(actions)
+                                if done or truncated:
+                                    break
 
     def test_smoke_runs_with_two_and_four_agents(self) -> None:
         for num_agents in (2, 4):
-            with self.subTest(num_agents=num_agents):
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    env = JointGuidanceEnv(num_agents=num_agents, max_agents=MAX_AGENTS)
-                    env.reset(seed=42, num_agents=num_agents, route_ids=None)
-                    controller = MultiAgentThreeCallController(save_dir=tmpdir)
-                    controller.reset()
-                    with patch(
-                        "rl_llm_multi.llm.ollama_invoke",
-                        return_value={
-                            "llm_status": "ok",
-                            "raw_text": _answer_json(0),
-                            "error": "",
-                            "used_vision": False,
-                        },
-                    ):
-                        for _ in range(3):
-                            actions = controller.choose_llm_actions(env.core, step=env.n_step)
-                            self.assertIsInstance(actions, dict)
-                            _, _, done, truncated, _ = env.step(actions)
-                            if done or truncated:
-                                break
-
+            for num_weather_cells in (1, 2):
+                with self.subTest(num_agents=num_agents, num_weather_cells=num_weather_cells):
+                    with tempfile.TemporaryDirectory() as tmpdir:
+                        env = JointGuidanceEnv(
+                            num_agents=num_agents,
+                            max_agents=MAX_AGENTS,
+                            num_weather_cells=num_weather_cells,
+                        )
+                        env.reset(
+                            seed=42,
+                            num_agents=num_agents,
+                            route_ids=None,
+                            num_weather_cells=num_weather_cells,
+                        )
+                        controller = MultiAgentThreeCallController(save_dir=tmpdir)
+                        controller.reset()
+                        with patch(
+                            "rl_llm_multi.llm.ollama_invoke",
+                            return_value={
+                                "llm_status": "ok",
+                                "raw_text": _answer_json(0),
+                                "error": "",
+                                "used_vision": False,
+                            },
+                        ):
+                            for _ in range(3):
+                                actions = controller.choose_llm_actions(env.core, step=env.n_step)
+                                self.assertIsInstance(actions, dict)
+                                _, _, done, truncated, _ = env.step(actions)
+                                if done or truncated:
+                                    break
 
 if __name__ == "__main__":
     unittest.main()

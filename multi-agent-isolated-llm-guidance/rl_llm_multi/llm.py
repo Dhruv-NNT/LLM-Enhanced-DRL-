@@ -118,6 +118,9 @@ class MultiAgentPromptBuilder:
                 "- Keep recovery safe with respect to nearby traffic and weather.\n"
                 "MERGE_BACK PRIORITY:\n"
                 "- Choose a safe candidate that improves recovery toward destination.\n"
+                "- Do not merge back through another aircraft's path.\n"
+                "- If merge-back rows show pair_loss or low min_sep, choose a hold/diverge candidate instead of forcing recovery.\n"
+                "- Weather clearance and traffic separation override destination progress.\n"
                 "- Prefer larger progress_to_destination.\n"
                 "- Prefer reducing cross_track_abs.\n"
                 "- Use 0 only if it remains aligned and still makes good destination progress.\n"
@@ -128,7 +131,11 @@ class MultiAgentPromptBuilder:
             "ROLE: You are a cautious ATCO helper for one aircraft.\n"
             f"{stage_text}"
             f"- SAFE_R = {self.safe_r:.1f} units.\n"
-            "- The weather ellipse is forbidden airspace.\n"
+            "- Every weather cell is forbidden airspace; avoid entering any cell.\n"
+            "SAFETY SELECTION RULES:\n"
+            "- Prefer a preview row with safe=1 over any row with safe=0.\n"
+            "- Prefer weather_buffer_ok=1; do not choose weather_buffer_ok=0 unless every candidate has weather_buffer_ok=0.\n"
+            "- If all rows are unsafe, choose the least bad row: no weather_entry, no pair_loss, largest min_sep, then largest min_weather_clearance.\n"
             "- Return exactly one action for the ownship only.\n"
             "OUTPUT RULES:\n"
             "- Return EXACTLY ONE JSON object.\n"
@@ -196,20 +203,30 @@ class MultiAgentPromptBuilder:
         weather = core.weather_dict()
         if weather is None:
             return "LOCAL WEATHER RISK:\n- none"
-        return "\n".join(
-            [
-                "LOCAL WEATHER RISK:",
-                f"- current_clearance={current_clearance:.2f}",
+        cells = weather.get("cells") if isinstance(weather.get("cells"), list) else [weather]
+        lines = [
+            "LOCAL WEATHER RISK:",
+            "- every weather cell is forbidden airspace",
+            f"- required_clearance_buffer={core.weather_clearance_buffer_units:.2f} simulator units",
+            f"- current_min_clearance_across_cells={current_clearance:.2f}",
+            (
+                f"- predicted_weather_entry_step={state.predicted_weather_entry_step} "
+                f"predicted_min_clearance={state.predicted_weather_clearance:.2f}"
+            ),
+        ]
+        for cell in cells:
+            lines.append(
                 (
-                    f"- predicted_weather_entry_step={state.predicted_weather_entry_step} "
-                    f"predicted_min_clearance={state.predicted_weather_clearance:.2f}"
-                ),
-                (
-                    f"- weather_center=({weather['center'][0]:.1f},{weather['center'][1]:.1f}) "
-                    f"orientation_deg={math.degrees(weather['angle_rad']):+.1f}"
-                ),
-            ]
-        )
+                    f"- {cell.get('cell_id', 'W?')}: center=({cell['center'][0]:.1f},{cell['center'][1]:.1f}) "
+                    f"major_nm={float(cell['major_radius_nm']):.2f} "
+                    f"minor_nm={float(cell['minor_radius_nm']):.2f} "
+                    f"orientation_deg={math.degrees(float(cell['angle_rad'])):+.1f} "
+                    f"motion_heading_deg={math.degrees(float(cell['motion_heading_rad'])):+.1f} "
+                    f"growth_stopped={int(bool(cell.get('growth_stopped', False)))} "
+                    f"movement_stopped={int(bool(cell.get('movement_stopped', False)))}"
+                )
+            )
+        return "\n".join(lines)
 
     def _primary_threat_text(self, threat_rows: List[Dict[str, Any]]) -> str:
         if not threat_rows:
@@ -261,6 +278,7 @@ class MultiAgentPromptBuilder:
                 f"boundary_exit_step={row['boundary_exit_step']} | "
                 f"min_sep_to_any={float(row['min_sep_to_any']):.2f} | "
                 f"min_weather_clearance={float(row['min_weather_clearance']):.2f} | "
+                f"weather_buffer_ok={int(bool(row.get('weather_buffer_ok', True)))} | "
                 f"progress_to_destination={float(row.get('progress_to_destination', 0.0)):.2f} | "
                 f"cross_track_reduction={float(row.get('cross_track_reduction', 0.0)):.2f} | "
                 f"end_distance_to_destination={float(row.get('end_distance_to_destination', 999.0)):.2f} | "
@@ -284,6 +302,7 @@ class HLTPPromptBuilder:
         sections = [
             self._instructions_text(step),
             self._agent_context_text(contexts),
+            self._weather_text(core),
             self._vision_placeholder_text(frame_paths),
         ]
         return "\n\n".join(section for section in sections if section)
@@ -297,6 +316,7 @@ class HLTPPromptBuilder:
             "- For each listed aircraft, choose exactly two waypoint names.\n"
             "- first_waypoint_name must be a named waypoint on the right side of the aircraft's original flight plan.\n"
             "- merge_back_waypoint_name must be a later named waypoint on the aircraft's original route.\n"
+            "- Keep every weather cell as forbidden airspace when choosing guide waypoints.\n"
             "- This is advisory high-level context only; low-level safety guidance may override it.\n"
             "OUTPUT RULES:\n"
             "- Return EXACTLY ONE JSON object and no extra text.\n"
@@ -354,6 +374,27 @@ class HLTPPromptBuilder:
                         f"route_progress={row['route_progress']:.2f}"
                     )
                 )
+        return "\n".join(lines)
+
+    def _weather_text(self, core: "MultiAgentSectorCore") -> str:
+        weather = core.weather_dict()
+        if weather is None:
+            return "HLTP WEATHER CONTEXT:\n- none"
+        cells = weather.get("cells") if isinstance(weather.get("cells"), list) else [weather]
+        lines = ["HLTP WEATHER CONTEXT:", "- every listed weather cell is forbidden airspace"]
+        lines.append(f"- required_clearance_buffer={core.weather_clearance_buffer_units:.2f} simulator units")
+        for cell in cells:
+            lines.append(
+                (
+                    f"- {cell.get('cell_id', 'W?')}: center=({cell['center'][0]:.1f},{cell['center'][1]:.1f}) "
+                    f"major_nm={float(cell['major_radius_nm']):.2f} "
+                    f"minor_nm={float(cell['minor_radius_nm']):.2f} "
+                    f"motion_heading_deg={math.degrees(float(cell['motion_heading_rad'])):+.1f} "
+                    f"growth_nm_per_step={float(cell.get('major_growth_nm_per_step', 0.0)):+.2f} "
+                    f"growth_stopped={int(bool(cell.get('growth_stopped', False)))} "
+                    f"movement_stopped={int(bool(cell.get('movement_stopped', False)))}"
+                )
+            )
         return "\n".join(lines)
 
     def _vision_placeholder_text(self, frame_paths: Sequence[str]) -> str:
@@ -560,6 +601,11 @@ class MultiAgentThreeCallController:
             or (
                 state.predicted_weather_entry_step is not None
                 and state.predicted_weather_entry_step <= EMERGENCY_LOOKAHEAD_STEPS
+            )
+            or (
+                state.weather_predicted
+                and math.isfinite(state.predicted_weather_clearance)
+                and float(state.predicted_weather_clearance) < core.weather_clearance_buffer_units
             )
         )
         any_hazard = bool(state.hazard_predicted)
@@ -881,11 +927,17 @@ class MultiAgentThreeCallController:
                 "boundary_exit_step": sim["boundary_exit_step"].get(agent_id),
                 "min_sep_to_any": float(sim["per_agent_min_sep"].get(agent_id, 999.0)),
                 "min_weather_clearance": float(sim["min_weather_clearance"].get(agent_id, 999.0)),
+                "weather_buffer_ok": bool(
+                    float(sim["min_weather_clearance"].get(agent_id, 999.0))
+                    >= core.weather_clearance_buffer_units
+                ),
                 "safe_over_preview": bool(
                     sim["pair_loss_step"].get(agent_id) is None
                     and sim["weather_entry_step"].get(agent_id) is None
                     and sim["boundary_exit_step"].get(agent_id) is None
                     and float(sim["per_agent_min_sep"].get(agent_id, 999.0)) >= core.safe_r
+                    and float(sim["min_weather_clearance"].get(agent_id, 999.0))
+                    >= core.weather_clearance_buffer_units
                 ),
                 "end_heading_error_to_dest_deg": float(
                     sim["end_heading_error_to_dest_deg"].get(agent_id, 999.0)
@@ -1152,6 +1204,7 @@ class MultiAgentThreeCallController:
                 "frame_path": latest_frame_path if latest_frame_path and use_vision else None,
                 "fixed_actions": fixed_actions,
                 "threat_ids": [row["intruder_id"] for row in threat_rows],
+                "weather": core.weather_dict(),
             }
             self._log_local_call(
                 step=step,
@@ -1228,7 +1281,12 @@ class GlobalPromptBuilder:
             "- Do not return actions for aircraft that have not entered the sector.\n"
             "- Use the simulator-generated candidate previews as the main decision evidence.\n"
             f"- SAFE_R = {self.safe_r:.1f} units.\n"
-            "- The weather ellipse is forbidden airspace.\n"
+            "- Every weather cell is forbidden airspace; avoid entering any cell.\n"
+            "SAFETY SELECTION RULES:\n"
+            "- For each aircraft, prefer a preview row with safe=1 over any row with safe=0.\n"
+            "- Prefer weather_buffer_ok=1; do not choose weather_buffer_ok=0 unless every candidate for that aircraft has weather_buffer_ok=0.\n"
+            "- If all rows are unsafe, choose the least bad row: no weather_entry, no pair_loss, largest min_sep, then largest min_weather_clearance.\n"
+            "- During MERGE_BACK, traffic separation and weather clearance override destination recovery.\n"
             "OUTPUT RULES:\n"
             "- Return EXACTLY ONE JSON object and no extra text.\n"
             f"- heading_change_deg must be one of {{{bins_text}}}.\n"
@@ -1254,6 +1312,9 @@ class GlobalPromptBuilder:
         return (
             "MERGE_BACK PRIORITY:\n"
             "- Choose a safe candidate that improves recovery toward destination.\n"
+            "- Do not merge back through another aircraft's path.\n"
+            "- If merge-back rows show pair_loss or low min_sep, choose a hold/diverge candidate instead of forcing recovery.\n"
+            "- Weather clearance and traffic separation override destination progress.\n"
             "- Prefer larger progress_to_destination.\n"
             "- Prefer reducing cross_track_abs.\n"
             "- Use 0 only if it remains aligned and still makes good destination progress."
@@ -1322,21 +1383,24 @@ class GlobalPromptBuilder:
         weather = core.weather_dict()
         if weather is None:
             return "GLOBAL WEATHER:\n- none"
-        return "\n".join(
-            [
-                "GLOBAL WEATHER:",
+        cells = weather.get("cells") if isinstance(weather.get("cells"), list) else [weather]
+        lines = ["GLOBAL WEATHER:", "- any listed cell is forbidden airspace"]
+        lines.append(f"- required_clearance_buffer={core.weather_clearance_buffer_units:.2f} simulator units")
+        for cell in cells:
+            lines.append(
                 (
-                    f"- center=({weather['center'][0]:.1f},{weather['center'][1]:.1f}) "
-                    f"orientation_deg={math.degrees(weather['angle_rad']):+.1f} "
-                    f"motion_heading_deg={math.degrees(weather['motion_heading_rad']):+.1f} "
-                    f"speed_units_per_step={float(weather['speed_units_per_step']):.2f}"
-                ),
-                (
-                    f"- major_radius_nm={float(weather['major_radius_nm']):.2f} "
-                    f"minor_radius_nm={float(weather['minor_radius_nm']):.2f}"
-                ),
-            ]
-        )
+                    f"- {cell.get('cell_id', 'W?')}: center=({cell['center'][0]:.1f},{cell['center'][1]:.1f}) "
+                    f"major_radius_nm={float(cell['major_radius_nm']):.2f} "
+                    f"minor_radius_nm={float(cell['minor_radius_nm']):.2f} "
+                    f"orientation_deg={math.degrees(float(cell['angle_rad'])):+.1f} "
+                    f"motion_heading_deg={math.degrees(float(cell['motion_heading_rad'])):+.1f} "
+                    f"speed_units_per_step={float(cell['speed_units_per_step']):.2f} "
+                    f"growth_nm_per_step={float(cell.get('major_growth_nm_per_step', 0.0)):+.2f} "
+                    f"growth_stopped={int(bool(cell.get('growth_stopped', False)))} "
+                    f"movement_stopped={int(bool(cell.get('movement_stopped', False)))}"
+                )
+            )
+        return "\n".join(lines)
 
     def _threats_text(self, threat_rows_by_agent: Dict[str, List[Dict[str, Any]]]) -> str:
         lines = ["RANKED TRAFFIC THREATS:"]
@@ -1373,6 +1437,7 @@ class GlobalPromptBuilder:
                     f"boundary_exit={row['boundary_exit_step']} | "
                     f"min_sep={float(row['min_sep_to_any']):.2f} | "
                     f"min_weather_clearance={float(row['min_weather_clearance']):.2f} | "
+                    f"weather_buffer_ok={int(bool(row.get('weather_buffer_ok', True)))} | "
                     f"progress_to_destination={float(row.get('progress_to_destination', 0.0)):.2f} | "
                     f"cross_track_reduction={float(row.get('cross_track_reduction', 0.0)):.2f} | "
                     f"end_distance={float(row.get('end_distance_to_destination', 999.0)):.2f} | "
@@ -1995,6 +2060,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             "used_vision": False,
             "frame_paths": [],
             "model": OLLAMA_MODEL,
+            "weather": core.weather_dict(),
         }
         self._log_hltp_call(
             step=step,
@@ -2038,6 +2104,11 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             or (
                 state.predicted_weather_entry_step is not None
                 and state.predicted_weather_entry_step <= EMERGENCY_LOOKAHEAD_STEPS
+            )
+            or (
+                state.weather_predicted
+                and math.isfinite(state.predicted_weather_clearance)
+                and float(state.predicted_weather_clearance) < core.weather_clearance_buffer_units
             )
         )
 
@@ -2406,6 +2477,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             ctrl.merge_back_recheck_remaining = int(MERGE_BACK_RECHECK_STEPS)
 
     def _graph_commit_and_log(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        core = state["core"]
         step = int(state["step"])
         actionable = list(state.get("actionable", []))
         annotations = list(state.get("annotations", []))
@@ -2447,6 +2519,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
                 for item in actionable
             },
             "hltp_plans": state.get("hltp_plans", {}),
+            "weather": core.weather_dict(),
             "model": OLLAMA_MODEL,
         }
         self._log_global_call(

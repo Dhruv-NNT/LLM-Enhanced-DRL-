@@ -25,7 +25,6 @@ from configs import (
     WAYPOINTS_CSV,
 )
 
-
 def rescaling(
     r_min: float,
     r_max: float,
@@ -69,6 +68,9 @@ class WeatherCell:
     motion_heading_rad: float
     speed_units_per_step: float
     major_growth_nm_per_step: float
+    cell_id: str = "W1"
+    growth_stopped: bool = False
+    movement_stopped: bool = False
 
     @property
     def minor_radius_nm(self) -> float:

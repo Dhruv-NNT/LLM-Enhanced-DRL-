@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional, Sequence, Tuple
 import numpy as np
 from gymnasium import spaces
 
-from configs import ACTION_BINS, MAX_AGENTS, SAFE_R
+from configs import ACTION_BINS, MAX_AGENTS, NUM_WEATHER_CELLS_DEFAULT, SAFE_R
 from .core import MultiAgentSectorCore
 from .utils import action_idx_to_deg
 
@@ -44,9 +44,15 @@ class MultiAgentParallelEnv(PettingZooParallelEnv):
         num_agents: int = 2,
         max_agents: int = MAX_AGENTS,
         safe_r: float = SAFE_R,
+        num_weather_cells: int = NUM_WEATHER_CELLS_DEFAULT,
     ) -> None:
         super().__init__()
-        self.core = MultiAgentSectorCore(num_agents=num_agents, max_agents=max_agents, safe_r=safe_r)
+        self.core = MultiAgentSectorCore(
+            num_agents=num_agents,
+            max_agents=max_agents,
+            safe_r=safe_r,
+            num_weather_cells=num_weather_cells,
+        )
         self.possible_agents = list(self.core.possible_agents)
         self.agents = list(self.possible_agents[:num_agents])
         self._local_obs_shape = (self.core.local_obs_dim,)
@@ -84,6 +90,7 @@ class MultiAgentParallelEnv(PettingZooParallelEnv):
             seed=seed,
             num_agents=options.get("num_agents"),
             route_ids=options.get("route_ids"),
+            num_weather_cells=options.get("num_weather_cells"),
         )
         self.agents = list(self.core.active_agent_ids)
         return observations, _active_info_dict(self.core)
@@ -127,8 +134,14 @@ class JointGuidanceEnv:
         num_agents: int = 2,
         max_agents: int = MAX_AGENTS,
         safe_r: float = SAFE_R,
+        num_weather_cells: int = NUM_WEATHER_CELLS_DEFAULT,
     ) -> None:
-        self.core = MultiAgentSectorCore(num_agents=num_agents, max_agents=max_agents, safe_r=safe_r)
+        self.core = MultiAgentSectorCore(
+            num_agents=num_agents,
+            max_agents=max_agents,
+            safe_r=safe_r,
+            num_weather_cells=num_weather_cells,
+        )
 
     def reset(
         self,
@@ -136,8 +149,14 @@ class JointGuidanceEnv:
         *,
         num_agents: Optional[int] = None,
         route_ids: Optional[Sequence[str]] = None,
+        num_weather_cells: Optional[int] = None,
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        local_obs, info = self.core.reset(seed=seed, num_agents=num_agents, route_ids=route_ids)
+        local_obs, info = self.core.reset(
+            seed=seed,
+            num_agents=num_agents,
+            route_ids=route_ids,
+            num_weather_cells=num_weather_cells,
+        )
         return self.joint_observation(local_obs), info
 
     def joint_observation(self, local_obs: Optional[Dict[str, np.ndarray]] = None) -> Dict[str, Any]:
@@ -168,4 +187,3 @@ class JointGuidanceEnv:
     @property
     def MAX_STEP(self) -> int:
         return self.core.max_step
-
