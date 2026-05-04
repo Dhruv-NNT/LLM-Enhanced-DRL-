@@ -134,10 +134,19 @@ def weather_axis_units(cell: WeatherCell) -> Tuple[float, float]:
     return nm_to_grid_x(cell.major_radius_nm), nm_to_grid_y(cell.minor_radius_nm)
 
 
-def weather_polygon(cell: WeatherCell, *, resolution: int = 96) -> Polygon:
+WEATHER_TERMINAL_CORE_SCALE = 0.75
+
+
+def weather_polygon(cell: WeatherCell, *, resolution: int = 96, scale: float = 1.0) -> Polygon:
     base = Point(0.0, 0.0).buffer(1.0, resolution=resolution)
     major_units, minor_units = weather_axis_units(cell)
-    poly = affinity.scale(base, xfact=major_units, yfact=minor_units, origin=(0.0, 0.0))
+    scale = float(scale)
+    poly = affinity.scale(
+        base,
+        xfact=major_units * scale,
+        yfact=minor_units * scale,
+        origin=(0.0, 0.0),
+    )
     poly = affinity.rotate(poly, math.degrees(cell.angle_rad), origin=(0.0, 0.0))
     poly = affinity.translate(poly, xoff=cell.center[0], yoff=cell.center[1])
     return poly
@@ -145,6 +154,14 @@ def weather_polygon(cell: WeatherCell, *, resolution: int = 96) -> Polygon:
 
 def weather_signed_clearance(cell: WeatherCell, point: Tuple[float, float]) -> float:
     poly = weather_polygon(cell)
+    cur = Point(point)
+    distance = float(poly.exterior.distance(cur))
+    return -distance if poly.covers(cur) else distance
+
+
+def weather_terminal_signed_clearance(cell: WeatherCell, point: Tuple[float, float]) -> float:
+    """Signed clearance to the yellow-or-worse terminal weather core."""
+    poly = weather_polygon(cell, scale=WEATHER_TERMINAL_CORE_SCALE)
     cur = Point(point)
     distance = float(poly.exterior.distance(cur))
     return -distance if poly.covers(cur) else distance

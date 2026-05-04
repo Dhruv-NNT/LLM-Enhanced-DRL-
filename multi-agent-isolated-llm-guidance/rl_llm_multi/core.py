@@ -55,6 +55,7 @@ from .utils import (
     weather_axis_units,
     weather_polygon,
     weather_signed_clearance,
+    weather_terminal_signed_clearance,
     weather_trail,
 )
 
@@ -299,6 +300,11 @@ class MultiAgentSectorCore:
         if not self.weather_cells:
             return float("inf")
         return min(weather_signed_clearance(cell, position) for cell in self.weather_cells)
+
+    def weather_terminal_signed_clearance(self, position: Tuple[float, float]) -> float:
+        if not self.weather_cells:
+            return float("inf")
+        return min(weather_terminal_signed_clearance(cell, position) for cell in self.weather_cells)
 
     def weather_center_distance(self, position: Tuple[float, float]) -> float:
         if not self.weather_cells:
@@ -641,7 +647,7 @@ class MultiAgentSectorCore:
         weather_violation_agents = [
             agent_id
             for agent_id in active_ids
-            if self.weather_signed_clearance(self.agent_states[agent_id].position) < 0.0
+            if self.weather_terminal_signed_clearance(self.agent_states[agent_id].position) < 0.0
         ]
         weather_failure = bool(weather_violation_agents)
 
@@ -886,61 +892,47 @@ class MultiAgentSectorCore:
                     weight="bold",
                 )
 
-        weather_colors = [
-            ("#dc2626", (220 / 255.0, 38 / 255.0, 38 / 255.0, 0.18), "#991b1b"),
-            ("#ea580c", (234 / 255.0, 88 / 255.0, 12 / 255.0, 0.16), "#9a3412"),
+        weather_severity_bands = [
+            (1.00, "#22c55e", (34 / 255.0, 197 / 255.0, 94 / 255.0, 0.24)),
+            (0.75, "#facc15", (250 / 255.0, 204 / 255.0, 21 / 255.0, 0.34)),
+            (0.50, "#dc2626", (220 / 255.0, 38 / 255.0, 38 / 255.0, 0.44)),
+            (0.25, "#d946ef", (217 / 255.0, 70 / 255.0, 239 / 255.0, 0.56)),
         ]
-        for idx, cell in enumerate(self.weather_cells):
-            edge_color, face_color, arrow_color = weather_colors[idx % len(weather_colors)]
+        arrow_color = "#86198f"
+        trail_color = "#166534"
+        for cell in self.weather_cells:
             major_units, minor_units = weather_axis_units(cell)
-            weather_patch = Ellipse(
-                xy=cell.center,
-                width=2.0 * major_units,
-                height=2.0 * minor_units,
-                angle=math.degrees(cell.angle_rad),
-                edgecolor=edge_color,
-                facecolor=face_color,
-                linewidth=2.0,
-            )
-            ax.add_patch(weather_patch)
-            ax.text(
-                cell.center[0],
-                cell.center[1],
-                str(cell.cell_id),
-                color=arrow_color,
-                fontsize=8,
-                weight="bold",
-                ha="center",
-                va="center",
-            )
+            for scale, edge_color, face_color in weather_severity_bands:
+                weather_patch = Ellipse(
+                    xy=cell.center,
+                    width=2.0 * major_units * scale,
+                    height=2.0 * minor_units * scale,
+                    angle=math.degrees(cell.angle_rad),
+                    edgecolor=edge_color,
+                    facecolor=face_color,
+                    linewidth=1.6 if scale < 1.0 else 2.0,
+                )
+                ax.add_patch(weather_patch)
             if cell.movement_stopped or abs(float(cell.speed_units_per_step)) <= 1e-9:
                 ax.scatter(cell.center[0], cell.center[1], c=arrow_color, s=28, marker="x")
-                ax.text(
-                    cell.center[0] + 1.0,
-                    cell.center[1] - 1.0,
-                    "STOP",
-                    color=arrow_color,
-                    fontsize=7,
-                    weight="bold",
-                )
                 continue
             trail = weather_trail(cell, WEATHER_TRAIL_STEPS)
-            trail_x = [point[0] for point in trail]
-            trail_y = [point[1] for point in trail]
-            ax.plot(trail_x, trail_y, color=edge_color, alpha=0.35, linewidth=1.0, linestyle=":")
-            arrow_dx = 3.0 * cell.speed_units_per_step * math.cos(cell.motion_heading_rad)
-            arrow_dy = 3.0 * cell.speed_units_per_step * math.sin(cell.motion_heading_rad)
-            ax.arrow(
-                cell.center[0],
-                cell.center[1],
-                arrow_dx,
-                arrow_dy,
-                color=arrow_color,
-                width=0.08,
-                head_width=1.5,
-                length_includes_head=True,
-                alpha=0.9,
-            )
+            future_centers = trail[1:]
+            future_count = max(len(future_centers), 1)
+            for future_idx, future_center in enumerate(future_centers, start=1):
+                alpha = max(0.10, 0.38 * (1.0 - (future_idx - 1) / future_count))
+                ghost_patch = Ellipse(
+                    xy=future_center,
+                    width=2.0 * major_units,
+                    height=2.0 * minor_units,
+                    angle=math.degrees(cell.angle_rad),
+                    edgecolor=trail_color,
+                    facecolor="none",
+                    linewidth=1.2,
+                    linestyle="--",
+                    alpha=alpha,
+                )
+                ax.add_patch(ghost_patch)
 
         failure_text = self.last_failure_reason or "-"
         ax.set_title(

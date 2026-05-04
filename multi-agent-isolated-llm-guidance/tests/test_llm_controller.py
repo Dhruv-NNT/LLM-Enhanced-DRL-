@@ -10,6 +10,8 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import matplotlib.pyplot as plt
+from matplotlib.colors import to_hex
+from matplotlib.patches import Ellipse
 from shapely.geometry import LineString
 
 
@@ -20,6 +22,7 @@ if str(PACKAGE_ROOT) not in sys.path:
 from configs import (  # noqa: E402
     MAX_AGENTS,
     SAFE_R,
+    WEATHER_TRAIL_STEPS,
     WEATHER_MAJOR_RADIUS_NM_MAX,
     WEATHER_MAJOR_RADIUS_NM_MIN,
 )
@@ -30,6 +33,8 @@ from rl_llm_multi import (  # noqa: E402
     MultiAgentThreeCallController,
     WeatherCell,
 )
+from rl_llm_multi.llm import GlobalPromptBuilder, HLTPPromptBuilder  # noqa: E402
+from rl_llm_multi.utils import weather_axis_units  # noqa: E402
 
 
 def _answer_json(turn_deg: int) -> str:
@@ -52,7 +57,6 @@ def _global_answer_json(actions: dict[str, int]) -> str:
                 "scenario_summary": "",
                 "actions": {
                     agent_id: {
-                        "call_name": "EXECUTE_TURN",
                         "rationale": "",
                         "maneuver": {"heading_change_deg": int(turn_deg)},
                     }
@@ -339,6 +343,9 @@ class ControllerTests(unittest.TestCase):
         self.assertIn("OTHER THREATS:", prompt)
         self.assertIn("A3", prompt)
         self.assertIn("\"maneuver\": { \"heading_change_deg\": 0 }", prompt)
+        merge_prompt = controller.builder.build_prompt(core, "A1", "MERGE_BACK", [], preview_rows, {})
+        self.assertIn("largest allowed turn magnitude", merge_prompt)
+        self.assertIn("boundary_exit_step", merge_prompt)
         self.assertNotIn("\"global_summary\"", prompt)
         self.assertNotIn("\"agents\"", prompt)
         self.assertNotIn("actionable agents listed below", prompt)
@@ -763,11 +770,34 @@ class ControllerTests(unittest.TestCase):
         self.assertTrue(any(terminations.values()))
         self.assertEqual(info["failure_reason"], "weather")
 
+    def test_aircraft_entering_only_green_weather_ring_does_not_terminate(self) -> None:
+        core = MultiAgentSectorCore(num_agents=1, num_weather_cells=1)
+        core.reset(seed=42, num_weather_cells=1)
+        state = core.get_agent("A1")
+        cell = WeatherCell((50.0, 50.0), 15.0, 0.8, 0.0, 0.0, 0.0, 0.0, cell_id="W1", movement_stopped=True)
+        major_units, _ = weather_axis_units(cell)
+        state.position = (cell.center[0] + 0.90 * major_units - core.speed, cell.center[1])
+        state.destination = (90.0, 90.0)
+        state.heading_rad = 0.0
+        state.launched = True
+        state.active = True
+        state.has_entered_sector = True
+        state.inside_sector = True
+        core.weather_cells = [cell]
+        core._sync_primary_weather_cell()
+
+        self.assertLess(core.weather_signed_clearance((cell.center[0] + 0.90 * major_units, cell.center[1])), 0.0)
+        self.assertGreater(core.weather_terminal_signed_clearance((cell.center[0] + 0.90 * major_units, cell.center[1])), 0.0)
+
+        _, _, terminations, _, info = core.step({})
+
+        self.assertFalse(any(terminations.values()))
+        self.assertIsNone(info["failure_reason"])
+
     def test_global_prompt_includes_both_weather_cells(self) -> None:
         core = MultiAgentSectorCore(num_agents=2, num_weather_cells=2)
         core.reset(seed=42, num_weather_cells=2)
-        controller = GlobalLangGraphGuidanceController()
-        prompt = controller.global_builder.build_prompt(
+        prompt = GlobalPromptBuilder().build_prompt(
             core,
             step=0,
             actionable=[],
@@ -776,12 +806,98 @@ class ControllerTests(unittest.TestCase):
             threat_rows_by_agent={},
             preview_rows_by_agent={},
             recent_decisions=[],
-            frame_paths=[],
+            frame_paths=["/tmp/image_000.png"],
         )
 
         self.assertIn("W1", prompt)
         self.assertIn("W2", prompt)
-        self.assertIn("any listed cell is forbidden airspace", prompt)
+        self.assertIn("green is a caution/buffer ring", prompt)
+        self.assertIn("green=light precipitation", prompt)
+        self.assertIn("never enter yellow/red/magenta", prompt)
+        self.assertIn("dashed green outer ellipses", prompt)
+        self.assertIn("motion is from the solid cell toward the dashed outlines", prompt)
+        self.assertIn("do not output call_name", prompt)
+        self.assertIn("may choose any displayed row", prompt)
+        self.assertIn("each row predicts consequences", prompt)
+        self.assertNotIn("\"call_name\": \"EXECUTE_TURN\"", prompt)
+
+        merge_prompt = GlobalPromptBuilder().build_prompt(
+            core,
+            step=0,
+            actionable=[{"agent_id": "A1", "call_name": "MERGE_BACK", "call_reason": "BOUNDARY_LOOKAHEAD"}],
+            entered_agent_ids=["A1"],
+            hltp_plans={
+                "A1": {
+                    "short_context": "HLTP MUMSO->MABAL",
+                    "rationale": "Turn right around the conflict, then rejoin the original route.",
+                }
+            },
+            threat_rows_by_agent={},
+            preview_rows_by_agent={},
+            recent_decisions=[],
+            frame_paths=[],
+        )
+        self.assertIn("largest allowed turn magnitude", merge_prompt)
+        self.assertIn("boundary_exit", merge_prompt)
+        self.assertIn("HLTP MUMSO->MABAL", merge_prompt)
+        self.assertIn("Turn right around the conflict", merge_prompt)
+
+    def test_invalid_hltp_waypoint_proposal_can_preserve_llm_rationale(self) -> None:
+        controller = GlobalLangGraphGuidanceController.__new__(GlobalLangGraphGuidanceController)
+        context = {
+            "agent_id": "A3",
+            "conflict_partner_ids": ["A4"],
+            "right_waypoint_candidates": [
+                {"name": "MABAL", "route_progress": 10.0},
+            ],
+            "merge_back_candidates": [
+                {"name": "LEBIN", "route_progress": 20.0},
+            ],
+        }
+        payload = {
+            "first_waypoint_name": "MUMSO",
+            "merge_back_waypoint_name": "MABAL",
+            "rationale": "Turn right towards MUMSO, then merge back towards MABAL.",
+        }
+
+        self.assertIsNone(
+            controller._hltp_plan_from_payload(
+                agent_id="A3",
+                payload=payload,
+                context=context,
+                step=5,
+            )
+        )
+        fallback = controller._fallback_hltp_plan(
+            context=context,
+            step=5,
+            rationale=(
+                "LLM rationale from rejected waypoint proposal: "
+                f"{payload['rationale']}"
+            ),
+        )
+
+        self.assertEqual(fallback.short_context, "HLTP MABAL->LEBIN")
+        self.assertIn("Turn right towards MUMSO", fallback.rationale)
+
+    def test_hltp_prompt_uses_neutral_waypoint_placeholders(self) -> None:
+        core = MultiAgentSectorCore(num_agents=1, num_weather_cells=1)
+        core.reset(seed=42, num_weather_cells=1)
+
+        prompt = HLTPPromptBuilder().build_prompt(core, step=5, contexts=[], frame_paths=[])
+
+        self.assertIn("<FIRST_WAYPOINT_FROM_CANDIDATES>", prompt)
+        self.assertIn("<MERGE_BACK_WAYPOINT_FROM_CANDIDATES>", prompt)
+        self.assertNotIn("\"first_waypoint_name\": \"MUMSO\"", prompt)
+        self.assertNotIn("\"merge_back_waypoint_name\": \"MABAL\"", prompt)
+
+        multi_prompt = HLTPPromptBuilder()._instructions_text(
+            5,
+            [{"agent_id": "A3"}, {"agent_id": "A4"}],
+        )
+        self.assertIn("\"A3\":", multi_prompt)
+        self.assertIn("\"A4\":", multi_prompt)
+        self.assertIn("must include every aircraft shown", multi_prompt)
 
     def test_render_labels_two_weather_cells(self) -> None:
         core = MultiAgentSectorCore(num_agents=2, num_weather_cells=2)
@@ -789,8 +905,26 @@ class ControllerTests(unittest.TestCase):
         fig = core.render(show=False)
         try:
             labels = {text.get_text() for text in fig.gca().texts}
-            self.assertIn("W1", labels)
-            self.assertIn("W2", labels)
+            self.assertNotIn("W1", labels)
+            self.assertNotIn("W2", labels)
+            severity_colors = {"#22c55e", "#facc15", "#dc2626", "#d946ef"}
+            weather_patches = [
+                patch
+                for patch in fig.gca().patches
+                if isinstance(patch, Ellipse)
+                and to_hex(patch.get_facecolor(), keep_alpha=False) in severity_colors
+            ]
+            self.assertEqual(len(weather_patches), 8)
+            face_colors = {to_hex(patch.get_facecolor(), keep_alpha=False) for patch in weather_patches}
+            self.assertEqual(face_colors, severity_colors)
+            ghost_patches = [
+                patch
+                for patch in fig.gca().patches
+                if isinstance(patch, Ellipse)
+                and to_hex(patch.get_edgecolor(), keep_alpha=False) == "#166534"
+                and patch.get_facecolor()[3] == 0.0
+            ]
+            self.assertEqual(len(ghost_patches), 2 * WEATHER_TRAIL_STEPS)
         finally:
             plt.close(fig)
 

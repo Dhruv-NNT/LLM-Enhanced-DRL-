@@ -36,6 +36,7 @@ from configs import (
     PREVIEW_TOP_K,
     ROUTE_RECOVERY_XTRACK_UNITS,
     SAFE_R,
+    TRAFFIC_CAUTION_R,
     TURN_PREVIEW_STEPS,
 )
 from .utils import heading_from_line, line_signed_cross_track, load_waypoint_map
@@ -45,6 +46,14 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
+
+WEATHER_SEVERITY_LEGEND = (
+    "- Weather severity rings: green=light precipitation, yellow=moderate rain/rain and hail, "
+    "red=heavy to very heavy precipitation, magenta=extreme convective activity.\n"
+    "- Treat the green outer ring as a caution/buffer region: avoid it with the required clearance "
+    "buffer whenever any safe alternative exists.\n"
+    "- Yellow, red, and magenta are the terminal convective core; never plan through them."
+)
 
 
 @dataclass
@@ -121,8 +130,14 @@ class MultiAgentPromptBuilder:
                 "- Do not merge back through another aircraft's path.\n"
                 "- If merge-back rows show pair_loss or low min_sep, choose a hold/diverge candidate instead of forcing recovery.\n"
                 "- Weather clearance and traffic separation override destination progress.\n"
+                "- Once pair_loss_step=None, traffic_buffer_ok=1, weather_entry_step=None, and weather_buffer_ok=1 are satisfied, do not choose the row only because it has the largest min_sep.\n"
+                "- Among traffic/weather-clear rows, prioritize recovery in this order: no boundary_exit_step, larger progress_to_destination, larger cross_track_reduction, smaller end_heading_error_to_dest_deg.\n"
+                "- Use min_sep as a tie-breaker after the traffic caution buffer is satisfied.\n"
+                "- If rows are unsafe only because boundary_exit_step is present, treat that as recovery urgency: choose the candidate with the strongest destination-side recovery, usually the largest allowed turn magnitude.\n"
+                "- When heading_error_to_destination_deg is large, do not keep using +/-5 unless larger same-direction bins materially worsen traffic or weather safety.\n"
                 "- Prefer larger progress_to_destination.\n"
                 "- Prefer reducing cross_track_abs.\n"
+                "- Do not choose 0 just because it is safe if a nonzero safe row gives materially better progress, cross-track recovery, or heading alignment.\n"
                 "- Use 0 only if it remains aligned and still makes good destination progress.\n"
             )
         else:
@@ -131,11 +146,20 @@ class MultiAgentPromptBuilder:
             "ROLE: You are a cautious ATCO helper for one aircraft.\n"
             f"{stage_text}"
             f"- SAFE_R = {self.safe_r:.1f} units.\n"
-            "- Every weather cell is forbidden airspace; avoid entering any cell.\n"
+            "- Avoid weather with buffer: stay outside the green ring when possible and never enter yellow/red/magenta.\n"
+            f"{WEATHER_SEVERITY_LEGEND}\n"
+            f"- Internal traffic caution buffer: prefer min_sep >= {TRAFFIC_CAUTION_R:.1f} units; the simulator still terminates only below SAFE_R={self.safe_r:.1f}.\n"
             "SAFETY SELECTION RULES:\n"
             "- Prefer a preview row with safe=1 over any row with safe=0.\n"
+            "- Prefer traffic_buffer_ok=1; do not choose traffic_buffer_ok=0 unless every candidate has traffic_buffer_ok=0.\n"
             "- Prefer weather_buffer_ok=1; do not choose weather_buffer_ok=0 unless every candidate has weather_buffer_ok=0.\n"
-            "- If all rows are unsafe, choose the least bad row: no weather_entry, no pair_loss, largest min_sep, then largest min_weather_clearance.\n"
+            "- If all rows are unsafe due to traffic or weather, choose the least bad row: no weather_entry, no pair_loss, largest min_sep, then largest min_weather_clearance.\n"
+            "- If all rows are unsafe only because boundary_exit_step is present, prioritize recovering back inside/toward destination over small weather-clearance differences.\n"
+            "TRAFFIC HARD VETO:\n"
+            "- Never choose a row with pair_loss_step not None if any displayed row has pair_loss_step=None.\n"
+            "- pair_loss_step at step 1 or 2 is an imminent collision and overrides MERGE_BACK, boundary recovery, destination progress, and HLTP.\n"
+            "- If choosing between boundary_exit_step and pair_loss_step, choose boundary_exit_step unless every row has pair_loss_step.\n"
+            f"- Do not claim a maneuver avoids conflict unless pair_loss_step=None and min_sep>={TRAFFIC_CAUTION_R:.1f}.\n"
             "- Return exactly one action for the ownship only.\n"
             "OUTPUT RULES:\n"
             "- Return EXACTLY ONE JSON object.\n"
@@ -206,7 +230,8 @@ class MultiAgentPromptBuilder:
         cells = weather.get("cells") if isinstance(weather.get("cells"), list) else [weather]
         lines = [
             "LOCAL WEATHER RISK:",
-            "- every weather cell is forbidden airspace",
+            "- avoid green with buffer when possible; yellow/red/magenta are terminal no-go regions",
+            WEATHER_SEVERITY_LEGEND,
             f"- required_clearance_buffer={core.weather_clearance_buffer_units:.2f} simulator units",
             f"- current_min_clearance_across_cells={current_clearance:.2f}",
             (
@@ -277,6 +302,7 @@ class MultiAgentPromptBuilder:
                 f"weather_entry_step={row['weather_entry_step']} | "
                 f"boundary_exit_step={row['boundary_exit_step']} | "
                 f"min_sep_to_any={float(row['min_sep_to_any']):.2f} | "
+                f"traffic_buffer_ok={int(bool(row.get('traffic_buffer_ok', True)))} | "
                 f"min_weather_clearance={float(row['min_weather_clearance']):.2f} | "
                 f"weather_buffer_ok={int(bool(row.get('weather_buffer_ok', True)))} | "
                 f"progress_to_destination={float(row.get('progress_to_destination', 0.0)):.2f} | "
@@ -300,14 +326,15 @@ class HLTPPromptBuilder:
         frame_paths: Sequence[str],
     ) -> str:
         sections = [
-            self._instructions_text(step),
+            self._instructions_text(step, contexts),
             self._agent_context_text(contexts),
             self._weather_text(core),
             self._vision_placeholder_text(frame_paths),
         ]
         return "\n\n".join(section for section in sections if section)
 
-    def _instructions_text(self, step: int) -> str:
+    def _instructions_text(self, step: int, contexts: Sequence[Dict[str, Any]]) -> str:
+        json_shape = self._strict_json_shape_text(contexts)
         return (
             "ROLE: You are a high-level tactical planner (HLTP) for aircraft that just entered the sector.\n"
             "TASK:\n"
@@ -316,24 +343,46 @@ class HLTPPromptBuilder:
             "- For each listed aircraft, choose exactly two waypoint names.\n"
             "- first_waypoint_name must be a named waypoint on the right side of the aircraft's original flight plan.\n"
             "- merge_back_waypoint_name must be a later named waypoint on the aircraft's original route.\n"
-            "- Keep every weather cell as forbidden airspace when choosing guide waypoints.\n"
+            "- Keep weather clear of the route with buffer; avoid the green ring when possible and never plan through yellow/red/magenta.\n"
+            f"{WEATHER_SEVERITY_LEGEND}\n"
             "- This is advisory high-level context only; low-level safety guidance may override it.\n"
             "OUTPUT RULES:\n"
             "- Return EXACTLY ONE JSON object and no extra text.\n"
             "- Use only waypoint names shown in the candidate lists.\n"
+            "- The placeholder strings below are not waypoint names; replace them with candidate names for each listed aircraft.\n"
+            "- The plans object must include every aircraft shown in this JSON shape.\n"
             "STRICT JSON SHAPE:\n"
+            f"{json_shape}"
+        )
+
+    def _strict_json_shape_text(self, contexts: Sequence[Dict[str, Any]]) -> str:
+        agent_ids = [str(context["agent_id"]) for context in contexts]
+        if not agent_ids:
+            agent_ids = ["A1"]
+        lines = [
             "{\n"
             "  \"answer\": {\n"
             "    \"plans\": {\n"
-            "      \"A1\": {\n"
-            "        \"first_waypoint_name\": \"MUMSO\",\n"
-            "        \"merge_back_waypoint_name\": \"MABAL\",\n"
-            "        \"rationale\": \"<brief>\"\n"
-            "      }\n"
-            "    }\n"
-            "  }\n"
-            "}"
+        ]
+        for idx, agent_id in enumerate(agent_ids):
+            comma = "," if idx < len(agent_ids) - 1 else ""
+            lines.extend(
+                [
+                    f"      \"{agent_id}\": {{\n",
+                    "        \"first_waypoint_name\": \"<FIRST_WAYPOINT_FROM_CANDIDATES>\",\n",
+                    "        \"merge_back_waypoint_name\": \"<MERGE_BACK_WAYPOINT_FROM_CANDIDATES>\",\n",
+                    "        \"rationale\": \"<brief>\"\n",
+                    f"      }}{comma}\n",
+                ]
+            )
+        lines.extend(
+            [
+                "    }\n",
+                "  }\n",
+                "}",
+            ]
         )
+        return "".join(lines)
 
     def _agent_context_text(self, contexts: Sequence[Dict[str, Any]]) -> str:
         lines = ["HLTP AIRCRAFT CONTEXT:"]
@@ -381,7 +430,11 @@ class HLTPPromptBuilder:
         if weather is None:
             return "HLTP WEATHER CONTEXT:\n- none"
         cells = weather.get("cells") if isinstance(weather.get("cells"), list) else [weather]
-        lines = ["HLTP WEATHER CONTEXT:", "- every listed weather cell is forbidden airspace"]
+        lines = [
+            "HLTP WEATHER CONTEXT:",
+            "- keep routes outside green with buffer when possible; never plan through yellow/red/magenta",
+            WEATHER_SEVERITY_LEGEND,
+        ]
         lines.append(f"- required_clearance_buffer={core.weather_clearance_buffer_units:.2f} simulator units")
         for cell in cells:
             lines.append(
@@ -446,6 +499,12 @@ def _wrap_deg(angle_deg: float) -> float:
 
 def _pair_key(agent_a: str, agent_b: str) -> Tuple[str, str]:
     return tuple(sorted((str(agent_a), str(agent_b))))
+
+
+def _bad_step_sort_value(step: Optional[int]) -> Tuple[int, int]:
+    if step is None:
+        return (0, 0)
+    return (1, -int(step))
 
 
 def _heading_error_to_destination(state: "AgentState") -> float:
@@ -871,9 +930,11 @@ class MultiAgentThreeCallController:
     def _candidate_sort_key(self, row: Dict[str, Any]) -> Tuple[Any, ...]:
         return (
             0 if bool(row.get("safe_over_preview", False)) else 1,
-            999 if row.get("pair_loss_step") is None else row.get("pair_loss_step"),
-            999 if row.get("weather_entry_step") is None else row.get("weather_entry_step"),
-            999 if row.get("boundary_exit_step") is None else row.get("boundary_exit_step"),
+            _bad_step_sort_value(row.get("pair_loss_step")),
+            0 if bool(row.get("traffic_buffer_ok", True)) else 1,
+            _bad_step_sort_value(row.get("weather_entry_step")),
+            0 if bool(row.get("weather_buffer_ok", True)) else 1,
+            _bad_step_sort_value(row.get("boundary_exit_step")),
             -float(row.get("min_sep_to_any", 999.0)),
             -float(row.get("min_weather_clearance", 999.0)),
             float(row.get("end_heading_error_to_dest_deg", 999.0)),
@@ -884,12 +945,15 @@ class MultiAgentThreeCallController:
     def _merge_back_candidate_sort_key(self, row: Dict[str, Any]) -> Tuple[Any, ...]:
         return (
             0 if bool(row.get("safe_over_preview", False)) else 1,
-            999 if row.get("boundary_exit_step") is None else row.get("boundary_exit_step"),
-            999 if row.get("weather_entry_step") is None else row.get("weather_entry_step"),
-            999 if row.get("pair_loss_step") is None else row.get("pair_loss_step"),
+            _bad_step_sort_value(row.get("pair_loss_step")),
+            0 if bool(row.get("traffic_buffer_ok", True)) else 1,
+            _bad_step_sort_value(row.get("weather_entry_step")),
+            0 if bool(row.get("weather_buffer_ok", True)) else 1,
+            _bad_step_sort_value(row.get("boundary_exit_step")),
             -float(row.get("progress_to_destination", 0.0)),
             -float(row.get("cross_track_reduction", 0.0)),
             float(row.get("end_heading_error_to_dest_deg", 999.0)),
+            -float(row.get("min_sep_to_any", 999.0)),
             abs(int(row.get("heading_change_deg", 0))),
         )
 
@@ -927,6 +991,9 @@ class MultiAgentThreeCallController:
                 "boundary_exit_step": sim["boundary_exit_step"].get(agent_id),
                 "min_sep_to_any": float(sim["per_agent_min_sep"].get(agent_id, 999.0)),
                 "min_weather_clearance": float(sim["min_weather_clearance"].get(agent_id, 999.0)),
+                "traffic_buffer_ok": bool(
+                    float(sim["per_agent_min_sep"].get(agent_id, 999.0)) >= TRAFFIC_CAUTION_R
+                ),
                 "weather_buffer_ok": bool(
                     float(sim["min_weather_clearance"].get(agent_id, 999.0))
                     >= core.weather_clearance_buffer_units
@@ -935,7 +1002,7 @@ class MultiAgentThreeCallController:
                     sim["pair_loss_step"].get(agent_id) is None
                     and sim["weather_entry_step"].get(agent_id) is None
                     and sim["boundary_exit_step"].get(agent_id) is None
-                    and float(sim["per_agent_min_sep"].get(agent_id, 999.0)) >= core.safe_r
+                    and float(sim["per_agent_min_sep"].get(agent_id, 999.0)) >= TRAFFIC_CAUTION_R
                     and float(sim["min_weather_clearance"].get(agent_id, 999.0))
                     >= core.weather_clearance_buffer_units
                 ),
@@ -1279,17 +1346,31 @@ class GlobalPromptBuilder:
             "GLOBAL GUIDANCE TASK:\n"
             f"- Return one maneuver for every GUIDANCE-ELIGIBLE agent: {agent_ids}.\n"
             "- Do not return actions for aircraft that have not entered the sector.\n"
+            "- The controller already assigned each aircraft's phase; do not classify, rename, or output phases.\n"
             "- Use the simulator-generated candidate previews as the main decision evidence.\n"
+            "- Preview rows are sorted by a deterministic heuristic, but you must judge the tradeoffs and may choose any displayed row that best satisfies the safety and phase priorities.\n"
             f"- SAFE_R = {self.safe_r:.1f} units.\n"
-            "- Every weather cell is forbidden airspace; avoid entering any cell.\n"
+            "- Avoid weather with buffer: stay outside the green ring when possible and never enter yellow/red/magenta.\n"
+            f"{WEATHER_SEVERITY_LEGEND}\n"
+            f"- Internal traffic caution buffer: prefer min_sep >= {TRAFFIC_CAUTION_R:.1f} units; the simulator still terminates only below SAFE_R={self.safe_r:.1f}.\n"
             "SAFETY SELECTION RULES:\n"
             "- For each aircraft, prefer a preview row with safe=1 over any row with safe=0.\n"
+            "- Prefer traffic_buffer_ok=1; do not choose traffic_buffer_ok=0 unless every candidate for that aircraft has traffic_buffer_ok=0.\n"
             "- Prefer weather_buffer_ok=1; do not choose weather_buffer_ok=0 unless every candidate for that aircraft has weather_buffer_ok=0.\n"
-            "- If all rows are unsafe, choose the least bad row: no weather_entry, no pair_loss, largest min_sep, then largest min_weather_clearance.\n"
+            "- If all rows are unsafe due to traffic or weather, choose the least bad row: no weather_entry, no pair_loss, largest min_sep, then largest min_weather_clearance.\n"
+            "- If all rows are unsafe only because boundary_exit is present, prioritize recovering back inside/toward destination over small weather-clearance differences.\n"
             "- During MERGE_BACK, traffic separation and weather clearance override destination recovery.\n"
+            "TRAFFIC HARD VETO:\n"
+            "- Never choose a row with pair_loss not None if any displayed row for that aircraft has pair_loss=None.\n"
+            "- pair_loss at step 1 or 2 is an imminent collision and overrides MERGE_BACK, boundary recovery, destination progress, and HLTP.\n"
+            "- If choosing between boundary_exit and pair_loss, choose boundary_exit unless every row for that aircraft has pair_loss.\n"
+            f"- Do not claim a maneuver avoids conflict unless pair_loss=None and min_sep>={TRAFFIC_CAUTION_R:.1f}.\n"
             "OUTPUT RULES:\n"
             "- Return EXACTLY ONE JSON object and no extra text.\n"
+            "- Under actions, output only the listed aircraft IDs with rationale and maneuver; do not output call_name.\n"
             f"- heading_change_deg must be one of {{{bins_text}}}.\n"
+            "- heading_change_deg should match one of that aircraft's displayed preview row turns.\n"
+            "- In the rationale, cite the chosen row's most important consequences, such as no traffic loss, no weather entry, better boundary recovery, or better progress.\n"
             "- Positive is left, negative is right, 0 means hold current heading.\n"
             "STRICT JSON SHAPE:\n"
             "{\n"
@@ -1297,7 +1378,6 @@ class GlobalPromptBuilder:
             "    \"scenario_summary\": \"<brief>\",\n"
             "    \"actions\": {\n"
             "      \"A1\": {\n"
-            "        \"call_name\": \"EXECUTE_TURN\",\n"
             "        \"rationale\": \"<brief>\",\n"
             "        \"maneuver\": { \"heading_change_deg\": 0 }\n"
             "      }\n"
@@ -1315,8 +1395,14 @@ class GlobalPromptBuilder:
             "- Do not merge back through another aircraft's path.\n"
             "- If merge-back rows show pair_loss or low min_sep, choose a hold/diverge candidate instead of forcing recovery.\n"
             "- Weather clearance and traffic separation override destination progress.\n"
+            "- Once pair_loss=None, traffic_buffer_ok=1, weather_entry=None, and weather_buffer_ok=1 are satisfied, do not choose the row only because it has the largest min_sep.\n"
+            "- Among traffic/weather-clear rows, prioritize recovery in this order: no boundary_exit, larger progress_to_destination, larger cross_track_reduction, smaller end_heading_error.\n"
+            "- Use min_sep as a tie-breaker after the traffic caution buffer is satisfied.\n"
+            "- If rows are unsafe only because boundary_exit is present, treat that as recovery urgency: choose the candidate with the strongest destination-side recovery, usually the largest allowed turn magnitude.\n"
+            "- When heading_err magnitude is large, do not keep using +/-5 unless larger same-direction bins materially worsen traffic or weather safety.\n"
             "- Prefer larger progress_to_destination.\n"
             "- Prefer reducing cross_track_abs.\n"
+            "- Do not choose 0 just because it is safe if a nonzero safe row gives materially better progress, cross-track recovery, or heading alignment.\n"
             "- Use 0 only if it remains aligned and still makes good destination progress."
         )
 
@@ -1374,7 +1460,14 @@ class GlobalPromptBuilder:
             context = str(plan.get("short_context", "")).strip()
             if not context:
                 continue
-            lines.append(f"- {agent_id}: {context}. Advisory only; current safety logic may override.")
+            rationale = str(plan.get("rationale", "")).strip()
+            if rationale:
+                lines.append(
+                    f"- {agent_id}: {context}. HLTP rationale: {rationale}. "
+                    "Advisory only; current safety logic may override."
+                )
+            else:
+                lines.append(f"- {agent_id}: {context}. Advisory only; current safety logic may override.")
         if len(lines) == 1:
             lines.append("- none")
         return "\n".join(lines)
@@ -1384,7 +1477,11 @@ class GlobalPromptBuilder:
         if weather is None:
             return "GLOBAL WEATHER:\n- none"
         cells = weather.get("cells") if isinstance(weather.get("cells"), list) else [weather]
-        lines = ["GLOBAL WEATHER:", "- any listed cell is forbidden airspace"]
+        lines = [
+            "GLOBAL WEATHER:",
+            "- green is a caution/buffer ring; yellow/red/magenta are terminal no-go regions",
+            WEATHER_SEVERITY_LEGEND,
+        ]
         lines.append(f"- required_clearance_buffer={core.weather_clearance_buffer_units:.2f} simulator units")
         for cell in cells:
             lines.append(
@@ -1421,7 +1518,15 @@ class GlobalPromptBuilder:
         return "\n".join(lines)
 
     def _preview_text(self, preview_rows_by_agent: Dict[str, List[Dict[str, Any]]]) -> str:
-        lines = ["PER-AGENT TURN PREVIEWS:"]
+        lines = [
+            "PER-AGENT TURN PREVIEWS:",
+            "- each row predicts consequences if that turn is applied now",
+            "- safe=1 means no predicted traffic loss, traffic-buffer loss, weather entry, or boundary exit over the preview",
+            "- pair_loss/weather_entry/boundary_exit show the first bad step; None means not predicted",
+            f"- traffic_buffer_ok=1 means min_sep stayed at or above {TRAFFIC_CAUTION_R:.1f} units",
+            "- progress_to_destination and cross_track_reduction: larger is better for recovery",
+            "- end_heading_error: smaller is better alignment to destination",
+        ]
         if not preview_rows_by_agent:
             lines.append("- none")
             return "\n".join(lines)
@@ -1436,6 +1541,7 @@ class GlobalPromptBuilder:
                     f"weather_entry={row['weather_entry_step']} | "
                     f"boundary_exit={row['boundary_exit_step']} | "
                     f"min_sep={float(row['min_sep_to_any']):.2f} | "
+                    f"traffic_buffer_ok={int(bool(row.get('traffic_buffer_ok', True)))} | "
                     f"min_weather_clearance={float(row['min_weather_clearance']):.2f} | "
                     f"weather_buffer_ok={int(bool(row.get('weather_buffer_ok', True)))} | "
                     f"progress_to_destination={float(row.get('progress_to_destination', 0.0)):.2f} | "
@@ -1467,6 +1573,13 @@ class GlobalPromptBuilder:
         if not frame_paths:
             lines.append("- none")
             return "\n".join(lines)
+        lines.extend(
+            [
+                "- Solid concentric weather rings show each cell's current position.",
+                "- Faint dashed green outer ellipses show predicted future weather-cell positions; motion is from the solid cell toward the dashed outlines.",
+                "- Keep aircraft clear of both the current solid cell and its dashed future outlines with margin.",
+            ]
+        )
         for idx, frame_path in enumerate(frame_paths):
             lines.append(f"- frame_{idx}: {os.path.basename(frame_path)}")
         return "\n".join(lines)
@@ -2021,6 +2134,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
 
         final_plans: Dict[str, HLTPPlan] = {}
         invalid_agent_ids: List[str] = []
+        invalid_rationales: Dict[str, str] = {}
         for agent_id, plan_payload in candidate_plans.items():
             plan = self._hltp_plan_from_payload(
                 agent_id=agent_id,
@@ -2030,13 +2144,23 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             )
             if plan is None:
                 invalid_agent_ids.append(agent_id)
+                rationale = plan_payload.get("rationale", "")
+                if isinstance(rationale, str) and rationale.strip():
+                    invalid_rationales[agent_id] = rationale.strip()
                 continue
             final_plans[agent_id] = plan
 
         for agent_id in sorted(set(missing_agent_ids).union(invalid_agent_ids)):
+            fallback_rationale = invalid_rationales.get(agent_id, "")
+            if fallback_rationale:
+                fallback_rationale = (
+                    "LLM rationale from rejected waypoint proposal: "
+                    f"{fallback_rationale}"
+                )
             final_plans[agent_id] = self._fallback_hltp_plan(
                 context=contexts_by_agent[agent_id],
                 step=step,
+                rationale=fallback_rationale or "deterministic right-side waypoint fallback",
             )
             fallback_agents.append(agent_id)
 
