@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is on a MERGE_BACK maneuver, needing to recover toward its destination while avoiding traffic and weather. The current heading is +158.6, and the aircraft is approaching a boundary exit.",
+    "actions": {
+      "A4": {
+        "rationale": "Choosing +25 degrees provides a safe maneuver with good progress toward the destination and maintains adequate separation from surrounding traffic. It avoids weather entry and boundary exit.",
+        "maneuver": { "heading_change_deg": 25 }
+      }
+    }
+  }
+}
+```

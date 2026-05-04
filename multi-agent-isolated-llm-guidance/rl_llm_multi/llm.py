@@ -770,13 +770,27 @@ class MultiAgentThreeCallController:
         boundary_exit_step = {agent_id: None for agent_id in active_ids}
         pairwise_summary: Dict[Tuple[str, str], Dict[str, Any]] = {}
 
+        def ensure_tracked(agent_id: str) -> None:
+            if agent_id not in active_ids:
+                active_ids.append(agent_id)
+            pair_loss_step.setdefault(agent_id, None)
+            per_agent_min_sep.setdefault(agent_id, float("inf"))
+            min_weather_clearance.setdefault(agent_id, float("inf"))
+            weather_entry_step.setdefault(agent_id, None)
+            boundary_exit_step.setdefault(agent_id, None)
+
         for tick in range(1, int(horizon_steps) + 1):
             turns = first_step_turns if tick == 1 else {}
             sim.step(turns, compute_predictions=False)
             cumulative_reward += float(sim.reward)
 
+            for agent_id in sim.active_agent_ids:
+                ensure_tracked(agent_id)
+
             for pair_key, distance in sim.last_pairwise_separations.items():
                 agent_a, agent_b = pair_key
+                ensure_tracked(agent_a)
+                ensure_tracked(agent_b)
                 key = _pair_key(agent_a, agent_b)
                 summary = pairwise_summary.setdefault(
                     key,
@@ -795,7 +809,7 @@ class MultiAgentThreeCallController:
                 if float(distance) < core.safe_r and pair_loss_step[agent_b] is None:
                     pair_loss_step[agent_b] = tick
 
-            for agent_id in active_ids:
+            for agent_id in list(active_ids):
                 state = sim.agent_states.get(agent_id)
                 if state is None or not state.launched or state.finished:
                     continue

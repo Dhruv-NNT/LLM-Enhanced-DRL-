@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A6 is entering the sector and needs to avoid traffic and weather. The current heading is -18.8 degrees towards a destination at 70.9,38.0. The primary concern is maintaining separation from A5 and avoiding weather.",
+    "actions": {
+      "A6": {
+        "rationale": "Turning +25 degrees maintains safe separation from traffic (min_sep=7.11) and avoids weather entry. This is the best option as it prioritizes safety and separation.",
+        "maneuver": { "heading_change_deg": 25 }
+      }
+    }
+  }
+}
+```

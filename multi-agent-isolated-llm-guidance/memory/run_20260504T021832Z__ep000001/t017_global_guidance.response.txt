@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A3 is in a MERGE_BACK phase, needing to recover toward its destination while avoiding conflict with A4 and weather. The current heading is not optimal for recovery.",
+    "actions": {
+      "A3": {
+        "rationale": "Turning +5 degrees provides a safe maneuver that avoids conflict with A4 and maintains reasonable progress toward the destination. While not the most aggressive recovery, it prioritizes safety and avoids weather entry.",
+        "maneuver": { "heading_change_deg": 5 }
+      }
+    }
+  }
+}
+```

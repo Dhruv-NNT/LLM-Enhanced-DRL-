@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A7 is on a MERGE_BACK maneuver, exiting the sector. All candidate turns result in boundary exit. Prioritizing recovery while avoiding weather entry.",
+    "actions": {
+      "A7": {
+        "rationale": "Turn +10 results in boundary exit, but has the best weather clearance and progress towards destination among the available options. It avoids weather entry and provides reasonable progress.",
+        "maneuver": { "heading_change_deg": 10 }
+      }
+    }
+  }
+}
+```

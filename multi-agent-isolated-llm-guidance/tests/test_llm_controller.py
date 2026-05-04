@@ -20,6 +20,8 @@ if str(PACKAGE_ROOT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_ROOT))
 
 from configs import (  # noqa: E402
+    AGENT_SPEED,
+    LAUNCH_SEPARATION_R,
     MAX_AGENTS,
     SAFE_R,
     WEATHER_TRAIL_STEPS,
@@ -34,7 +36,7 @@ from rl_llm_multi import (  # noqa: E402
     WeatherCell,
 )
 from rl_llm_multi.llm import GlobalPromptBuilder, HLTPPromptBuilder  # noqa: E402
-from rl_llm_multi.utils import weather_axis_units  # noqa: E402
+from rl_llm_multi.utils import assign_routes, weather_axis_units  # noqa: E402
 
 
 def _answer_json(turn_deg: int) -> str:
@@ -179,6 +181,87 @@ class FakeCore:
 
     def weather_signed_clearance(self, position: tuple[float, float]) -> float:
         return 8.0
+
+
+class LaunchSpacingTests(unittest.TestCase):
+    def test_same_origin_routes_are_staggered_by_launch_separation(self) -> None:
+        assignments = assign_routes(2, route_ids=["PATH5_REV", "PATH6"])
+
+        self.assertEqual(assignments[0].route.origin, "OMBAP")
+        self.assertEqual(assignments[1].route.origin, "OMBAP")
+        self.assertEqual(assignments[0].start_step, 0)
+        self.assertGreater(assignments[1].start_step, 0)
+
+        first_route = assignments[0].route
+        second_origin = assignments[1].route.points[0]
+        elapsed_before_launch = max(0, assignments[1].start_step - 1)
+        first_progress = float(elapsed_before_launch) * float(AGENT_SPEED)
+        first_point = first_route.linestring.interpolate(first_progress)
+        distance_at_launch = math.hypot(
+            first_point.x - second_origin[0],
+            first_point.y - second_origin[1],
+        )
+        self.assertGreaterEqual(distance_at_launch, LAUNCH_SEPARATION_R)
+
+    def test_reset_does_not_initially_launch_too_close_aircraft(self) -> None:
+        core = MultiAgentSectorCore(num_agents=8, num_weather_cells=2)
+        core.reset(seed=42, num_agents=8, route_ids=None, num_weather_cells=2)
+
+        active_ids = list(core.active_agent_ids)
+        for idx, agent_a in enumerate(active_ids):
+            for agent_b in active_ids[idx + 1 :]:
+                state_a = core.get_agent(agent_a)
+                state_b = core.get_agent(agent_b)
+                distance = math.hypot(
+                    state_a.position[0] - state_b.position[0],
+                    state_a.position[1] - state_b.position[1],
+                )
+                self.assertGreaterEqual(distance, LAUNCH_SEPARATION_R)
+
+    def test_runtime_launch_gate_waits_for_active_aircraft_to_clear_origin(self) -> None:
+        core = MultiAgentSectorCore(num_agents=2, num_weather_cells=1)
+        core.reset(
+            seed=42,
+            num_agents=2,
+            route_ids=["PATH5_REV", "PATH6"],
+            num_weather_cells=1,
+        )
+        blocker = core.get_agent("A1")
+        delayed = core.get_agent("A2")
+        origin = delayed.route.points[0]
+
+        blocker.launched = True
+        blocker.active = True
+        blocker.finished = False
+        blocker.position = origin
+        delayed.launched = False
+        delayed.active = False
+        delayed.start_step = core.n_step
+
+        core._launch_agents()
+        self.assertFalse(delayed.launched)
+        self.assertEqual(delayed.start_step, core.n_step + 1)
+
+        blocker.position = (origin[0] + LAUNCH_SEPARATION_R + 1.0, origin[1])
+        core.n_step = delayed.start_step
+        core._launch_agents()
+        self.assertTrue(delayed.launched)
+
+    def test_preview_tracks_aircraft_that_launch_during_horizon(self) -> None:
+        core = MultiAgentSectorCore(num_agents=8, num_weather_cells=2)
+        core.reset(seed=42, num_agents=8, num_weather_cells=2)
+        self.assertNotIn("A7", core.active_agent_ids)
+        self.assertGreater(core.get_agent("A7").start_step, core.n_step)
+
+        controller = MultiAgentThreeCallController()
+        preview = controller._simulate_joint_horizon(
+            core,
+            {},
+            horizon_steps=core.get_agent("A7").start_step + 2,
+        )
+
+        self.assertIn("A7", preview["per_agent_min_sep"])
+        self.assertIn("A7", preview["pair_loss_step"])
 
 
 class ControllerTests(unittest.TestCase):

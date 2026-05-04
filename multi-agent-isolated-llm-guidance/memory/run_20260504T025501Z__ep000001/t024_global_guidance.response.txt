@@ -1,0 +1,8 @@
+```json
+{
+  "agent": "A7",
+  "turn": "+0",
+  "reasoning": "The agent is currently facing a situation where a turn of +0 degrees results in a boundary exit. A turn of +15 degrees also results in a boundary exit and a negative progress to destination. A turn of +10 degrees also results in a boundary exit and a negative progress to destination. A turn of +5 degrees also results in a boundary exit and a negative progress to destination. A turn of +30 degrees results in a pair loss. A turn of +25 degrees results in a pair loss. Therefore, the best option is to maintain the current heading, even though it results in a boundary exit, as it avoids traffic loss and pair loss.",
+  "preview": "+0"
+}
+```

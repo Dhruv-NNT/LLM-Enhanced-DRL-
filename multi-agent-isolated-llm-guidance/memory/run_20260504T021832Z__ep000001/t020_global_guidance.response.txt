@@ -1,0 +1,15 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Coordinated turns needed to maintain separation between aircraft A3 and A4, while also considering weather and boundary exits.",
+    "A3": {
+      "turn": "+15",
+      "reason": "This turn provides a balance between maintaining separation from A2, minimizing boundary exits, and achieving reasonable progress towards the destination. It's a compromise given the constraints."
+    },
+    "A4": {
+      "turn": "+10",
+      "reason": "This turn provides a balance between maintaining separation from A2, minimizing boundary exits, and achieving reasonable progress towards the destination. It's a compromise given the constraints."
+    }
+  }
+}
+```

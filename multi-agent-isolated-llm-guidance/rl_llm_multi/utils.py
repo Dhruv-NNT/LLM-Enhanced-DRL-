@@ -18,6 +18,7 @@ from shapely.geometry import LineString, Point, Polygon
 
 from configs import (
     AGENT_SPEED,
+    LAUNCH_SEPARATION_R,
     MAX_AGENTS,
     ROUTE_MIRROR_SUFFIX,
     ROUTES_CSV,
@@ -350,6 +351,51 @@ def resolve_route_specs(route_ids: Optional[Sequence[str]] = None) -> List[Route
     return [catalog[route_id] for route_id in route_ids]
 
 
+def _route_position_before_step(
+    route: RouteSpec,
+    *,
+    start_step: int,
+    step: int,
+) -> Optional[Tuple[float, float]]:
+    if int(step) < int(start_step):
+        return None
+    if int(start_step) == 0:
+        elapsed_steps = max(0, int(step) - 1)
+    else:
+        elapsed_steps = max(0, int(step) - int(start_step))
+    progress = float(elapsed_steps) * float(AGENT_SPEED)
+    if progress >= float(route.linestring.length):
+        return None
+    point = route.linestring.interpolate(progress)
+    return float(point.x), float(point.y)
+
+
+def _launch_step_with_origin_spacing(
+    route: RouteSpec,
+    start_step: int,
+    assignments: Sequence[AssignedRoute],
+) -> int:
+    candidate_step = int(start_step)
+    origin = tuple(route.points[0])
+    while True:
+        blocked = False
+        for assignment in assignments:
+            other_position = _route_position_before_step(
+                assignment.route,
+                start_step=assignment.start_step,
+                step=candidate_step,
+            )
+            if other_position is None:
+                continue
+            distance = float(np.linalg.norm(np.array(origin) - np.array(other_position)))
+            if distance < float(LAUNCH_SEPARATION_R):
+                candidate_step += 1
+                blocked = True
+                break
+        if not blocked:
+            return candidate_step
+
+
 def assign_routes(
     num_agents: int,
     *,
@@ -383,6 +429,7 @@ def assign_routes(
             start_step = prev_start + prev_entry + 1
         else:
             start_step = 0
+        start_step = _launch_step_with_origin_spacing(route, start_step, assignments)
         prefix_state[route.shared_prefix_key] = (start_step, route.entry_step)
         assignments.append(
             AssignedRoute(

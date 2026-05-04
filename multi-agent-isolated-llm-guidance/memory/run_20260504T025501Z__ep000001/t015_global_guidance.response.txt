@@ -1,0 +1,9 @@
+Ἥσχος
+
+```json
+{
+  "agent": "A6",
+  "turn": -30,
+  "explanation": "Applying a turn of -30 degrees results in a safe maneuver with no predicted traffic loss, weather entry, or boundary exit. It also maintains a sufficient traffic buffer and weather clearance. This turn provides the best progress towards the destination and a significant reduction in cross-track error, while also aligning the agent closer to its intended heading. The recent decision memory indicates a pattern of emergency maneuvers, and this turn provides a more stable and controlled recovery."
+}
+```

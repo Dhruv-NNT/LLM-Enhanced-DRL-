@@ -1,0 +1,8 @@
+```json
+{
+  "agent": "A3",
+  "turn": "+30",
+  "reasoning": "A3 is in a situation where it needs to avoid a potential loss of separation with A7. The preview shows that a turn of +30 degrees results in a safe outcome with a minimum separation of 7.04 units and traffic buffer ok. While other turns are possible, this turn provides the best combination of safety and progress towards the destination. The other turns result in traffic loss or reduced separation, making +30 degrees the optimal choice.",
+  "action": "+30"
+}
+```

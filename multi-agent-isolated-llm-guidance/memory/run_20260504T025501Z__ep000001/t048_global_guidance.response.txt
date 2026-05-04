@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A7 is in MERGE_BACK phase, attempting to recover toward destination while avoiding weather and maintaining traffic separation.",
+    "actions": {
+      "A7": {
+        "rationale": "Choosing +0 degrees to maintain current heading. This avoids boundary exit and prioritizes recovery toward destination while maintaining safe separation from other traffic and weather.",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+```

@@ -1,0 +1,12 @@
+```json
+{
+  "A3": {
+    "turn": "+30",
+    "reason": "Chooses +30 turn for A3 to avoid predicted traffic loss and maintain safe separation from A4 while progressing towards destination. This turn also provides a good balance between cross-track reduction and alignment with the destination."
+  },
+  "A4": {
+    "turn": "+25",
+    "reason": "Chooses +25 turn for A4 to avoid predicted traffic loss and maintain safe separation from A3 while progressing towards destination. This turn also provides a good balance between cross-track reduction and alignment with the destination."
+  }
+}
+```

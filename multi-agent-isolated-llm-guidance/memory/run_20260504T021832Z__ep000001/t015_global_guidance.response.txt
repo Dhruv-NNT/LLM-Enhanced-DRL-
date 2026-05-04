@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 and A4 are both on MERGE_BACK calls, needing to recover toward their destinations while avoiding traffic and weather. A4 is currently experiencing a boundary exit and needs to turn right to avoid conflict with A3.",
+    "actions": {
+      "A2": {
+        "rationale": "Choosing the +0 heading change maintains safe separation from A3 and A4, avoids boundary exit, and provides good progress toward destination.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A4": {
+        "rationale": "Choosing the +5 heading change maintains safe separation from A3 and A4, avoids boundary exit, and provides good progress toward destination.",
+        "maneuver": { "heading_change_deg": 5 }
+      }
+    }
+  }
+}
+```

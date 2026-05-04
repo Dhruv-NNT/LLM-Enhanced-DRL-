@@ -21,6 +21,7 @@ from configs import (
     DESTINATION_ALIGNMENT_DEG,
     GOAL_RADIUS,
     HAZARD_LOOKAHEAD_STEPS,
+    LAUNCH_SEPARATION_R,
     MAX_AGENTS,
     MAX_STEP,
     NUM_WEATHER_CELLS_DEFAULT,
@@ -216,9 +217,23 @@ class MultiAgentSectorCore:
     def _wrap_angle(self, angle_rad: float) -> float:
         return ((float(angle_rad) + math.pi) % (2.0 * math.pi)) - math.pi
 
+    def _launch_position_clear(self, state: AgentState) -> bool:
+        launch_position = np.array(state.route.points[0], dtype=float)
+        for other in self.agent_states.values():
+            if other.agent_id == state.agent_id or not other.launched or other.finished:
+                continue
+            distance = float(np.linalg.norm(launch_position - np.array(other.position, dtype=float)))
+            if distance < float(LAUNCH_SEPARATION_R):
+                return False
+        return True
+
     def _launch_agents(self) -> None:
         for state in self.agent_states.values():
             if not state.launched and self.n_step >= state.start_step:
+                if not self._launch_position_clear(state):
+                    state.start_step = self.n_step + 1
+                    state.last_event = f"launch_delayed@{self.n_step}"
+                    continue
                 state.launched = True
                 state.active = True
                 state.last_event = f"launch@{self.n_step}"

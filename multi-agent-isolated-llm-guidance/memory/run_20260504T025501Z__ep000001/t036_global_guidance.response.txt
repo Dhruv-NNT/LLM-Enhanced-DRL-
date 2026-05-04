@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A7 is exiting the sector and needs to adjust heading to avoid boundary exit. All turns result in boundary exit, but a moderate turn is preferred to facilitate recovery.",
+    "actions": {
+      "A7": {
+        "rationale": "All turns result in boundary exit, but a +15 degree turn provides the best progress towards the destination and reduces cross-track error while avoiding immediate traffic loss.",
+        "maneuver": { "heading_change_deg": 15 }
+      }
+    }
+  }
+}
+```

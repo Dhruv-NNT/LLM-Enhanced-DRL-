@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 and A4 are both on MERGE_BACK trajectories, needing to recover toward their destinations while avoiding traffic and weather. A4 is currently closer to the green caution ring and needs to adjust its heading to maintain adequate clearance.",
+    "actions": {
+      "A2": {
+        "rationale": "A2's current heading is safe, but a slight adjustment is needed to improve recovery toward destination. Choosing +0 degrees maintains separation and avoids weather entry.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A4": {
+        "rationale": "A4 needs to turn right to avoid conflict with A2 and maintain adequate weather clearance. A turn of +5 degrees provides a balance between traffic separation, weather avoidance, and progress toward the destination.",
+        "maneuver": { "heading_change_deg": 5 }
+      }
+    }
+  }
+}
+```

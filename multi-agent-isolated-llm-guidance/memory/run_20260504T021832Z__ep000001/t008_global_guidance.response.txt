@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 is in MERGE_BACK phase, needing to recover toward destination while avoiding traffic and weather. The current heading is +102.4, and the destination is at +31.2 heading error. The closest traffic is A4 at 18.10 distance and 11.39 separation.",
+    "actions": {
+      "A2": {
+        "rationale": "Choosing +15 degrees provides the best combination of traffic separation (min_sep=9.40), weather clearance (min_weather_clearance=4.83), and progress toward destination (progress_to_destination=18.64).",
+        "maneuver": { "heading_change_deg": 15 }
+      }
+    }
+  }
+}
+```

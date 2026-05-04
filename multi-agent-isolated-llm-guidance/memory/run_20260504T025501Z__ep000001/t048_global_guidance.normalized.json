@@ -1,0 +1,120 @@
+{
+  "answer": {
+    "scenario_summary": "A7 is in MERGE_BACK phase, attempting to recover toward destination while avoiding weather and maintaining traffic separation.",
+    "actions": {
+      "A7": {
+        "call_name": "MERGE_BACK",
+        "rationale": "Choosing +0 degrees to maintain current heading. This avoids boundary exit and prioritizes recovery toward destination while maintaining safe separation from other traffic and weather.",
+        "source": "llm",
+        "requested_heading_change_deg": 0,
+        "maneuver": {
+          "heading_change_deg": 0
+        }
+      }
+    }
+  },
+  "threat_rows_by_agent": {
+    "A7": []
+  },
+  "preview_rows_by_agent": {
+    "A7": [
+      {
+        "heading_change_deg": 0,
+        "pair_loss_step": null,
+        "weather_entry_step": null,
+        "boundary_exit_step": 4,
+        "min_sep_to_any": 999.0,
+        "min_weather_clearance": 7.014354180738027,
+        "traffic_buffer_ok": true,
+        "weather_buffer_ok": true,
+        "safe_over_preview": false,
+        "end_heading_error_to_dest_deg": 6.835670891231757,
+        "start_distance_to_destination": 26.759508956309485,
+        "end_distance_to_destination": 6.795588253669102,
+        "progress_to_destination": 19.963920702640383,
+        "start_cross_track_abs": 17.82549253937302,
+        "end_cross_track_abs": 4.961023087065335,
+        "cross_track_reduction": 12.864469452307684
+      }
+    ]
+  },
+  "hltp_plans": {},
+  "debug": {
+    "llm_status": "ok",
+    "llm_error": "",
+    "parse_status": "ok",
+    "fallback_reason": "",
+    "fallback_agents": [],
+    "retry_count": 0,
+    "used_vision": false,
+    "frame_paths": [],
+    "eligible_agent_ids": [
+      "A7"
+    ],
+    "entered_agent_ids": [
+      "A7"
+    ],
+    "stage_by_agent": {
+      "A7": "MERGE_BACK"
+    },
+    "hltp_plans": {},
+    "weather": {
+      "cell_id": "W1",
+      "center": [
+        37.18058338315127,
+        64.54516119380304
+      ],
+      "major_radius_nm": 16.243670303379,
+      "minor_radius_nm": 9.969576460594952,
+      "major_radius_units": 5.42407054865865,
+      "minor_radius_units": 4.153990191914563,
+      "minor_ratio": 0.613751465918456,
+      "angle_rad": 0.7012372151706965,
+      "motion_heading_rad": 0.8760444114976647,
+      "speed_units_per_step": 0.0,
+      "major_growth_nm_per_step": 0.0,
+      "growth_stopped": true,
+      "movement_stopped": true,
+      "cells": [
+        {
+          "cell_id": "W1",
+          "center": [
+            37.18058338315127,
+            64.54516119380304
+          ],
+          "major_radius_nm": 16.243670303379,
+          "minor_radius_nm": 9.969576460594952,
+          "major_radius_units": 5.42407054865865,
+          "minor_radius_units": 4.153990191914563,
+          "minor_ratio": 0.613751465918456,
+          "angle_rad": 0.7012372151706965,
+          "motion_heading_rad": 0.8760444114976647,
+          "speed_units_per_step": 0.0,
+          "major_growth_nm_per_step": 0.0,
+          "growth_stopped": true,
+          "movement_stopped": true
+        },
+        {
+          "cell_id": "W2",
+          "center": [
+            68.03473831617298,
+            54.43102664650962
+          ],
+          "major_radius_nm": 14.665330692188178,
+          "minor_radius_nm": 8.959518325431164,
+          "major_radius_units": 4.897032924713486,
+          "minor_radius_units": 3.7331326355963177,
+          "minor_ratio": 0.6109318987401802,
+          "angle_rad": 1.5876204605582767,
+          "motion_heading_rad": 0.8760444114976647,
+          "speed_units_per_step": 0.1919242952645281,
+          "major_growth_nm_per_step": 0.2394769428089918,
+          "growth_stopped": false,
+          "movement_stopped": false
+        }
+      ],
+      "num_weather_cells": 2
+    },
+    "model": "gemma3:12b"
+  }
+}

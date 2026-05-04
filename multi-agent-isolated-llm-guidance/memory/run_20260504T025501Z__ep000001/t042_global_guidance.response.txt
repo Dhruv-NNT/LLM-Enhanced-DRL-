@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A7 is on a MERGE_BACK phase, approaching the boundary and needing to recover toward its destination. The aircraft is currently experiencing a boundary exit.",
+    "actions": {
+      "A7": {
+        "rationale": "The +0 degree turn is unsafe due to boundary exit. The +10 degree turn is also unsafe due to boundary exit. The +15 degree turn is unsafe due to boundary exit. The +20 degree turn is unsafe due to boundary exit. The +25 degree turn is unsafe due to boundary exit. The +30 degree turn is unsafe due to boundary exit. The +0 degree turn is the least bad option, as it avoids traffic loss and weather entry, and prioritizes boundary recovery.",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+```

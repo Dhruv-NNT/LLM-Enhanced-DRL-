@@ -1,0 +1,254 @@
+{
+  "answer": {
+    "scenario_summary": "A6 is in MERGE_BACK phase, attempting to recover towards destination while avoiding conflicts and weather. The current heading needs adjustment to improve recovery and maintain safe separation.",
+    "actions": {
+      "A6": {
+        "call_name": "MERGE_BACK",
+        "rationale": "Choosing +0 degrees avoids boundary exit and maintains current separation from traffic. While a larger turn might offer better destination progress, the current situation prioritizes avoiding boundary exit and maintaining safe separation.",
+        "source": "llm",
+        "requested_heading_change_deg": 0,
+        "maneuver": {
+          "heading_change_deg": 0
+        }
+      }
+    }
+  },
+  "threat_rows_by_agent": {
+    "A6": [
+      {
+        "intruder_id": "A4",
+        "intruder_position": [
+          49.39445259321235,
+          56.57028820322758
+        ],
+        "intruder_heading_deg": 173.6197271109552,
+        "current_distance": 16.416721441965805,
+        "bearing_error_deg": 166.44782550076224,
+        "predicted_loss_step": null,
+        "predicted_min_sep": 19.95150285255917,
+        "predicted_min_step": 1
+      },
+      {
+        "intruder_id": "A2",
+        "intruder_position": [
+          55.51251311712259,
+          62.75574190407525
+        ],
+        "intruder_heading_deg": 147.36254848733597,
+        "current_distance": 18.92833953780332,
+        "bearing_error_deg": 139.11571591806216,
+        "predicted_loss_step": null,
+        "predicted_min_sep": 22.08581223648025,
+        "predicted_min_step": 1
+      },
+      {
+        "intruder_id": "A8",
+        "intruder_position": [
+          70.46418190832749,
+          63.64613451686934
+        ],
+        "intruder_heading_deg": 93.58538799644542,
+        "current_distance": 21.56927241149789,
+        "bearing_error_deg": 96.32086096590939,
+        "predicted_loss_step": null,
+        "predicted_min_sep": 23.696429024662564,
+        "predicted_min_step": 1
+      },
+      {
+        "intruder_id": "A3",
+        "intruder_position": [
+          74.8519596059383,
+          68.78427151480031
+        ],
+        "intruder_heading_deg": -27.67503961653013,
+        "current_distance": 28.192623740563466,
+        "bearing_error_deg": 93.2168762572071,
+        "predicted_loss_step": null,
+        "predicted_min_sep": 28.4048946729571,
+        "predicted_min_step": 1
+      }
+    ]
+  },
+  "preview_rows_by_agent": {
+    "A6": [
+      {
+        "heading_change_deg": 0,
+        "pair_loss_step": null,
+        "weather_entry_step": null,
+        "boundary_exit_step": 3,
+        "min_sep_to_any": 19.95150285255917,
+        "min_weather_clearance": 4.843865675893205,
+        "traffic_buffer_ok": true,
+        "weather_buffer_ok": true,
+        "safe_over_preview": false,
+        "end_heading_error_to_dest_deg": 5.081383545828658,
+        "start_distance_to_destination": 12.233429750393489,
+        "end_distance_to_destination": 4.244333145299982,
+        "progress_to_destination": 7.989096605093507,
+        "start_cross_track_abs": 2.812979976093992,
+        "end_cross_track_abs": 0.7364534251475583,
+        "cross_track_reduction": 2.0765265509464337
+      }
+    ]
+  },
+  "hltp_plans": {
+    "A3": {
+      "agent_id": "A3",
+      "first_waypoint_name": "MABAL",
+      "merge_back_waypoint_name": "OMLIV",
+      "short_context": "HLTP MABAL->OMLIV",
+      "source": "llm",
+      "created_step": 5,
+      "conflict_partner_ids": [
+        "A4"
+      ],
+      "rationale": "A3 needs to turn right to avoid conflict with A4. MABAL is the closest right-side waypoint and provides sufficient lateral separation. OMLIV is selected as the merge-back waypoint to maintain route progress while avoiding weather."
+    },
+    "A4": {
+      "agent_id": "A4",
+      "first_waypoint_name": "SUSAR",
+      "merge_back_waypoint_name": "ELGOR",
+      "short_context": "HLTP SUSAR->ELGOR",
+      "source": "llm",
+      "created_step": 5,
+      "conflict_partner_ids": [
+        "A3"
+      ],
+      "rationale": "A4 needs to turn right to avoid conflict with A3. SUSAR is the closest right-side waypoint and provides sufficient lateral separation. ELGOR is selected as the merge-back waypoint to maintain route progress while avoiding weather."
+    },
+    "A6": {
+      "agent_id": "A6",
+      "first_waypoint_name": "WP071",
+      "merge_back_waypoint_name": "LIPRO",
+      "short_context": "HLTP WP071->LIPRO",
+      "source": "llm",
+      "created_step": 1,
+      "conflict_partner_ids": [
+        "A5"
+      ],
+      "rationale": "WP071 provides a right-side deviation to avoid the conflict with A5. LIPRO allows for a return to the original route progression while maintaining separation."
+    }
+  },
+  "debug": {
+    "llm_status": "ok",
+    "llm_error": "",
+    "parse_status": "ok",
+    "fallback_reason": "",
+    "fallback_agents": [],
+    "retry_count": 0,
+    "used_vision": false,
+    "frame_paths": [],
+    "eligible_agent_ids": [
+      "A6"
+    ],
+    "entered_agent_ids": [
+      "A1",
+      "A2",
+      "A3",
+      "A4",
+      "A5",
+      "A6",
+      "A7",
+      "A8"
+    ],
+    "stage_by_agent": {
+      "A6": "MERGE_BACK"
+    },
+    "hltp_plans": {
+      "A3": {
+        "agent_id": "A3",
+        "first_waypoint_name": "MABAL",
+        "merge_back_waypoint_name": "OMLIV",
+        "short_context": "HLTP MABAL->OMLIV",
+        "source": "llm",
+        "created_step": 5,
+        "conflict_partner_ids": [
+          "A4"
+        ],
+        "rationale": "A3 needs to turn right to avoid conflict with A4. MABAL is the closest right-side waypoint and provides sufficient lateral separation. OMLIV is selected as the merge-back waypoint to maintain route progress while avoiding weather."
+      },
+      "A4": {
+        "agent_id": "A4",
+        "first_waypoint_name": "SUSAR",
+        "merge_back_waypoint_name": "ELGOR",
+        "short_context": "HLTP SUSAR->ELGOR",
+        "source": "llm",
+        "created_step": 5,
+        "conflict_partner_ids": [
+          "A3"
+        ],
+        "rationale": "A4 needs to turn right to avoid conflict with A3. SUSAR is the closest right-side waypoint and provides sufficient lateral separation. ELGOR is selected as the merge-back waypoint to maintain route progress while avoiding weather."
+      },
+      "A6": {
+        "agent_id": "A6",
+        "first_waypoint_name": "WP071",
+        "merge_back_waypoint_name": "LIPRO",
+        "short_context": "HLTP WP071->LIPRO",
+        "source": "llm",
+        "created_step": 1,
+        "conflict_partner_ids": [
+          "A5"
+        ],
+        "rationale": "WP071 provides a right-side deviation to avoid the conflict with A5. LIPRO allows for a return to the original route progression while maintaining separation."
+      }
+    },
+    "weather": {
+      "cell_id": "W1",
+      "center": [
+        35.063784562481516,
+        62.005073053652296
+      ],
+      "major_radius_nm": 12.15303737931621,
+      "minor_radius_nm": 7.458944506917114,
+      "major_radius_units": 4.058130391392167,
+      "minor_radius_units": 3.107893544548797,
+      "minor_ratio": 0.613751465918456,
+      "angle_rad": 0.7012372151706965,
+      "motion_heading_rad": 0.8760444114976647,
+      "speed_units_per_step": 0.3673879270939118,
+      "major_growth_nm_per_step": 0.4545147693403101,
+      "growth_stopped": false,
+      "movement_stopped": false,
+      "cells": [
+        {
+          "cell_id": "W1",
+          "center": [
+            35.063784562481516,
+            62.005073053652296
+          ],
+          "major_radius_nm": 12.15303737931621,
+          "minor_radius_nm": 7.458944506917114,
+          "major_radius_units": 4.058130391392167,
+          "minor_radius_units": 3.107893544548797,
+          "minor_ratio": 0.613751465918456,
+          "angle_rad": 0.7012372151706965,
+          "motion_heading_rad": 0.8760444114976647,
+          "speed_units_per_step": 0.3673879270939118,
+          "major_growth_nm_per_step": 0.4545147693403101,
+          "growth_stopped": false,
+          "movement_stopped": false
+        },
+        {
+          "cell_id": "W2",
+          "center": [
+            64.59440769693758,
+            50.30274439371041
+          ],
+          "major_radius_nm": 7.959976293536414,
+          "minor_radius_nm": 4.863003430937023,
+          "major_radius_units": 2.657987522241852,
+          "minor_radius_units": 2.0262514295570924,
+          "minor_ratio": 0.6109318987401802,
+          "angle_rad": 1.5876204605582767,
+          "motion_heading_rad": 0.8760444114976647,
+          "speed_units_per_step": 0.1919242952645281,
+          "major_growth_nm_per_step": 0.2394769428089918,
+          "growth_stopped": false,
+          "movement_stopped": false
+        }
+      ],
+      "num_weather_cells": 2
+    },
+    "model": "gemma3:12b"
+  }
+}

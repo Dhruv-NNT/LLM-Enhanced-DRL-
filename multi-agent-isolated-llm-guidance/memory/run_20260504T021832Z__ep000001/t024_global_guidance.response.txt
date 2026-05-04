@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 is in MERGE_BACK phase, attempting to recover toward destination while avoiding weather and traffic. The current situation requires careful maneuvering to maintain safe separation and alignment.",
+    "actions": {
+      "A2": {
+        "rationale": "Choosing the +0 heading maintains safe separation from traffic and avoids weather entry. While a larger turn might offer slightly better destination progress, the priority is to ensure safety and stability during the recovery phase.",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+```

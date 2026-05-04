@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A3 and A4 are both on MERGE_BACK maneuvers, needing to avoid each other and weather. A3 needs to turn right to avoid conflict with A4 and recover toward its destination.",
+    "actions": {
+      "A3": {
+        "rationale": "Choosing -10 degrees avoids boundary exit and provides good progress toward destination and cross-track reduction. It also maintains a safe separation from traffic.",
+        "maneuver": { "heading_change_deg": -10 }
+      }
+    }
+  }
+}
+```

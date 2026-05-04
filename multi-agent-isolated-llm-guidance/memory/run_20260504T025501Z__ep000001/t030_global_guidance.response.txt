@@ -1,0 +1,9 @@
+<unused675>લ
+
+```json
+{
+  "agent": "A5",
+  "turn": -20,
+  "explanation": "Applying a turn of -20 degrees allows A5 to avoid the boundary exit and maintain a safe separation from surrounding traffic. While the progress to destination is slightly reduced compared to the +0 degree turn, the avoidance of a boundary exit is prioritized. The resulting end heading error is also relatively low, indicating a reasonable alignment towards the destination."
+}
+```

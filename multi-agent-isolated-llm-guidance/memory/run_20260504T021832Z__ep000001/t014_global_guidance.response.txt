@@ -1,0 +1,15 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A3 and A4 are in proximity and require coordinated maneuvering to avoid traffic conflicts and weather. A4 is currently executing a recovery maneuver.",
+    "A3": {
+      "turn": -15,
+      "reason": "This turn provides a safe separation from A2 and A4 while maintaining reasonable progress towards the destination. It avoids predicted weather entry and boundary exit. It also provides a good minimum separation."
+    },
+    "A4": {
+      "turn": -20,
+      "reason": "This turn provides a safe separation from A2 and A3 while maintaining reasonable progress towards the destination. It avoids predicted weather entry and boundary exit. It also provides a good minimum separation."
+    }
+  }
+}
+```

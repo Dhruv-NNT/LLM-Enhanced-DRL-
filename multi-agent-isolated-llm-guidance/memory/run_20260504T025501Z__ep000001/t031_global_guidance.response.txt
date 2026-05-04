@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is in MERGE_BACK phase, needing to recover towards its destination while avoiding conflict with A3 and maintaining weather clearance. The current situation requires a right turn to avoid A3.",
+    "actions": {
+      "A4": {
+        "rationale": "Choosing +0 degrees avoids immediate boundary exit and maintains a reasonable progress towards destination. While not the most aggressive recovery, it prioritizes safety and avoids immediate boundary exit.",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+```
