@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are maneuvering to avoid conflicts and weather. A1 is merging back, A7 is entering the sector, A8 is executing a turn, A10 is also executing a turn, and A2 is maneuvering to avoid a conflict.",
+    "actions": {
+      "A1": {
+        "rationale": "Choosing -15 degrees provides a safe separation from traffic and avoids weather entry, while maintaining reasonable progress toward the destination.",
+        "turn": -15
+      },
+      "A10": {
+        "rationale": "Choosing +0 degrees provides a safe separation from traffic and avoids weather entry, while maintaining reasonable progress toward the destination.",
+        "turn": 0
+      }
+    }
+  }
+}
+```

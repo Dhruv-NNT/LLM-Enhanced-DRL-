@@ -1,0 +1,18 @@
+```json
+{
+  "answer": {
+    "plans": {
+      "A7": {
+        "first_waypoint_name": "OPULA",
+        "merge_back_waypoint_name": "LIPRO",
+        "rationale": "OPULA provides a rightward offset to avoid the conflict with A2. LIPRO is a suitable merge-back waypoint along A7's original route."
+      },
+      "A2": {
+        "first_waypoint_name": "ONAPO",
+        "merge_back_waypoint_name": "ELGOR",
+        "rationale": "ONAPO provides a rightward offset to avoid the conflict with A7. ELGOR is a suitable merge-back waypoint along A2's original route."
+      }
+    }
+  }
+}
+```

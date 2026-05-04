@@ -1,0 +1,225 @@
+{
+  "answer": {
+    "plans": {
+      "A2": {
+        "agent_id": "A2",
+        "first_waypoint_name": "ONAPO",
+        "merge_back_waypoint_name": "SUSAR",
+        "short_context": "HLTP ONAPO->SUSAR",
+        "source": "llm",
+        "created_step": 7,
+        "conflict_partner_ids": [
+          "A4"
+        ],
+        "rationale": "Conflict with A4 requires a right turn. ONAPO is the closest right-side waypoint allowing for a safe initial deviation. SUSAR provides a reasonable merge point back into the original route while maintaining separation."
+      }
+    }
+  },
+  "contexts_by_agent": {
+    "A2": {
+      "agent_id": "A2",
+      "state": {
+        "position": [
+          72.5443040693192,
+          44.53898763357678
+        ],
+        "heading_deg": 132.36254848733603
+      },
+      "route_waypoint_names": [
+        "BOBOB",
+        "OMLIV",
+        "LEBIN",
+        "ELGOR",
+        "MUMSO",
+        "SUSAR",
+        "DAMOG"
+      ],
+      "conflict_partner_ids": [
+        "A4"
+      ],
+      "conflict": {
+        "agent_ids": [
+          "A2",
+          "A4"
+        ],
+        "loss_step": 7,
+        "min_sep": 4.3578163811296005,
+        "point": [
+          61.69695840319291,
+          56.54142315643617
+        ]
+      },
+      "right_waypoint_candidates": [
+        {
+          "name": "ONAPO",
+          "point": [
+            67.75555555555599,
+            58.84722222222223
+          ],
+          "route_progress": 27.804244240459198,
+          "side_offset": -6.095006434883544,
+          "distance_to_conflict": 6.482538760886961,
+          "progress_delta_to_conflict": 2.3735215949429715
+        },
+        {
+          "name": "OPULA",
+          "point": [
+            67.10000000000008,
+            63.29861111111113
+          ],
+          "route_progress": 31.537752087564197,
+          "side_offset": -8.606756260840017,
+          "distance_to_conflict": 8.651730899168847,
+          "progress_delta_to_conflict": 1.3599862521620274
+        },
+        {
+          "name": "LUSMO",
+          "point": [
+            78.51666666666688,
+            64.02083333333333
+          ],
+          "route_progress": 24.38570174755841,
+          "side_offset": -17.535344345055528,
+          "distance_to_conflict": 18.407720191882735,
+          "progress_delta_to_conflict": 5.792064087843759
+        },
+        {
+          "name": "MABLI",
+          "point": [
+            64.25555555555519,
+            82.19444444444444
+          ],
+          "route_progress": 47.42121089136628,
+          "side_offset": -19.233030921291956,
+          "distance_to_conflict": 25.780301018240305,
+          "progress_delta_to_conflict": 17.24344505596411
+        },
+        {
+          "name": "PT222",
+          "point": [
+            86.31111111111125,
+            68.1527777777778
+          ],
+          "route_progress": 22.194008298185683,
+          "side_offset": -26.08068277682532,
+          "distance_to_conflict": 27.215438076049324,
+          "progress_delta_to_conflict": 7.983757537216487
+        },
+        {
+          "name": "PT111",
+          "point": [
+            68.17222222222227,
+            89.5347222222222
+          ],
+          "route_progress": 50.210928526763645,
+          "side_offset": -27.071234232476982,
+          "distance_to_conflict": 33.622712929958944,
+          "progress_delta_to_conflict": 20.033162691361476
+        }
+      ],
+      "merge_back_candidates": [
+        {
+          "name": "ELGOR",
+          "point": [
+            56.100000000000136,
+            62.59722222222223
+          ],
+          "route_progress": 38.42365747755807
+        },
+        {
+          "name": "MUMSO",
+          "point": [
+            50.73888888888888,
+            68.47222222222223
+          ],
+          "route_progress": 46.377093046271796
+        },
+        {
+          "name": "SUSAR",
+          "point": [
+            45.255555555555134,
+            74.49305555555556
+          ],
+          "route_progress": 54.52064131912109
+        },
+        {
+          "name": "DAMOG",
+          "point": [
+            40.0777777777779,
+            80.17361111111111
+          ],
+          "route_progress": 62.206868881182785
+        }
+      ]
+    }
+  },
+  "debug": {
+    "llm_status": "ok",
+    "llm_error": "",
+    "parse_status": "ok",
+    "fallback_agents": [],
+    "eligible_agent_ids": [
+      "A2"
+    ],
+    "used_vision": false,
+    "frame_paths": [],
+    "model": "gemma3:12b",
+    "weather": {
+      "cell_id": "W1",
+      "center": [
+        32.00618626595853,
+        58.336056851212334
+      ],
+      "major_radius_nm": 6.244345377892177,
+      "minor_radius_nm": 3.8324761293824587,
+      "major_radius_units": 2.085105719785026,
+      "minor_radius_units": 1.5968650539093576,
+      "minor_ratio": 0.613751465918456,
+      "angle_rad": 0.7012372151706965,
+      "motion_heading_rad": 0.8760444114976647,
+      "speed_units_per_step": 0.3673879270939118,
+      "major_growth_nm_per_step": 0.4545147693403101,
+      "growth_stopped": false,
+      "movement_stopped": false,
+      "cells": [
+        {
+          "cell_id": "W1",
+          "center": [
+            32.00618626595853,
+            58.336056851212334
+          ],
+          "major_radius_nm": 6.244345377892177,
+          "minor_radius_nm": 3.8324761293824587,
+          "major_radius_units": 2.085105719785026,
+          "minor_radius_units": 1.5968650539093576,
+          "minor_ratio": 0.613751465918456,
+          "angle_rad": 0.7012372151706965,
+          "motion_heading_rad": 0.8760444114976647,
+          "speed_units_per_step": 0.3673879270939118,
+          "major_growth_nm_per_step": 0.4545147693403101,
+          "growth_stopped": false,
+          "movement_stopped": false
+        },
+        {
+          "cell_id": "W2",
+          "center": [
+            62.997111338006924,
+            48.386041919196494
+          ],
+          "major_radius_nm": 4.846776037019524,
+          "minor_radius_nm": 2.961050087064743,
+          "major_radius_units": 1.6184307282371646,
+          "minor_radius_units": 1.2337708696103096,
+          "minor_ratio": 0.6109318987401802,
+          "angle_rad": 1.5876204605582767,
+          "motion_heading_rad": 0.8760444114976647,
+          "speed_units_per_step": 0.1919242952645281,
+          "major_growth_nm_per_step": 0.2394769428089918,
+          "growth_stopped": false,
+          "movement_stopped": false
+        }
+      ],
+      "num_weather_cells": 2
+    }
+  }
+}

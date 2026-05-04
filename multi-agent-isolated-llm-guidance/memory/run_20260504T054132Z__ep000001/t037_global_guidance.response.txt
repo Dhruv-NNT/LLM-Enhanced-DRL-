@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are MERGING BACK and require tactical maneuvers to avoid traffic and weather. A10, A5, and A8 are all boundary exit and require tactical maneuvers.",
+    "actions": {
+      "A10": {
+        "rationale": "A10 is boundary exiting and has a pair loss at +10 degrees. Choosing +15 degrees results in a pair loss. Choosing +20 degrees results in a pair loss. Choosing +25 degrees results in a pair loss. Therefore, choosing +0 degrees is the safest option.",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+```

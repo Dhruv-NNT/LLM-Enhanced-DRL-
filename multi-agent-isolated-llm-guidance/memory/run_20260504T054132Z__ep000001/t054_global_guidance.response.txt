@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are in MERGE_BACK phases, requiring careful coordination to avoid conflicts and maintain separation while progressing toward destinations. Weather conditions are moderate, requiring caution and avoidance of the green buffer ring.",
+    "actions": {
+      "A10": {
+        "rationale": "Choosing +0 degrees avoids boundary exit and maintains a reasonable progress to destination while avoiding traffic loss. Other options resulted in boundary exit.",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+```

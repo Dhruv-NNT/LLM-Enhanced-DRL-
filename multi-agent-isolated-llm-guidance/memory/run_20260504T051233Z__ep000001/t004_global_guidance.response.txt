@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A11 is entering the sector and needs a heading adjustment to maintain safe separation from other traffic and avoid weather.",
+    "actions": {
+      "A11": {
+        "rationale": "Choosing +15 degrees maintains safe separation from traffic and avoids weather entry. It also provides good progress towards the destination.",
+        "maneuver": { "heading_change_deg": 15 }
+      }
+    }
+  }
+}
+```

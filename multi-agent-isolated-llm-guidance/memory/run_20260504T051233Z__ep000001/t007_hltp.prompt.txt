@@ -1,0 +1,57 @@
+ROLE: You are a high-level tactical planner (HLTP) for aircraft that just entered the sector.
+TASK:
+- Look ahead from current step 7 to step 60.
+- If two aircraft are in conflict, aviation convention says both should turn right.
+- For each listed aircraft, choose exactly two waypoint names.
+- first_waypoint_name must be a named waypoint on the right side of the aircraft's original flight plan.
+- merge_back_waypoint_name must be a later named waypoint on the aircraft's original route.
+- Keep weather clear of the route with buffer; avoid the green ring when possible and never plan through yellow/red/magenta.
+- Weather severity rings: green=light precipitation, yellow=moderate rain/rain and hail, red=heavy to very heavy precipitation, magenta=extreme convective activity.
+- Treat the green outer ring as a caution/buffer region: avoid it with the required clearance buffer whenever any safe alternative exists.
+- Yellow, red, and magenta are the terminal convective core; never plan through them.
+- This is advisory high-level context only; low-level safety guidance may override it.
+OUTPUT RULES:
+- Return EXACTLY ONE JSON object and no extra text.
+- Use only waypoint names shown in the candidate lists.
+- The placeholder strings below are not waypoint names; replace them with candidate names for each listed aircraft.
+- The plans object must include every aircraft shown in this JSON shape.
+STRICT JSON SHAPE:
+{
+  "answer": {
+    "plans": {
+      "A2": {
+        "first_waypoint_name": "<FIRST_WAYPOINT_FROM_CANDIDATES>",
+        "merge_back_waypoint_name": "<MERGE_BACK_WAYPOINT_FROM_CANDIDATES>",
+        "rationale": "<brief>"
+      }
+    }
+  }
+}
+
+HLTP AIRCRAFT CONTEXT:
+- A2: pos=(72.5,44.5) heading=+132.4 route=BOBOB->OMLIV->LEBIN->ELGOR->MUMSO->SUSAR->DAMOG
+  conflict_partners=A4 loss_step=7 min_sep=4.36 conflict_point=(61.7,56.5)
+  right-side first waypoint candidates:
+    - ONAPO: pos=(67.8,58.8) distance_to_conflict=6.48 right_offset=6.10
+    - OPULA: pos=(67.1,63.3) distance_to_conflict=8.65 right_offset=8.61
+    - LUSMO: pos=(78.5,64.0) distance_to_conflict=18.41 right_offset=17.54
+    - MABLI: pos=(64.3,82.2) distance_to_conflict=25.78 right_offset=19.23
+    - PT222: pos=(86.3,68.2) distance_to_conflict=27.22 right_offset=26.08
+    - PT111: pos=(68.2,89.5) distance_to_conflict=33.62 right_offset=27.07
+  original-route merge-back candidates:
+    - ELGOR: pos=(56.1,62.6) route_progress=38.42
+    - MUMSO: pos=(50.7,68.5) route_progress=46.38
+    - SUSAR: pos=(45.3,74.5) route_progress=54.52
+    - DAMOG: pos=(40.1,80.2) route_progress=62.21
+
+HLTP WEATHER CONTEXT:
+- keep routes outside green with buffer when possible; never plan through yellow/red/magenta
+- Weather severity rings: green=light precipitation, yellow=moderate rain/rain and hail, red=heavy to very heavy precipitation, magenta=extreme convective activity.
+- Treat the green outer ring as a caution/buffer region: avoid it with the required clearance buffer whenever any safe alternative exists.
+- Yellow, red, and magenta are the terminal convective core; never plan through them.
+- required_clearance_buffer=0.74 simulator units
+- W1: center=(32.0,58.3) major_nm=6.24 minor_nm=3.83 motion_heading_deg=+50.2 growth_nm_per_step=+0.45 growth_stopped=0 movement_stopped=0
+- W2: center=(63.0,48.4) major_nm=4.85 minor_nm=2.96 motion_heading_deg=+50.2 growth_nm_per_step=+0.24 growth_stopped=0 movement_stopped=0
+
+VISION HLTP CONTEXT:
+- none

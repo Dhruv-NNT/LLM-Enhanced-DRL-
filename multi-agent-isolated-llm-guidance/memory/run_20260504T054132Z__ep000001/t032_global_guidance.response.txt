@@ -1,0 +1,15 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are experiencing immediate hazards and require emergency maneuvers. A10 and A5 are experiencing boundary exits and require significant heading changes to avoid conflicts. A11 and A12 are in merge-back phases and require adjustments to maintain separation and recover toward their destinations.",
+    "actions": {
+      "A10": {
+        "rationale": "A10 is experiencing a boundary exit and requires a significant heading change to avoid the conflict. Choosing -15 degrees provides a reasonable compromise between avoiding the boundary exit and maintaining some progress toward the destination while avoiding traffic loss.",
+        "maneuver": {
+          "heading_change_deg": -15
+        }
+      }
+    }
+  }
+}
+```

@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are experiencing immediate hazards and require emergency maneuvers. A10 and A5 are in emergency situations due to potential conflicts. A6 and A7 are in merge-back phases, attempting to recover toward their destinations while avoiding conflicts.",
+    "actions": {
+      "A10": {
+        "rationale": "A10 is in an emergency situation with a potential conflict. The -15 degree turn avoids a pair loss and maintains a safe separation, although it does not fully recover toward the destination. This is the least-bad option given the immediate hazard.",
+        "maneuver": { "heading_change_deg": -15 }
+      }
+    }
+  }
+}
+```

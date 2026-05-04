@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are experiencing emergency maneuvers due to immediate hazards. Prioritizing separation and weather avoidance while attempting to recover toward destination.",
+    "actions": {
+      "A12": {
+        "rationale": "Choosing a turn of +30 degrees to avoid immediate traffic loss and boundary exit, while maintaining reasonable progress toward destination.",
+        "maneuver": { "heading_change_deg": 5 }
+      }
+    }
+  }
+}
+```

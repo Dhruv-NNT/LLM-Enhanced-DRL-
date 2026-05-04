@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 is in conflict with A4 and requires a right turn to maintain separation. The best option avoids a pair loss and maintains weather clearance.",
+    "actions": {
+      "A2": {
+        "rationale": "Turning -20 degrees avoids a pair loss with A4 and maintains weather clearance. While this turn results in a larger cross-track reduction, it is the safest option given the current traffic situation.",
+        "maneuver": { "heading_change_deg": -20 }
+      }
+    }
+  }
+}
+```

@@ -1,0 +1,21 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are experiencing immediate hazards and require emergency maneuvers. Traffic separation and weather clearance are primary concerns.",
+    "actions": {
+      "A10": {
+        "rationale": "A10 is experiencing an immediate hazard and boundary exit. Choosing -15 degrees avoids the boundary exit and maintains a reasonable separation from traffic, although traffic buffer is compromised.",
+        "maneuver": { "heading_change_deg": -15 }
+      },
+      "A5": {
+        "rationale": "A5 is experiencing an immediate hazard and boundary exit. Choosing +10 degrees avoids the boundary exit, but compromises traffic separation.",
+        "maneuver": { "heading_change_deg": 5 }
+      },
+      "A8": {
+        "rationale": "A8 is in a MERGE_BACK phase and boundary exit is present. Choosing +30 degrees prioritizes boundary recovery and destination progress, while maintaining reasonable separation from traffic.",
+        "maneuver": { "heading_change_deg": 30 }
+      }
+    }
+  }
+}
+```

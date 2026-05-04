@@ -1,0 +1,15 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft require tactical maneuvers to avoid conflicts and weather. A11 and A4 are in emergency maneuvers due to weather entry. A12 is attempting to recover from a boundary exit. A3 and A9 are attempting to merge back.",
+    "actions": {
+      "A1": {
+        "rationale": "Maintaining current heading (+0 degrees) allows for continued progress toward destination while avoiding traffic conflicts and weather entry. This is the safest option.",
+        "maneuver": {
+          "heading_change_deg": 0
+        }
+      }
+    }
+  }
+}
+```

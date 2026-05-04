@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A12 is in a MERGE_BACK phase, exiting the boundary and needing to recover toward its destination while maintaining separation from surrounding traffic and avoiding weather. The current heading is slightly off, and a turn is needed to correct the course and facilitate recovery.",
+    "actions": {
+      "A12": {
+        "rationale": "Choosing +10 degrees provides the best balance of progress toward destination, cross-track reduction, and heading alignment while avoiding traffic loss and weather entry. It's the best option among those that avoid boundary exit.",
+        "maneuver": { "heading_change_deg": 10 }
+      }
+    }
+  }
+}
+```

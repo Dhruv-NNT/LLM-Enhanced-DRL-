@@ -1,0 +1,29 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are experiencing immediate hazards and require emergency maneuvers. Several aircraft are also in the process of merging back and require careful coordination to avoid conflicts and maintain separation.",
+    "actions": {
+      "A10": {
+        "rationale": "A10 is experiencing an immediate hazard and boundary exit. Choosing -15 degrees provides a reasonable separation from traffic while minimizing deviation from the intended course.",
+        "maneuver": { "heading_change_deg": -15 }
+      },
+      "A11": {
+        "rationale": "A11 is in the process of merging back and a heading of +0 degrees provides the best progress toward destination while maintaining separation.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A12": {
+        "rationale": "A12 is in the process of merging back and a heading of +0 degrees provides the best progress toward destination while maintaining separation.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A3": {
+        "rationale": "A3 is in the process of merging back and a heading of +20 degrees provides the best progress toward destination while maintaining separation.",
+        "maneuver": { "heading_change_deg": 20 }
+      },
+      "A5": {
+        "rationale": "A5 is experiencing an immediate hazard and boundary exit. Choosing +0 degrees provides a reasonable separation from traffic while minimizing deviation from the intended course.",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+```

@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "plans": {
+      "A2": {
+        "first_waypoint_name": "ONAPO",
+        "merge_back_waypoint_name": "SUSAR",
+        "rationale": "Conflict with A4 requires a right turn. ONAPO is the closest right-side waypoint allowing for a safe initial deviation. SUSAR provides a reasonable merge point back into the original route while maintaining separation."
+      }
+    }
+  }
+}
+```

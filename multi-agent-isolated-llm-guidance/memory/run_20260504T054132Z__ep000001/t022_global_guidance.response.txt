@@ -1,0 +1,34 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are experiencing immediate hazards and require emergency maneuvers. Traffic separation and weather clearance are primary concerns. A12, A3, and A7 require emergency maneuvers to avoid collisions and maintain safe weather clearances. A8 and A9 are attempting to recover to their planned routes.",
+    "traffic_management_actions": [
+      {
+        "agent": "A12",
+        "turn": -30,
+        "rationale": "A12 is in an emergency situation and requires a significant turn to avoid a potential collision. While this turn results in a loss of separation, it is necessary to prioritize safety. Subsequent steps will focus on re-establishing separation."
+      },
+      {
+        "agent": "A3",
+        "turn": "+10",
+        "rationale": "A3 is in an emergency situation and requires a turn to avoid a potential collision. This turn is selected to provide a balance between collision avoidance and maintaining a reasonable track towards the destination."
+      },
+      {
+        "agent": "A7",
+        "turn": -30,
+        "rationale": "A7 is in an emergency situation and requires a turn to avoid a potential collision. This turn is selected to provide a balance between collision avoidance and maintaining a reasonable track towards the destination."
+      },
+      {
+        "agent": "A8",
+        "turn": "+30",
+        "rationale": "A8 is attempting to recover to its planned route after an earlier emergency maneuver. This turn is selected to provide a balance between collision avoidance and maintaining a reasonable track towards the destination."
+      },
+      {
+        "agent": "A9",
+        "turn": -30,
+        "rationale": "A9 is attempting to recover to its planned route after an earlier emergency maneuver. This turn is selected to provide a balance between collision avoidance and maintaining a reasonable track towards the destination."
+      }
+    ]
+  }
+}
+```

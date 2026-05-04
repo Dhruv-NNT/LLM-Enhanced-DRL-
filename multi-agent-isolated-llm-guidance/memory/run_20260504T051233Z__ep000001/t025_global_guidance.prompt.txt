@@ -1,0 +1,138 @@
+ROLE: You are a cautious ATCO helper for the entered aircraft listed below.
+GLOBAL GUIDANCE TASK:
+- Return one maneuver for every GUIDANCE-ELIGIBLE agent: A3, A9, A11, A12.
+- Do not return actions for aircraft that have not entered the sector.
+- The controller already assigned each aircraft's phase; do not classify, rename, or output phases.
+- Use the simulator-generated candidate previews as the main decision evidence.
+- Preview rows are sorted by a deterministic heuristic, but you must judge the tradeoffs and may choose any displayed row that best satisfies the safety and phase priorities.
+- SAFE_R = 5.0 units.
+- Avoid weather with buffer: stay outside the green ring when possible and never enter yellow/red/magenta.
+- Weather severity rings: green=light precipitation, yellow=moderate rain/rain and hail, red=heavy to very heavy precipitation, magenta=extreme convective activity.
+- Treat the green outer ring as a caution/buffer region: avoid it with the required clearance buffer whenever any safe alternative exists.
+- Yellow, red, and magenta are the terminal convective core; never plan through them.
+- Internal traffic caution buffer: prefer min_sep >= 6.5 units; the simulator still terminates only below SAFE_R=5.0.
+SAFETY SELECTION RULES:
+- For each aircraft, prefer a preview row with safe=1 over any row with safe=0.
+- Prefer traffic_buffer_ok=1; do not choose traffic_buffer_ok=0 unless every candidate for that aircraft has traffic_buffer_ok=0.
+- Prefer weather_buffer_ok=1; do not choose weather_buffer_ok=0 unless every candidate for that aircraft has weather_buffer_ok=0.
+- If all rows are unsafe due to traffic or weather, choose the least bad row: no weather_entry, no pair_loss, largest min_sep, then largest min_weather_clearance.
+- If all rows are unsafe only because boundary_exit is present, prioritize recovering back inside/toward destination over small weather-clearance differences.
+- During MERGE_BACK, traffic separation and weather clearance override destination recovery.
+TRAFFIC HARD VETO:
+- Never choose a row with pair_loss not None if any displayed row for that aircraft has pair_loss=None.
+- pair_loss at step 1 or 2 is an imminent collision and overrides MERGE_BACK, boundary recovery, destination progress, and HLTP.
+- If choosing between boundary_exit and pair_loss, choose boundary_exit unless every row for that aircraft has pair_loss.
+- Do not claim a maneuver avoids conflict unless pair_loss=None and min_sep>=6.5.
+OUTPUT RULES:
+- Return EXACTLY ONE JSON object and no extra text.
+- Under actions, output only the listed aircraft IDs with rationale and maneuver; do not output call_name.
+- heading_change_deg must be one of {-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30}.
+- heading_change_deg should match one of that aircraft's displayed preview row turns.
+- In the rationale, cite the chosen row's most important consequences, such as no traffic loss, no weather entry, better boundary recovery, or better progress.
+- Positive is left, negative is right, 0 means hold current heading.
+STRICT JSON SHAPE:
+{
+  "answer": {
+    "scenario_summary": "<brief>",
+    "actions": {
+      "A1": {
+        "rationale": "<brief>",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+
+MERGE_BACK PRIORITY:
+- Choose a safe candidate that improves recovery toward destination.
+- Do not merge back through another aircraft's path.
+- If merge-back rows show pair_loss or low min_sep, choose a hold/diverge candidate instead of forcing recovery.
+- Weather clearance and traffic separation override destination progress.
+- Once pair_loss=None, traffic_buffer_ok=1, weather_entry=None, and weather_buffer_ok=1 are satisfied, do not choose the row only because it has the largest min_sep.
+- Among traffic/weather-clear rows, prioritize recovery in this order: no boundary_exit, larger progress_to_destination, larger cross_track_reduction, smaller end_heading_error.
+- Use min_sep as a tie-breaker after the traffic caution buffer is satisfied.
+- If rows are unsafe only because boundary_exit is present, treat that as recovery urgency: choose the candidate with the strongest destination-side recovery, usually the largest allowed turn magnitude.
+- When heading_err magnitude is large, do not keep using +/-5 unless larger same-direction bins materially worsen traffic or weather safety.
+- Prefer larger progress_to_destination.
+- Prefer reducing cross_track_abs.
+- Do not choose 0 just because it is safe if a nonzero safe row gives materially better progress, cross-track recovery, or heading alignment.
+- Use 0 only if it remains aligned and still makes good destination progress.
+
+GUIDANCE-ELIGIBLE AGENTS THIS STEP:
+- A3: pos=(69.8,40.9) heading=-42.7 dest=(82.0,34.2) dist_dest=13.92 heading_err=+13.7 xtrack=-4.46 boundary_dist=n/a pair_loss=None weather_entry=None boundary_exit=1 weather_clearance=10.04 safe_streak=0 call_name=MERGE_BACK call_reason=BOUNDARY_LOOKAHEAD
+- A9: pos=(78.8,45.1) heading=-76.4 dest=(70.9,38.0) dist_dest=10.62 heading_err=-61.5 xtrack=+8.86 boundary_dist=0.69 pair_loss=None weather_entry=None boundary_exit=1 weather_clearance=13.46 safe_streak=0 call_name=MERGE_BACK call_reason=BOUNDARY_LOOKAHEAD
+- A11: pos=(67.6,67.8) heading=+3.6 dest=(86.3,68.2) dist_dest=18.70 heading_err=-2.5 xtrack=+4.44 boundary_dist=6.01 pair_loss=None weather_entry=None boundary_exit=4 weather_clearance=14.17 safe_streak=2 call_name=MERGE_BACK call_reason=BOUNDARY_LOOKAHEAD
+- A12: pos=(62.4,47.6) heading=-9.2 dest=(86.3,68.2) dist_dest=31.53 heading_err=+50.0 xtrack=-7.86 boundary_dist=6.89 pair_loss=None weather_entry=None boundary_exit=9 weather_clearance=0.97 safe_streak=5 call_name=MERGE_BACK call_reason=BOUNDARY_LOOKAHEAD
+
+ENTERED TRAFFIC CONTEXT:
+- A2: pos=(45.1,66.7) heading=+142.4 dest=(40.1,80.2) dist_dest=14.44 heading_err=-31.8 xtrack=+5.36 boundary_dist=5.56 pair_loss=None weather_entry=None boundary_exit=4 weather_clearance=1.88 safe_streak=3
+- A3: pos=(69.8,40.9) heading=-42.7 dest=(82.0,34.2) dist_dest=13.92 heading_err=+13.7 xtrack=-4.46 boundary_dist=n/a pair_loss=None weather_entry=None boundary_exit=1 weather_clearance=10.04 safe_streak=0
+- A4: pos=(38.0,58.0) heading=-176.4 dest=(18.6,60.2) dist_dest=19.52 heading_err=-10.2 xtrack=+3.46 boundary_dist=10.98 pair_loss=None weather_entry=None boundary_exit=7 weather_clearance=1.55 safe_streak=7
+- A5: pos=(57.7,73.8) heading=+60.4 dest=(68.2,89.5) dist_dest=18.87 heading_err=-4.1 xtrack=-1.22 boundary_dist=3.57 pair_loss=None weather_entry=None boundary_exit=4 weather_clearance=20.28 safe_streak=1
+- A7: pos=(49.4,56.7) heading=-144.3 dest=(17.4,34.7) dist_dest=38.77 heading_err=-1.2 xtrack=-5.96 boundary_dist=16.42 pair_loss=None weather_entry=None boundary_exit=11 weather_clearance=9.39 safe_streak=3
+- A8: pos=(69.8,73.4) heading=+93.6 dest=(68.2,89.5) dist_dest=16.22 heading_err=+2.3 xtrack=-4.20 boundary_dist=0.80 pair_loss=None weather_entry=None boundary_exit=1 weather_clearance=21.49 safe_streak=1
+- A9: pos=(78.8,45.1) heading=-76.4 dest=(70.9,38.0) dist_dest=10.62 heading_err=-61.5 xtrack=+8.86 boundary_dist=0.69 pair_loss=None weather_entry=None boundary_exit=1 weather_clearance=13.46 safe_streak=0
+- A10: pos=(36.7,69.3) heading=-159.6 dest=(22.1,39.4) dist_dest=33.27 heading_err=+43.6 xtrack=-10.62 boundary_dist=n/a pair_loss=None weather_entry=None boundary_exit=1 weather_clearance=1.29 safe_streak=8
+- A11: pos=(67.6,67.8) heading=+3.6 dest=(86.3,68.2) dist_dest=18.70 heading_err=-2.5 xtrack=+4.44 boundary_dist=6.01 pair_loss=None weather_entry=None boundary_exit=4 weather_clearance=14.17 safe_streak=2
+- A12: pos=(62.4,47.6) heading=-9.2 dest=(86.3,68.2) dist_dest=31.53 heading_err=+50.0 xtrack=-7.86 boundary_dist=6.89 pair_loss=None weather_entry=None boundary_exit=9 weather_clearance=0.97 safe_streak=5
+
+HIGH-LEVEL TACTICAL PLANS:
+- A2: HLTP ONAPO->SUSAR. HLTP rationale: Conflict with A4 requires a right turn. ONAPO is the closest right-side waypoint allowing for a safe initial deviation. SUSAR provides a reasonable merge point back into the original route while maintaining separation.. Advisory only; current safety logic may override.
+- A4: HLTP SUSAR->MABAL. HLTP rationale: SUSAR provides a significant rightward offset to avoid the conflict with A9. MABAL is selected as the merge-back waypoint to allow for a smooth return to the original flight path.. Advisory only; current safety logic may override.
+- A7: HLTP OPULA->LIPRO. HLTP rationale: Conflict resolution requires a right turn. OPULA is the closest right-side waypoint allowing for a safe initial deviation. LIPRO provides a reasonable merge point back into the original route while avoiding weather.. Advisory only; current safety logic may override.
+- A9: HLTP LEBIN->OPULA. HLTP rationale: LEBIN provides a good rightward offset to avoid the conflict with A4. OPULA is selected as the merge-back waypoint to allow for a smooth return to the original flight path.. Advisory only; current safety logic may override.
+
+GLOBAL WEATHER:
+- green is a caution/buffer ring; yellow/red/magenta are terminal no-go regions
+- Weather severity rings: green=light precipitation, yellow=moderate rain/rain and hail, red=heavy to very heavy precipitation, magenta=extreme convective activity.
+- Treat the green outer ring as a caution/buffer region: avoid it with the required clearance buffer whenever any safe alternative exists.
+- Yellow, red, and magenta are the terminal convective core; never plan through them.
+- required_clearance_buffer=0.74 simulator units
+- W1: center=(36.2,63.4) major_radius_nm=14.43 minor_radius_nm=8.85 orientation_deg=+40.2 motion_heading_deg=+50.2 speed_units_per_step=0.37 growth_nm_per_step=+0.45 growth_stopped=0 movement_stopped=0
+- W2: center=(65.2,51.0) major_radius_nm=9.16 minor_radius_nm=5.59 orientation_deg=+91.0 motion_heading_deg=+50.2 speed_units_per_step=0.19 growth_nm_per_step=+0.24 growth_stopped=0 movement_stopped=0
+
+RANKED TRAFFIC THREATS:
+- A11: A8 dist=6.04 loss=None min_sep=7.49; A5 dist=11.59 loss=None min_sep=13.32; A12 dist=20.86 loss=None min_sep=21.30; A7 dist=21.35 loss=None min_sep=25.13
+- A12: A3 dist=9.92 loss=None min_sep=10.30; A9 dist=16.54 loss=None min_sep=13.67; A7 dist=15.88 loss=None min_sep=18.56; A11 dist=20.86 loss=None min_sep=21.30
+- A3: A9 dist=9.92 loss=None min_sep=5.31; A12 dist=9.92 loss=None min_sep=10.30; A11 dist=26.93 loss=None min_sep=28.37; A7 dist=25.75 loss=None min_sep=28.38
+- A9: A3 dist=9.92 loss=None min_sep=5.31; A12 dist=16.54 loss=None min_sep=13.67; A11 dist=25.26 loss=None min_sep=26.54; A8 dist=29.66 loss=None min_sep=33.60
+
+PER-AGENT TURN PREVIEWS:
+- each row predicts consequences if that turn is applied now
+- safe=1 means no predicted traffic loss, traffic-buffer loss, weather entry, or boundary exit over the preview
+- pair_loss/weather_entry/boundary_exit show the first bad step; None means not predicted
+- traffic_buffer_ok=1 means min_sep stayed at or above 6.5 units
+- progress_to_destination and cross_track_reduction: larger is better for recovery
+- end_heading_error: smaller is better alignment to destination
+- A11:
+  turn=+0 | safe=0 | pair_loss=None | weather_entry=None | boundary_exit=4 | min_sep=7.49 | traffic_buffer_ok=1 | min_weather_clearance=14.17 | weather_buffer_ok=1 | progress_to_destination=13.95 | cross_track_reduction=1.78 | end_distance=4.75 | end_cross_track=2.66 | end_heading_error=9.7
+- A12:
+  turn=+5 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=10.41 | traffic_buffer_ok=1 | min_weather_clearance=0.80 | weather_buffer_ok=1 | progress_to_destination=9.12 | cross_track_reduction=-9.97 | end_distance=22.41 | end_cross_track=17.83 | end_heading_error=84.1
+  turn=+0 | safe=0 | pair_loss=None | weather_entry=None | boundary_exit=9 | min_sep=10.30 | traffic_buffer_ok=1 | min_weather_clearance=0.97 | weather_buffer_ok=1 | progress_to_destination=7.38 | cross_track_reduction=-11.44 | end_distance=24.15 | end_cross_track=19.30 | end_heading_error=89.4
+  turn=+20 | safe=0 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=10.83 | traffic_buffer_ok=1 | min_weather_clearance=0.01 | weather_buffer_ok=0 | progress_to_destination=14.16 | cross_track_reduction=-5.14 | end_distance=17.37 | end_cross_track=13.00 | end_heading_error=65.1
+  turn=+15 | safe=0 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=10.68 | traffic_buffer_ok=1 | min_weather_clearance=0.34 | weather_buffer_ok=0 | progress_to_destination=12.53 | cross_track_reduction=-6.80 | end_distance=19.00 | end_cross_track=14.67 | end_heading_error=72.1
+  turn=+10 | safe=0 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=10.54 | traffic_buffer_ok=1 | min_weather_clearance=0.63 | weather_buffer_ok=0 | progress_to_destination=10.84 | cross_track_reduction=-8.42 | end_distance=20.69 | end_cross_track=16.28 | end_heading_error=78.4
+  turn=+30 | safe=0 | pair_loss=None | weather_entry=2 | boundary_exit=None | min_sep=11.15 | traffic_buffer_ok=1 | min_weather_clearance=-0.67 | weather_buffer_ok=0 | progress_to_destination=17.08 | cross_track_reduction=-1.70 | end_distance=14.46 | end_cross_track=9.57 | end_heading_error=48.2
+- A3:
+  turn=+0 | safe=0 | pair_loss=None | weather_entry=None | boundary_exit=1 | min_sep=5.31 | traffic_buffer_ok=0 | min_weather_clearance=10.04 | weather_buffer_ok=1 | progress_to_destination=9.09 | cross_track_reduction=0.87 | end_distance=4.83 | end_cross_track=3.59 | end_heading_error=43.1
+  turn=+15 | safe=0 | pair_loss=4 | weather_entry=None | boundary_exit=1 | min_sep=3.78 | traffic_buffer_ok=0 | min_weather_clearance=9.83 | weather_buffer_ok=1 | progress_to_destination=8.00 | cross_track_reduction=2.73 | end_distance=5.93 | end_cross_track=1.73 | end_heading_error=3.0
+  turn=+10 | safe=0 | pair_loss=4 | weather_entry=None | boundary_exit=1 | min_sep=4.20 | traffic_buffer_ok=0 | min_weather_clearance=9.91 | weather_buffer_ok=1 | progress_to_destination=7.96 | cross_track_reduction=2.07 | end_distance=5.96 | end_cross_track=2.39 | end_heading_error=8.7
+  turn=+5 | safe=0 | pair_loss=4 | weather_entry=None | boundary_exit=1 | min_sep=4.72 | traffic_buffer_ok=0 | min_weather_clearance=9.98 | weather_buffer_ok=1 | progress_to_destination=7.79 | cross_track_reduction=1.38 | end_distance=6.14 | end_cross_track=3.07 | end_heading_error=20.1
+  turn=+20 | safe=0 | pair_loss=3 | weather_entry=None | boundary_exit=1 | min_sep=4.91 | traffic_buffer_ok=0 | min_weather_clearance=9.73 | weather_buffer_ok=1 | progress_to_destination=5.94 | cross_track_reduction=2.53 | end_distance=7.99 | end_cross_track=1.93 | end_heading_error=11.0
+  turn=+25 | safe=0 | pair_loss=3 | weather_entry=None | boundary_exit=1 | min_sep=4.68 | traffic_buffer_ok=0 | min_weather_clearance=9.63 | weather_buffer_ok=1 | progress_to_destination=5.80 | cross_track_reduction=3.00 | end_distance=8.13 | end_cross_track=1.46 | end_heading_error=19.6
+- A9:
+  turn=+0 | safe=0 | pair_loss=None | weather_entry=None | boundary_exit=1 | min_sep=5.31 | traffic_buffer_ok=0 | min_weather_clearance=13.46 | weather_buffer_ok=1 | progress_to_destination=-7.00 | cross_track_reduction=-8.76 | end_distance=17.61 | end_cross_track=17.61 | end_heading_error=148.0
+  turn=-10 | safe=0 | pair_loss=4 | weather_entry=None | boundary_exit=1 | min_sep=3.96 | traffic_buffer_ok=0 | min_weather_clearance=13.18 | weather_buffer_ok=1 | progress_to_destination=2.19 | cross_track_reduction=0.43 | end_distance=8.43 | end_cross_track=8.43 | end_heading_error=99.5
+  turn=-5 | safe=0 | pair_loss=4 | weather_entry=None | boundary_exit=1 | min_sep=4.62 | traffic_buffer_ok=0 | min_weather_clearance=13.33 | weather_buffer_ok=1 | progress_to_destination=1.50 | cross_track_reduction=-0.25 | end_distance=9.11 | end_cross_track=9.11 | end_heading_error=103.6
+  turn=-30 | safe=0 | pair_loss=3 | weather_entry=None | boundary_exit=1 | min_sep=3.82 | traffic_buffer_ok=0 | min_weather_clearance=12.54 | weather_buffer_ok=1 | progress_to_destination=4.28 | cross_track_reduction=2.54 | end_distance=6.33 | end_cross_track=6.32 | end_heading_error=61.2
+  turn=-25 | safe=0 | pair_loss=3 | weather_entry=None | boundary_exit=1 | min_sep=4.14 | traffic_buffer_ok=0 | min_weather_clearance=12.71 | weather_buffer_ok=1 | progress_to_destination=3.81 | cross_track_reduction=2.05 | end_distance=6.81 | end_cross_track=6.80 | end_heading_error=68.2
+  turn=-20 | safe=0 | pair_loss=3 | weather_entry=None | boundary_exit=1 | min_sep=4.53 | traffic_buffer_ok=0 | min_weather_clearance=12.87 | weather_buffer_ok=1 | progress_to_destination=3.31 | cross_track_reduction=1.56 | end_distance=7.30 | end_cross_track=7.30 | end_heading_error=74.5
+
+RECENT GLOBAL DECISION MEMORY:
+- step=21: A10:MERGE_BACK +5deg; A3:EMERGENCY_MANEUVER -20deg; A9:EMERGENCY_MANEUVER +30deg
+- step=22: A11:MERGE_BACK +0deg; A12:MERGE_BACK +25deg; A2:EMERGENCY_MANEUVER -10deg; A3:MERGE_BACK +10deg; A7:EMERGENCY_MANEUVER +30deg; A9:MERGE_BACK -5deg
+- step=23: A1:MERGE_BACK +0deg; A2:MERGE_BACK +0deg; A6:MERGE_BACK +30deg; A8:MERGE_BACK -5deg
+- step=24: A10:MERGE_BACK +0deg; A4:MERGE_BACK +0deg; A5:MERGE_BACK +25deg; A7:MERGE_BACK +15deg
+
+VISION FRAME CONTEXT:
+- none

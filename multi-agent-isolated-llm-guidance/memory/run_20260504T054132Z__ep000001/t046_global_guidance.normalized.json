@@ -1,0 +1,227 @@
+{
+  "answer": {
+    "scenario_summary": "A8 is exiting the sector and needs a slight heading adjustment to maintain safe separation from surrounding traffic and avoid boundary exit.",
+    "actions": {
+      "A8": {
+        "call_name": "MERGE_BACK",
+        "rationale": "Choosing +0 degrees maintains boundary exit avoidance and provides a slight recovery toward destination.",
+        "source": "llm",
+        "requested_heading_change_deg": 0,
+        "maneuver": {
+          "heading_change_deg": 0
+        }
+      }
+    }
+  },
+  "threat_rows_by_agent": {
+    "A8": [
+      {
+        "intruder_id": "A6",
+        "intruder_position": [
+          75.26993287349765,
+          59.292745762568636
+        ],
+        "intruder_heading_deg": 146.24096008105997,
+        "current_distance": 26.766839605699264,
+        "bearing_error_deg": 116.65856077900082,
+        "predicted_loss_step": null,
+        "predicted_min_sep": 26.546028075641363,
+        "predicted_min_step": 1
+      },
+      {
+        "intruder_id": "A10",
+        "intruder_position": [
+          23.006852017626922,
+          100.0
+        ],
+        "intruder_heading_deg": 105.43236867246046,
+        "current_distance": 53.98029456046477,
+        "bearing_error_deg": 11.448092892701396,
+        "predicted_loss_step": null,
+        "predicted_min_sep": 52.536950296829325,
+        "predicted_min_step": 1
+      },
+      {
+        "intruder_id": "A12",
+        "intruder_position": [
+          91.01118522111176,
+          35.03112389761662
+        ],
+        "intruder_heading_deg": 60.75154494970461,
+        "current_distance": 53.43469883106184,
+        "bearing_error_deg": 133.67539943116503,
+        "predicted_loss_step": null,
+        "predicted_min_sep": 53.51786154336285,
+        "predicted_min_step": 1
+      },
+      {
+        "intruder_id": "A5",
+        "intruder_position": [
+          16.23846157465384,
+          100.0
+        ],
+        "intruder_heading_deg": 105.41394445593147,
+        "current_distance": 60.54431817846985,
+        "bearing_error_deg": 13.102502311261361,
+        "predicted_loss_step": null,
+        "predicted_min_sep": 59.11648818023335,
+        "predicted_min_step": 1
+      }
+    ]
+  },
+  "preview_rows_by_agent": {
+    "A8": [
+      {
+        "heading_change_deg": 0,
+        "pair_loss_step": null,
+        "weather_entry_step": null,
+        "boundary_exit_step": 1,
+        "min_sep_to_any": 26.546028075641363,
+        "min_weather_clearance": 28.335771347719394,
+        "traffic_buffer_ok": true,
+        "weather_buffer_ok": true,
+        "safe_over_preview": false,
+        "end_heading_error_to_dest_deg": 0.0863785690366683,
+        "start_distance_to_destination": 7.800702832452497,
+        "end_distance_to_destination": 3.800705047214346,
+        "progress_to_destination": 3.9999977852381514,
+        "start_cross_track_abs": 7.800702832452498,
+        "end_cross_track_abs": 3.800705047214346,
+        "cross_track_reduction": 3.9999977852381523
+      }
+    ]
+  },
+  "hltp_plans": {
+    "A12": {
+      "agent_id": "A12",
+      "first_waypoint_name": "BUNTO",
+      "merge_back_waypoint_name": "LEBIN",
+      "short_context": "HLTP BUNTO->LEBIN",
+      "source": "llm",
+      "created_step": 9,
+      "conflict_partner_ids": [
+        "A1"
+      ],
+      "rationale": "BUNTO provides a right-side deviation to avoid the conflict with A1 loss at step 15. LEBIN allows for a return to the original route progression while maintaining separation."
+    },
+    "A6": {
+      "agent_id": "A6",
+      "first_waypoint_name": "WP071",
+      "merge_back_waypoint_name": "LIPRO",
+      "short_context": "HLTP WP071->LIPRO",
+      "source": "llm",
+      "created_step": 1,
+      "conflict_partner_ids": [
+        "A5"
+      ],
+      "rationale": "WP071 provides a right-side deviation to avoid the conflict with A5. LIPRO allows for a return to the original route progression while maintaining separation."
+    }
+  },
+  "debug": {
+    "llm_status": "ok",
+    "llm_error": "",
+    "parse_status": "ok",
+    "fallback_reason": "",
+    "fallback_agents": [],
+    "retry_count": 0,
+    "used_vision": false,
+    "frame_paths": [],
+    "eligible_agent_ids": [
+      "A8"
+    ],
+    "entered_agent_ids": [
+      "A5",
+      "A6",
+      "A8",
+      "A10",
+      "A12"
+    ],
+    "stage_by_agent": {
+      "A8": "MERGE_BACK"
+    },
+    "hltp_plans": {
+      "A12": {
+        "agent_id": "A12",
+        "first_waypoint_name": "BUNTO",
+        "merge_back_waypoint_name": "LEBIN",
+        "short_context": "HLTP BUNTO->LEBIN",
+        "source": "llm",
+        "created_step": 9,
+        "conflict_partner_ids": [
+          "A1"
+        ],
+        "rationale": "BUNTO provides a right-side deviation to avoid the conflict with A1 loss at step 15. LEBIN allows for a return to the original route progression while maintaining separation."
+      },
+      "A6": {
+        "agent_id": "A6",
+        "first_waypoint_name": "WP071",
+        "merge_back_waypoint_name": "LIPRO",
+        "short_context": "HLTP WP071->LIPRO",
+        "source": "llm",
+        "created_step": 1,
+        "conflict_partner_ids": [
+          "A5"
+        ],
+        "rationale": "WP071 provides a right-side deviation to avoid the conflict with A5. LIPRO allows for a return to the original route progression while maintaining separation."
+      }
+    },
+    "weather": {
+      "cell_id": "W1",
+      "center": [
+        37.18058338315127,
+        64.54516119380304
+      ],
+      "major_radius_nm": 16.243670303379,
+      "minor_radius_nm": 9.969576460594952,
+      "major_radius_units": 5.42407054865865,
+      "minor_radius_units": 4.153990191914563,
+      "minor_ratio": 0.613751465918456,
+      "angle_rad": 0.7012372151706965,
+      "motion_heading_rad": 0.8760444114976647,
+      "speed_units_per_step": 0.0,
+      "major_growth_nm_per_step": 0.0,
+      "growth_stopped": true,
+      "movement_stopped": true,
+      "cells": [
+        {
+          "cell_id": "W1",
+          "center": [
+            37.18058338315127,
+            64.54516119380304
+          ],
+          "major_radius_nm": 16.243670303379,
+          "minor_radius_nm": 9.969576460594952,
+          "major_radius_units": 5.42407054865865,
+          "minor_radius_units": 4.153990191914563,
+          "minor_ratio": 0.613751465918456,
+          "angle_rad": 0.7012372151706965,
+          "motion_heading_rad": 0.8760444114976647,
+          "speed_units_per_step": 0.0,
+          "major_growth_nm_per_step": 0.0,
+          "growth_stopped": true,
+          "movement_stopped": true
+        },
+        {
+          "cell_id": "W2",
+          "center": [
+            67.78900041479902,
+            54.13614934273825
+          ],
+          "major_radius_nm": 14.186376806570195,
+          "minor_radius_nm": 8.666910118681583,
+          "major_radius_units": 4.737101110251226,
+          "minor_radius_units": 3.6112125494506593,
+          "minor_ratio": 0.6109318987401802,
+          "angle_rad": 1.5876204605582767,
+          "motion_heading_rad": 0.8760444114976647,
+          "speed_units_per_step": 0.1919242952645281,
+          "major_growth_nm_per_step": 0.2394769428089918,
+          "growth_stopped": false,
+          "movement_stopped": false
+        }
+      ],
+      "num_weather_cells": 2
+    },
+    "model": "gemma3:12b"
+  }
+}

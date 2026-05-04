@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A6 is on a MERGE_BACK maneuver and needs to avoid boundary exit. A7 is also on a MERGE_BACK maneuver and needs to avoid boundary exit.",
+    "actions": {
+      "A6": {
+        "rationale": "Choosing +10 degrees provides safe separation, avoids weather entry, and maintains reasonable progress toward the destination. Other options have boundary exit.",
+        "maneuver": { "heading_change_deg": 10 }
+      }
+    }
+  }
+}
+```

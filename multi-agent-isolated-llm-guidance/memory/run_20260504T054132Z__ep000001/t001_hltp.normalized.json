@@ -1,0 +1,180 @@
+{
+  "answer": {
+    "plans": {
+      "A6": {
+        "agent_id": "A6",
+        "first_waypoint_name": "WP071",
+        "merge_back_waypoint_name": "LIPRO",
+        "short_context": "HLTP WP071->LIPRO",
+        "source": "llm",
+        "created_step": 1,
+        "conflict_partner_ids": [
+          "A5"
+        ],
+        "rationale": "WP071 provides a right-side deviation to avoid the conflict with A5. LIPRO allows for a return to the original route progression while maintaining separation."
+      }
+    }
+  },
+  "contexts_by_agent": {
+    "A6": {
+      "agent_id": "A6",
+      "state": {
+        "position": [
+          25.132647693216292,
+          53.801266715482676
+        ],
+        "heading_deg": -18.75903991893993
+      },
+      "route_waypoint_names": [
+        "WP061",
+        "OTLON",
+        "KILOT",
+        "LIPRO",
+        "BUNTO",
+        "OMBAP"
+      ],
+      "conflict_partner_ids": [
+        "A5"
+      ],
+      "conflict": {
+        "agent_ids": [
+          "A5",
+          "A6"
+        ],
+        "loss_step": 5,
+        "min_sep": 4.844362865966468,
+        "point": [
+          32.56259930747647,
+          49.2776760663283
+        ]
+      },
+      "right_waypoint_candidates": [
+        {
+          "name": "WP071",
+          "point": [
+            33.17777777777792,
+            42.243055555555564
+          ],
+          "route_progress": 13.371131859832436,
+          "side_offset": -8.317354991114101,
+          "distance_to_conflict": 7.061467997584274,
+          "progress_delta_to_conflict": 2.873629660355334
+        },
+        {
+          "name": "PEKLA",
+          "point": [
+            22.10000000000008,
+            39.4236111111111
+          ],
+          "route_progress": 3.8103166970032896,
+          "side_offset": -14.588646049368421,
+          "distance_to_conflict": 14.372493882776402,
+          "progress_delta_to_conflict": 6.687185502473813
+        }
+      ],
+      "merge_back_candidates": [
+        {
+          "name": "KILOT",
+          "point": [
+            33.455555555555634,
+            50.94444444444443
+          ],
+          "route_progress": 10.799569097367735
+        },
+        {
+          "name": "LIPRO",
+          "point": [
+            43.81666666666632,
+            47.375
+          ],
+          "route_progress": 21.758289693256497
+        },
+        {
+          "name": "BUNTO",
+          "point": [
+            59.95555555555569,
+            41.722222222222214
+          ],
+          "route_progress": 38.85851282550992
+        },
+        {
+          "name": "OMBAP",
+          "point": [
+            70.90000000000003,
+            38.02083333333333
+          ],
+          "route_progress": 50.411916821922354
+        }
+      ]
+    }
+  },
+  "debug": {
+    "llm_status": "ok",
+    "llm_error": "",
+    "parse_status": "ok",
+    "fallback_agents": [],
+    "eligible_agent_ids": [
+      "A6"
+    ],
+    "used_vision": false,
+    "frame_paths": [],
+    "model": "gemma3:12b",
+    "weather": {
+      "cell_id": "W1",
+      "center": [
+        30.594987052178713,
+        56.642664757778505
+      ],
+      "major_radius_nm": 3.5172567618503163,
+      "minor_radius_nm": 2.158721493597233,
+      "major_radius_units": 1.1744789482740379,
+      "minor_radius_units": 0.899467288998847,
+      "minor_ratio": 0.613751465918456,
+      "angle_rad": 0.7012372151706965,
+      "motion_heading_rad": 0.8760444114976647,
+      "speed_units_per_step": 0.3673879270939118,
+      "major_growth_nm_per_step": 0.4545147693403101,
+      "growth_stopped": false,
+      "movement_stopped": false,
+      "cells": [
+        {
+          "cell_id": "W1",
+          "center": [
+            30.594987052178713,
+            56.642664757778505
+          ],
+          "major_radius_nm": 3.5172567618503163,
+          "minor_radius_nm": 2.158721493597233,
+          "major_radius_units": 1.1744789482740379,
+          "minor_radius_units": 0.899467288998847,
+          "minor_ratio": 0.613751465918456,
+          "angle_rad": 0.7012372151706965,
+          "motion_heading_rad": 0.8760444114976647,
+          "speed_units_per_step": 0.3673879270939118,
+          "major_growth_nm_per_step": 0.4545147693403101,
+          "growth_stopped": false,
+          "movement_stopped": false
+        },
+        {
+          "cell_id": "W2",
+          "center": [
+            62.259897633885096,
+            47.50141000788238
+          ],
+          "major_radius_nm": 3.4099143801655742,
+          "minor_radius_nm": 2.083225466815999,
+          "major_radius_units": 1.138635284850386,
+          "minor_radius_units": 0.8680106111733328,
+          "minor_ratio": 0.6109318987401802,
+          "angle_rad": 1.5876204605582767,
+          "motion_heading_rad": 0.8760444114976647,
+          "speed_units_per_step": 0.1919242952645281,
+          "major_growth_nm_per_step": 0.2394769428089918,
+          "growth_stopped": false,
+          "movement_stopped": false
+        }
+      ],
+      "num_weather_cells": 2
+    }
+  }
+}

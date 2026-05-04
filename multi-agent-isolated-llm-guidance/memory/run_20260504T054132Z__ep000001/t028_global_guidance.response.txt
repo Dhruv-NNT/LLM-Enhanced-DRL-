@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are in MERGE_BACK phases, requiring careful coordination to avoid traffic conflicts and maintain weather clearance. A4 and A8 are the focus of this step.",
+    "actions": {
+      "A4": {
+        "rationale": "Choosing -25 degrees provides the best combination of boundary recovery and progress towards destination while maintaining safe separation and weather clearance. It also avoids the boundary exit present in other options.",
+        "maneuver": { "heading_change_deg": -25 }
+      },
+      "A8": {
+        "rationale": "Choosing +15 degrees provides the best combination of boundary recovery and progress towards destination while maintaining safe separation and weather clearance. It also avoids the boundary exit present in other options.",
+        "maneuver": { "heading_change_deg": 30 }
+      }
+    }
+  }
+}
+```

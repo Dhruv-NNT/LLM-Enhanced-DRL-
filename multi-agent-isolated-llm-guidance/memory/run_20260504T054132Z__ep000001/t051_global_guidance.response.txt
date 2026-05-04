@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are in MERGE_BACK phases, requiring careful coordination to avoid traffic loss and weather encroachment. A10 is close to A5 and A6, necessitating a cautious maneuver. A6 has a clear path to recovery with a slight heading change.",
+    "actions": {
+      "A6": {
+        "rationale": "A6 has a safe preview with a slight heading change (+30 degrees) that allows for recovery towards the destination while maintaining adequate separation from surrounding traffic and avoiding weather. This maneuver prioritizes destination progress and cross-track reduction.",
+        "maneuver": { "heading_change_deg": 5 }
+      }
+    }
+  }
+}
+```

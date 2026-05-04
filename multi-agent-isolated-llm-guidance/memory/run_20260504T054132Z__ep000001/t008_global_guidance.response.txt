@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A5 is in MERGE_BACK phase, attempting to recover toward destination while maintaining separation from surrounding traffic and avoiding weather. The current heading is significantly offset from the destination, requiring a corrective turn.",
+    "actions": {
+      "A5": {
+        "rationale": "Choosing -15 degrees provides the best combination of safe separation from traffic (min_sep=6.70), avoidance of weather entry, and reasonable progress toward the destination (progress_to_destination=11.99).",
+        "maneuver": { "heading_change_deg": -15 }
+      }
+    }
+  }
+}
+```

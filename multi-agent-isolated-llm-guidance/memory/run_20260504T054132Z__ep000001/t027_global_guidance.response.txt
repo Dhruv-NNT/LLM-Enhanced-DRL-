@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are in MERGE_BACK phases, attempting to recover from boundary exits while avoiding traffic and weather. Prioritizing separation and weather clearance.",
+    "actions": {
+      "A10": {
+        "rationale": "Choosing +0 degrees to maintain current heading and avoid immediate traffic loss. While not ideal for boundary recovery, it's the safest option given the traffic situation.",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+```

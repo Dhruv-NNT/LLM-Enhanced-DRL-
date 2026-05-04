@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A8 is exiting the sector and needs a slight heading adjustment to maintain safe separation from surrounding traffic and avoid boundary exit.",
+    "actions": {
+      "A8": {
+        "rationale": "Choosing +0 degrees maintains boundary exit avoidance and provides a slight recovery toward destination.",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+```

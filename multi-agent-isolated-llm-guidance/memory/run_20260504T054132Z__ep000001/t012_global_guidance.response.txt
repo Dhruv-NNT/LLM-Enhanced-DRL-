@@ -1,0 +1,33 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are experiencing immediate hazards, requiring emergency maneuvers. Prioritizing separation and weather avoidance while attempting to recover toward destination.",
+    "actions": {
+      "A11": {
+        "rationale": "Choosing -30 degrees to avoid pair loss and maintain a safe separation from A4. This maneuver prioritizes traffic separation over destination recovery.",
+        "maneuver": {
+          "heading_change_deg": -30
+        }
+      },
+      "A4": {
+        "rationale": "Selecting +20 degrees to avoid pair loss and maintain a safe separation from A11. This maneuver prioritizes traffic separation over destination recovery.",
+        "maneuver": {
+          "heading_change_deg": 20
+        }
+      },
+      "A8": {
+        "rationale": "Choosing -30 degrees to avoid pair loss and maintain a safe separation from A9. This maneuver prioritizes traffic separation over destination recovery.",
+        "maneuver": {
+          "heading_change_deg": -30
+        }
+      },
+      "A9": {
+        "rationale": "Selecting +20 degrees to avoid pair loss and maintain a safe separation from A8. This maneuver prioritizes traffic separation over destination recovery.",
+        "maneuver": {
+          "heading_change_deg": 20
+        }
+      }
+    }
+  }
+}
+```

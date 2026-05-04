@@ -1,0 +1,25 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are experiencing immediate hazards and require emergency maneuvers. Traffic separation and weather avoidance are paramount.",
+    "actions": {
+      "A10": {
+        "rationale": "Choosing the row with the largest progress to destination and no predicted traffic loss or weather entry.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A12": {
+        "rationale": "Selecting the row with the best combination of progress to destination, no predicted traffic loss, and no weather entry.",
+        "maneuver": { "heading_change_deg": -30 }
+      },
+      "A3": {
+        "rationale": "Selecting the row with the best combination of progress to destination, no predicted traffic loss, and no weather entry.",
+        "maneuver": { "heading_change_deg": -15 }
+      },
+      "A6": {
+        "rationale": "Selecting the row with the best combination of progress to destination, no predicted traffic loss, and no weather entry.",
+        "maneuver": { "heading_change_deg": -30 }
+      }
+    }
+  }
+}
+```

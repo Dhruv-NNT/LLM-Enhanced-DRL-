@@ -1,0 +1,8 @@
+```json
+{
+  "agent": "A5",
+  "turn": "-5",
+  "reasoning": "A5 is currently in a MERGE_BACK state. The current turn of -5 degrees is the best option, as it maintains a safe separation from other aircraft (min_sep=4.04) and provides a reasonable level of progress towards the destination. While other turns offer slightly better progress, the safety margin is paramount. The recent decision memory indicates a trend of emergency maneuvers and merges, suggesting a complex airspace situation. Maintaining a stable and safe trajectory is the priority.",
+  "confidence": 0.95
+}
+```

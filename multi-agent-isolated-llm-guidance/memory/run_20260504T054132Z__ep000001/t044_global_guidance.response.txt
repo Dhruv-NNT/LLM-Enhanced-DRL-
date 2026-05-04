@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are experiencing immediate hazard conditions and require emergency maneuvers to avoid collisions and weather. A10 and A5 are in close proximity and require immediate action. A12 is attempting to merge back and requires a cautious approach.",
+    "actions": {
+      "A10": {
+        "rationale": "A10 is in an immediate hazard situation with a predicted pair loss. A turn of -15 degrees avoids the predicted collision, although it results in a boundary exit. This is prioritized over boundary recovery.",
+        "maneuver": { "heading_change_deg": -15 }
+      }
+    }
+  }
+}
+```

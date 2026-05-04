@@ -1,281 +1,41 @@
 # Multi-Agent Isolated LLM Guidance
 
-This folder is the pure-LLM guidance sandbox for the multi-aircraft sector simulation.
+This folder contains the pure-LLM guidance sandbox for the multi-aircraft sector simulation.
+The current evaluation path uses a global LangGraph controller: one prompt is built for all entered aircraft that need guidance at the current simulator step, and the controller converts the LLM response into a validated `{agent_id: heading_change_deg}` action map.
 
-The current default evaluation path uses a **global LangGraph guidance controller**:
+The folder is still named "isolated" because the project started with per-aircraft isolated prompting. That older controller still exists as `MultiAgentThreeCallController`, but `evaluate.py` and `run_llm_episode_gif_multi_agent.py` use `GlobalLangGraphGuidanceController`.
 
-- The simulator owns the world state, aircraft motion, weather motion, hazard prediction, rewards, and rendering.
-- At each simulator step, the controller finds the aircraft that have entered the sector and are due for guidance.
-- If at least one entered aircraft needs guidance, the controller builds one global prompt for all guidance-eligible aircraft in that step.
-- The LLM must return one JSON action for every guidance-eligible aircraft.
-- The controller parses, retries, guardrails, and fills missing actions before applying the final maneuver dictionary to the simulator.
+## Current Control Flow
 
-The folder name still says "isolated" because this project started from a per-aircraft isolated prompting design. The older local controller still exists as `MultiAgentThreeCallController`, and some tests cover it, but `evaluate.py` now instantiates `GlobalLangGraphGuidanceController`.
-
-## Current Control Path
-
-The active path is:
-
-1. `evaluate.py` creates `GlobalLangGraphGuidanceController`.
-2. `evaluate.py` creates `JointGuidanceEnv`.
-3. The environment resets the multi-agent simulator.
-4. Each loop calls `controller.choose_llm_actions(...)`.
-5. The controller's LangGraph pipeline decides whether an LLM call is needed.
-6. If needed, one prompt is sent to Ollama.
-7. The LLM response is parsed into per-agent actions.
-8. Invalid, missing, or unsafe actions are corrected or replaced.
-9. The environment applies the final `{agent_id: heading_change_deg}` action map.
-10. Frames, GIFs, prompt traces, raw responses, and normalized JSON logs are saved.
-
-The active controller is implemented in `rl_llm_multi/llm.py` as `GlobalLangGraphGuidanceController`.
+1. `evaluate.py` creates `GlobalLangGraphGuidanceController` and `JointGuidanceEnv`.
+2. `JointGuidanceEnv` owns `MultiAgentSectorCore`, which handles aircraft motion, weather motion, rewards, rendering, and hazard prediction.
+3. At each simulator step, the controller checks which launched aircraft have entered the sector.
+4. New sector entries may receive an advisory HLTP plan.
+5. The controller assigns each guidance-eligible aircraft a call type such as `EXECUTE_TURN`, `EMERGENCY_MANEUVER`, or `MERGE_BACK`.
+6. For each actionable aircraft, the controller simulates candidate heading changes and builds preview rows.
+7. The global prompt asks the LLM to choose one maneuver for every guidance-eligible aircraft.
+8. The controller parses the JSON, retries if needed, applies guardrails, fills missing actions with deterministic fallback, logs artifacts, and returns final actions to the simulator.
 
 ## Important Files
 
-- `configs.py`: environment constants, allowed action bins, hazard lookahead windows, recovery thresholds, Ollama settings, and output paths.
-- `evaluate.py`: runs a pure-LLM episode using `GlobalLangGraphGuidanceController` and saves memory traces plus rendered frames.
-- `run_llm_episode_gif_multi_agent.py`: command-line entrypoint for running an episode and writing a GIF.
-- `rl_llm_multi/core.py`: multi-agent simulator. It moves aircraft and weather, predicts hazards, computes rewards, and renders frames.
-- `rl_llm_multi/env.py`: environment wrappers. The pure-LLM rollout uses `JointGuidanceEnv`.
-- `rl_llm_multi/llm.py`: prompt builders, Ollama invocation, JSON parsing, local legacy controller, and the current global LangGraph controller.
-- `rl_llm_multi/utils.py`: route loading, geometry helpers, weather helpers, route assignment, and cross-track calculations.
-- `tests/test_llm_controller.py`: unit tests for both the older local controller and the current global controller.
-
-## One-Sentence Summary
-
-At each step, the current controller asks the LLM for a joint JSON decision for all entered aircraft that are currently due for guidance, then applies controller-side validation and deterministic fallback before the simulator moves.
-
-## What The LLM Actually Receives
-
-The global prompt is built by `GlobalPromptBuilder.build_prompt()` in `rl_llm_multi/llm.py`.
-
-It is plain text, not a chat-history template. In text mode it is sent as the single user message to Ollama. In vision mode, recent rendered frames are also attached as image inputs.
-
-The prompt includes these sections:
-
-- `ROLE` and `GLOBAL GUIDANCE TASK`
-- `OUTPUT RULES`
-- strict JSON schema
-- optional `MERGE_BACK PRIORITY`
-- `GUIDANCE-ELIGIBLE AGENTS THIS STEP`
-- `ENTERED TRAFFIC CONTEXT`
-- `GLOBAL WEATHER`
-- `RANKED TRAFFIC THREATS`
-- `PER-AGENT TURN PREVIEWS`
-- `RECENT GLOBAL DECISION MEMORY`
-- `VISION FRAME CONTEXT`
-
-The most important section is `PER-AGENT TURN PREVIEWS`. The LLM is not asked to invent maneuver consequences from scratch. The controller simulates candidate turns first, ranks them, and gives the model structured preview rows such as:
-
-```text
-turn=+30 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=7.49 | min_weather_clearance=19.88 | progress_to_destination=20.00 | cross_track_reduction=-0.01 | end_distance=37.16 | end_cross_track=1.01 | end_heading_error=1.6
-```
-
-The LLM chooses among those controller-generated options using the prompt rules.
-
-## Required LLM Output
-
-The current global prompt asks for exactly one JSON object:
-
-```json
-{
-  "answer": {
-    "scenario_summary": "<brief>",
-    "actions": {
-      "A1": {
-        "call_name": "EXECUTE_TURN",
-        "rationale": "<brief>",
-        "maneuver": { "heading_change_deg": 0 }
-      }
-    }
-  }
-}
-```
-
-Rules enforced by the controller:
-
-- `actions` must include every guidance-eligible agent for the current step.
-- Actions for aircraft that have not entered the sector are ignored.
-- `heading_change_deg` must snap to one of `ACTION_BINS`.
-- Positive turn values mean left, negative values mean right, and `0` means hold current heading.
-
-## LangGraph Pipeline
-
-`GlobalLangGraphGuidanceController` compiles a LangGraph with these nodes:
-
-1. `collect_state`: finds entered aircraft, gathers sector-entry annotations, and optionally collects recent frame paths for vision mode.
-2. `assign_stages`: decides which entered aircraft need guidance and labels each one with a call type.
-3. `build_global_context`: builds threat rows, candidate preview rows, recent decision memory, and the final global prompt.
-4. `call_llm`: sends the prompt to Ollama when at least one aircraft is actionable.
-5. `parse_validate_retry`: extracts JSON, checks whether every expected agent has an action, and retries when output is invalid or incomplete.
-6. `guardrail_actions`: snaps requested turns to allowed bins and applies stage-specific maneuver constraints.
-7. `fallback_missing`: uses deterministic fallback for missing or invalid per-agent actions.
-8. `commit_and_log`: updates controller state, logs prompt/response/normalized artifacts, records recent decisions, and returns the final action map.
-
-## Which Aircraft Are Eligible For Guidance
-
-The global controller only considers aircraft that are:
-
-- launched,
-- not finished,
-- already inside or past sector entry,
-- present in `core.active_agent_ids`.
-
-Aircraft that have not entered the sector are excluded from the prompt and from the returned action map. This is intentional: current guidance is mainly about behavior after sector entry.
-
-## Call Types
-
-The controller labels every guidance-eligible aircraft with one of three per-agent call types.
-
-### `EXECUTE_TURN`
-
-Used for the first guidance call after an aircraft enters the sector.
-
-In the current global controller, the first call is triggered by sector entry, not only by a predicted hazard. This means every entered aircraft gets one initial chance to choose an active maneuver.
-
-### `EMERGENCY_MANEUVER`
-
-Used after an aircraft has already received its first guidance call and an immediate hazard is predicted.
-
-Immediate hazards are based on the short emergency lookahead window:
-
-- predicted pairwise loss of separation within `EMERGENCY_LOOKAHEAD_STEPS`,
-- or predicted weather entry within `EMERGENCY_LOOKAHEAD_STEPS`.
-
-The guardrail layer does not allow an emergency action to remain at `0`; if the LLM requests `0`, the controller resolves it to a nonzero permitted turn.
-
-### `MERGE_BACK`
-
-Used after initial avoidance when the aircraft should recover toward the destination or route corridor.
-
-Common triggers include:
-
-- boundary warning,
-- enough safe streak with excessive cross-track error,
-- enough safe streak with excessive destination heading error,
-- repeated merge-back recheck after a prior merge-back maneuver.
-
-For merge-back calls, the prompt adds `MERGE_BACK PRIORITY`, and the guardrail layer restricts the action toward the destination side when necessary.
-
-## Candidate Preview Rows
-
-Before asking the LLM, the controller simulates allowed heading-change bins for each actionable aircraft.
-
-Each preview row reports:
-
-- candidate `heading_change_deg`,
-- whether the candidate is safe over the preview horizon,
-- first predicted pair-loss step,
-- first predicted weather-entry step,
-- first predicted boundary-exit step,
-- minimum separation to any aircraft,
-- minimum weather clearance,
-- progress toward destination,
-- cross-track reduction,
-- end distance to destination,
-- end cross-track error,
-- end heading error to destination.
-
-Preview rows are sorted by a controller-side preference function before they reach the model. This means the LLM sees a curated decision table, not raw world state alone.
-
-## Threat Rows
-
-For each guidance-eligible aircraft, the controller ranks nearby traffic threats and includes the top threats in the prompt.
-
-Threat ranking prefers:
-
-- aircraft with predicted loss of separation,
-- then smaller predicted minimum separation,
-- then smaller current distance.
-
-The prompt does not dump all pairwise geometry in full detail. It gives the model a compact threat table that is most relevant for the current decision.
-
-## Hazard Prediction
-
-Hazards are computed by the simulator before the LLM is called.
-
-`MultiAgentSectorCore._update_hazard_predictions()` clones the simulator and rolls it forward for `HAZARD_LOOKAHEAD_STEPS`. For each aircraft, it records:
-
-- predicted minimum separation,
-- predicted pair-loss step,
-- predicted weather clearance,
-- predicted weather-entry step,
-- predicted boundary-exit step.
-
-These predictions appear in the prompt and also influence call timing.
-
-## Guardrails And Fallback
-
-The LLM is advisory. The controller is the final authority.
-
-After parsing the model response, the controller:
-
-- ignores actions for agents that were not expected,
-- snaps each requested turn to the nearest allowed action bin,
-- applies stage-specific constraints,
-- retries if the JSON is invalid or missing expected agents,
-- falls back per missing agent after retries are exhausted,
-- logs both requested and applied heading changes.
-
-Examples from the tests:
-
-- If the global LLM response omits `A2`, the controller retries. If `A2` is still missing, `A2` gets a deterministic fallback while valid LLM actions for other agents can still be used.
-- If an emergency response asks for `0`, the controller changes it to a nonzero maneuver.
-- If a merge-back response asks for a turn away from the destination side, the controller can resolve it to `0` or another allowed turn.
-
-## Vision Mode
-
-Text mode is the default.
-
-When `--use-vision` is enabled, the controller attaches the current frame plus up to the previous three frames to the Ollama request:
-
-```text
-image_003.png, image_002.png, image_001.png, image_000.png
-```
-
-The prompt still includes text references in `VISION FRAME CONTEXT`; the actual images are sent through the Ollama message payload.
-
-## Memory And Logs
-
-Every global guidance call writes files under a timestamped folder in `multi-agent-isolated-llm-guidance/memory/`.
-
-Current global call artifacts use this naming pattern:
-
-- `tXXX_global_guidance.prompt.txt`
-- `tXXX_global_guidance.response.txt`
-- `tXXX_global_guidance.normalized.json`
-- `_index.jsonl`
-
-The normalized JSON is usually the best debugging artifact. It contains:
-
-- final normalized answer,
-- per-agent requested heading changes,
-- per-agent applied heading changes,
-- whether each action came from `llm` or `fallback`,
-- threat rows by agent,
-- preview rows by agent,
-- debug metadata such as parse status, retry count, fallback agents, used vision, frame paths, eligible agent ids, entered agent ids, stage by agent, and model name.
-
-The `_index.jsonl` file gives a compact one-line record per guidance call. For global calls, `agent_id` is `GLOBAL` and `call_name` is `GLOBAL_GUIDANCE`.
-
-## Recent Decision Memory
-
-The global controller keeps the last four committed global decisions in `recent_decisions`.
-
-Those decisions are inserted into the next prompt under `RECENT GLOBAL DECISION MEMORY`, for example:
-
-```text
-- step=5: A1:EXECUTE_TURN +25deg; A3:EXECUTE_TURN -30deg
-```
-
-This gives the LLM short-term continuity without turning the prompt into an unbounded conversation history.
-
-## Outputs
-
-Runtime outputs are kept inside this folder:
-
-- rendered frames and GIFs go to `outputs/`,
-- evaluation summaries go to `evaluation/`,
-- prompts, raw responses, normalized traces, and indexes go to `memory/`.
+- `configs.py`: constants for agents, weather, action bins, lookahead windows, buffers, output paths, and Ollama settings.
+- `evaluate.py`: programmatic and CLI evaluation entrypoint.
+- `run_llm_episode_gif_multi_agent.py`: convenience CLI for running one episode and writing a GIF.
+- `rl_llm_multi/core.py`: simulator core for aircraft, launch timing, weather, hazard prediction, rewards, and rendering.
+- `rl_llm_multi/env.py`: environment wrappers, including `JointGuidanceEnv` for LLM rollouts.
+- `rl_llm_multi/llm.py`: prompt builders, Ollama calls, JSON parsing, HLTP logic, local legacy controller, and global LangGraph controller.
+- `rl_llm_multi/utils.py`: route loading, waypoint geometry, weather geometry, unit conversion, and route assignment.
+- `tests/test_llm_controller.py`: regression tests for controller behavior, weather, route launch spacing, and prompt/response handling.
+
+## Data Inputs
+
+The code expects shared data files outside this folder, as configured in `configs.py`:
+
+- `22feb_paths.csv`
+- `path_Waypoints22feb.csv`
+- `test.geojson`
+
+`utils.py` loads these files to build forward and reversed routes, waypoint positions, and the sector polygon.
 
 ## Running An Episode
 
@@ -285,25 +45,18 @@ From the repository root:
 python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py
 ```
 
-Run with explicit routes:
+Useful options:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --num-agents 2 --route-ids PATH2 PATH5
+python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --num-agents 8 --num-weather-cells 2
+python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --num-agents 2 --route-ids PATH5_REV PATH6
+python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --episode-step-cap 10
+python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision
 ```
 
-Run a short debugging episode:
+The script prints the number of steps, reward, success/truncation/failure status, whether vision was used, number of weather cells, and the GIF path.
 
-```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --num-agents 2 --episode-step-cap 8
-```
-
-Run with vision frames attached to the LLM request:
-
-```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --num-agents 2 --use-vision
-```
-
-The default Ollama settings are in `configs.py`:
+Default Ollama settings are in `configs.py`:
 
 ```python
 OLLAMA_MODEL = "gemma3:12b"
@@ -311,45 +64,200 @@ OLLAMA_HOST = "http://127.0.0.1:11434"
 OLLAMA_TIMEOUT_SECONDS = 120
 ```
 
+## Guidance Eligibility
+
+The global guidance prompt only asks for actions for aircraft that are:
+
+- launched,
+- not finished,
+- already entered into the sector.
+
+Aircraft that have not entered the sector are not controlled by the LLM yet. Delayed aircraft can still appear as future traffic inside controller previews once they launch during the lookahead.
+
+## Launch Spacing
+
+Route assignment now staggers aircraft that start too close to each other.
+
+- `SAFE_R = 5.0` remains the simulator collision threshold.
+- `TRAFFIC_CAUTION_R = 6.5` is the internal caution buffer.
+- `LAUNCH_SEPARATION_R = TRAFFIC_CAUTION_R` is used to delay same-origin or nearby-origin launches.
+
+There are two protections:
+
+- `assign_routes()` computes a scheduled `start_step` that avoids launching aircraft too close to earlier scheduled traffic.
+- `MultiAgentSectorCore._launch_agents()` checks again at runtime and postpones a launch if the start point is still too close to an active aircraft.
+
+This prevents immediate collisions when many agents share an origin such as `OMBAP`.
+
+## Weather Model
+
+The simulator supports one or two weather cells.
+
+Each weather cell has:
+
+- an elliptical shape,
+- a current center,
+- a motion heading and speed,
+- a major radius in nautical miles,
+- a random growth or shrink rate in nautical miles per simulator step.
+
+Weather speed is sampled from `0.5` to `1.1666666667` NM per step. Weather growth/shrink rate is sampled from `0.15` to `0.60` NM per step, with sign chosen randomly. If two weather cells exist, they share the same motion heading but can have different speed and growth/shrink rates.
+
+Weather rings are interpreted as:
+
+- green: caution/buffer region,
+- yellow/red/magenta: terminal no-go region.
+
+The prompt tells the LLM to avoid the green ring when possible and never plan through yellow/red/magenta.
+
+## Prompt Shape
+
+The global prompt is built by `GlobalPromptBuilder.build_prompt()` in `rl_llm_multi/llm.py`.
+
+Main sections include:
+
+- global task and output rules,
+- safety rules and traffic hard veto,
+- optional merge-back priority rules,
+- guidance-eligible aircraft,
+- entered traffic context,
+- advisory HLTP plans,
+- global weather,
+- ranked traffic threats,
+- per-agent turn previews,
+- recent global decision memory,
+- optional vision frame context.
+
+The most important section is `PER-AGENT TURN PREVIEWS`. The controller simulates candidate turns first, then gives the LLM rows such as:
+
+```text
+turn=+10 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=8.20 | traffic_buffer_ok=1 | min_weather_clearance=11.50 | weather_buffer_ok=1 | progress_to_destination=3.40 | cross_track_reduction=1.20 | end_distance=25.10 | end_cross_track=2.00 | end_heading_error=6.5
+```
+
+The LLM should choose from the displayed turns. It is not expected to invent new maneuver consequences.
+
+## Required LLM Output
+
+The global prompt asks for exactly one JSON object and no extra text:
+
+```json
+{
+  "answer": {
+    "scenario_summary": "<brief>",
+    "actions": {
+      "A1": {
+        "rationale": "<brief>",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+```
+
+Important details:
+
+- The LLM should output only the guidance-eligible aircraft IDs.
+- The LLM should not output `call_name`; the controller already assigned each phase.
+- `heading_change_deg` must be one of the configured `ACTION_BINS`.
+- Positive means left, negative means right, and `0` means hold current heading.
+
+The normalized logs may include extra controller-owned fields such as `call_name`, `source`, and `requested_heading_change_deg`, but those are added after parsing.
+
+## LangGraph Pipeline
+
+`GlobalLangGraphGuidanceController` builds a LangGraph with these nodes:
+
+1. `collect_state`
+2. `hltp_on_sector_entry`
+3. `assign_stages`
+4. `build_global_context`
+5. `call_llm`
+6. `parse_validate_retry`
+7. `guardrail_actions`
+8. `fallback_missing`
+9. `commit_and_log`
+
+If no aircraft is actionable, the graph returns an empty action map for that step.
+
+## Guardrails And Fallback
+
+The LLM is advisory. The controller is the final authority.
+
+After parsing the response, the controller:
+
+- ignores unexpected aircraft IDs,
+- checks that every expected aircraft has an action,
+- retries invalid or incomplete JSON up to the retry limit,
+- snaps requested turns to allowed bins,
+- enforces call-specific constraints,
+- uses deterministic fallback for missing or invalid actions,
+- logs requested and applied turns.
+
+Examples:
+
+- Emergency maneuvers cannot stay at `0`; the controller resolves them to a nonzero turn.
+- Merge-back maneuvers are constrained toward destination recovery when appropriate.
+- Rows with imminent pair loss are avoided when any no-pair-loss row exists.
+
+## HLTP Plans
+
+HLTP is an advisory high-level tactical plan generated when aircraft enter the sector.
+
+It can suggest:
+
+- a first waypoint for deviation,
+- a later route waypoint for merge-back,
+- short rationale and conflict context.
+
+Low-level candidate previews, traffic separation, weather clearance, and guardrails can override HLTP guidance.
+
+## Vision Mode
+
+Text mode is the default.
+
+When `--use-vision` is enabled, the controller attaches the current frame and recent previous frames to the Ollama request when available. The text prompt still contains the structured state and preview rows, so vision is extra context rather than the only evidence.
+
+## Outputs And Logs
+
+Runtime outputs stay inside `multi-agent-isolated-llm-guidance/`:
+
+- `outputs/`: rendered frames and GIFs,
+- `evaluation/`: evaluation summaries,
+- `memory/`: prompt, response, normalized JSON, and index logs.
+
+Global guidance logs use names like:
+
+- `t001_global_guidance.prompt.txt`
+- `t001_global_guidance.response.txt`
+- `t001_global_guidance.normalized.json`
+- `_index.jsonl`
+
+The normalized JSON is usually the best debugging file. It contains final actions, threat rows, preview rows, HLTP plans, weather, eligible agent IDs, entered agent IDs, fallback metadata, parse status, retry count, model name, and frame paths when vision is used.
+
 ## Running Tests
 
 ```bash
 python3 -m unittest discover multi-agent-isolated-llm-guidance/tests
 ```
 
-The tests patch `ollama_invoke`, so they do not require a live Ollama server.
-
-## Legacy Local Controller
-
-`MultiAgentThreeCallController` still exists in `rl_llm_multi/llm.py`.
-
-That older controller:
-
-- builds one local prompt per actionable aircraft,
-- processes actionable aircraft sequentially,
-- lets later aircraft in the same step see earlier committed actions,
-- writes `tXXX_<agent>_<call>.prompt.txt` style local traces.
-
-This is no longer the controller used by `evaluate.py`, but it remains useful for comparison and regression tests.
+Many tests patch `ollama_invoke`, so they do not require a live Ollama server. The global controller tests do require `langgraph` to be installed in the active Python environment.
 
 ## Practical Mental Model
 
-The current system is not "the LLM flies every aircraft directly."
+The LLM does not directly fly every aircraft at every step.
 
-It is:
+The actual division of responsibility is:
 
-- simulator-owned dynamics,
-- simulator-owned hazard prediction,
-- controller-owned call timing,
-- controller-owned candidate previews,
-- LLM-selected global JSON actions for due entered aircraft,
-- controller-owned validation, correction, fallback, logging, and state updates.
+- simulator owns motion, weather, reward, rendering, and hazard prediction,
+- controller owns call timing, candidate previews, guardrails, fallback, and logs,
+- LLM selects maneuvers from controller-generated preview rows for due entered aircraft.
 
-When changing guidance behavior, the strongest levers are usually:
+When changing behavior, the main places to inspect are:
 
 - call timing in `_global_call_decision_for_agent()`,
-- prompt structure in `GlobalPromptBuilder`,
-- candidate ranking in the preview sorting logic,
-- guardrail behavior in `_resolve_turn_for_call()`,
-- fallback behavior in `_fallback_answer()`,
-- hazard prediction in `core.py`.
+- prompt text in `GlobalPromptBuilder`,
+- preview generation and sorting in `_preview_rows()`,
+- turn correction in `_resolve_turn_for_call()`,
+- fallback in `_fallback_answer()`,
+- launch spacing in `assign_routes()` and `_launch_agents()`,
+- hazard prediction in `MultiAgentSectorCore._update_hazard_predictions()`.

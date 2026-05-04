@@ -1,0 +1,21 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are experiencing immediate hazards and require emergency maneuvers. A10 and A5 are in close proximity and experiencing loss of separation. A12 is attempting to merge back while avoiding conflicts.",
+    "actions": {
+      "A10": {
+        "rationale": "A10 is experiencing an immediate hazard with a loss of separation and boundary exit. Choosing -15 degrees minimizes the loss of separation while avoiding boundary exit.",
+        "maneuver": { "heading_change_deg": -15 }
+      },
+      "A12": {
+        "rationale": "A12 is attempting to merge back while avoiding conflicts. Choosing +30 degrees allows for a recovery while maintaining separation.",
+        "maneuver": { "heading_change_deg": 30 }
+      },
+      "A5": {
+        "rationale": "A5 is experiencing an immediate hazard with a loss of separation and boundary exit. Choosing +30 degrees minimizes the loss of separation while avoiding boundary exit.",
+        "maneuver": { "heading_change_deg": 30 }
+      }
+    }
+  }
+}
+```

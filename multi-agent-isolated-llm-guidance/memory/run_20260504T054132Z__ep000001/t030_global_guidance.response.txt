@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are exiting the sector and require merge-back maneuvers. Traffic separation and weather clearance are primary concerns.",
+    "actions": {
+      "A10": {
+        "rationale": "Choosing +0 heading avoids immediate boundary exit, but results in a traffic loss. Selecting +15 degrees provides a better separation from A5 while maintaining reasonable progress toward destination.",
+        "maneuver": { "heading_change_deg": 15 }
+      }
+    }
+  }
+}
+```

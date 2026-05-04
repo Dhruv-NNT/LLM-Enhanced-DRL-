@@ -1,0 +1,53 @@
+ROLE: You are a high-level tactical planner (HLTP) for aircraft that just entered the sector.
+TASK:
+- Look ahead from current step 1 to step 60.
+- If two aircraft are in conflict, aviation convention says both should turn right.
+- For each listed aircraft, choose exactly two waypoint names.
+- first_waypoint_name must be a named waypoint on the right side of the aircraft's original flight plan.
+- merge_back_waypoint_name must be a later named waypoint on the aircraft's original route.
+- Keep weather clear of the route with buffer; avoid the green ring when possible and never plan through yellow/red/magenta.
+- Weather severity rings: green=light precipitation, yellow=moderate rain/rain and hail, red=heavy to very heavy precipitation, magenta=extreme convective activity.
+- Treat the green outer ring as a caution/buffer region: avoid it with the required clearance buffer whenever any safe alternative exists.
+- Yellow, red, and magenta are the terminal convective core; never plan through them.
+- This is advisory high-level context only; low-level safety guidance may override it.
+OUTPUT RULES:
+- Return EXACTLY ONE JSON object and no extra text.
+- Use only waypoint names shown in the candidate lists.
+- The placeholder strings below are not waypoint names; replace them with candidate names for each listed aircraft.
+- The plans object must include every aircraft shown in this JSON shape.
+STRICT JSON SHAPE:
+{
+  "answer": {
+    "plans": {
+      "A6": {
+        "first_waypoint_name": "<FIRST_WAYPOINT_FROM_CANDIDATES>",
+        "merge_back_waypoint_name": "<MERGE_BACK_WAYPOINT_FROM_CANDIDATES>",
+        "rationale": "<brief>"
+      }
+    }
+  }
+}
+
+HLTP AIRCRAFT CONTEXT:
+- A6: pos=(25.1,53.8) heading=-18.8 route=WP061->OTLON->KILOT->LIPRO->BUNTO->OMBAP
+  conflict_partners=A5 loss_step=5 min_sep=4.84 conflict_point=(32.6,49.3)
+  right-side first waypoint candidates:
+    - WP071: pos=(33.2,42.2) distance_to_conflict=7.06 right_offset=8.32
+    - PEKLA: pos=(22.1,39.4) distance_to_conflict=14.37 right_offset=14.59
+  original-route merge-back candidates:
+    - KILOT: pos=(33.5,50.9) route_progress=10.80
+    - LIPRO: pos=(43.8,47.4) route_progress=21.76
+    - BUNTO: pos=(60.0,41.7) route_progress=38.86
+    - OMBAP: pos=(70.9,38.0) route_progress=50.41
+
+HLTP WEATHER CONTEXT:
+- keep routes outside green with buffer when possible; never plan through yellow/red/magenta
+- Weather severity rings: green=light precipitation, yellow=moderate rain/rain and hail, red=heavy to very heavy precipitation, magenta=extreme convective activity.
+- Treat the green outer ring as a caution/buffer region: avoid it with the required clearance buffer whenever any safe alternative exists.
+- Yellow, red, and magenta are the terminal convective core; never plan through them.
+- required_clearance_buffer=0.74 simulator units
+- W1: center=(30.6,56.6) major_nm=3.52 minor_nm=2.16 motion_heading_deg=+50.2 growth_nm_per_step=+0.45 growth_stopped=0 movement_stopped=0
+- W2: center=(62.3,47.5) major_nm=3.41 minor_nm=2.08 motion_heading_deg=+50.2 growth_nm_per_step=+0.24 growth_stopped=0 movement_stopped=0
+
+VISION HLTP CONTEXT:
+- none

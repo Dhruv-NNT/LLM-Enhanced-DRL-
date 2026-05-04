@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are MERGING BACK and experiencing boundary exits. Prioritizing traffic separation and weather clearance while attempting to recover toward destination.",
+    "actions": {
+      "A10": {
+        "rationale": "Choosing a small heading change of +5 degrees to mitigate the immediate traffic loss and maintain a reasonable progress toward destination. This maneuver avoids the most severe traffic conflict while still attempting recovery.",
+        "maneuver": { "heading_change_deg": 5 }
+      }
+    }
+  }
+}
+```

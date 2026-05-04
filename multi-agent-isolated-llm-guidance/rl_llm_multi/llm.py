@@ -30,6 +30,7 @@ from configs import (
     OLLAMA_HOST,
     OLLAMA_MAX_TOKENS,
     OLLAMA_MODEL,
+    OLLAMA_NUM_CTX,
     OLLAMA_TEMPERATURE,
     OLLAMA_TIMEOUT_SECONDS,
     OLLAMA_TOP_P,
@@ -550,6 +551,7 @@ def ollama_invoke(
             "temperature": OLLAMA_TEMPERATURE,
             "top_p": OLLAMA_TOP_P,
             "num_predict": OLLAMA_MAX_TOKENS,
+            "num_ctx": OLLAMA_NUM_CTX,
         },
     }
     request = urllib.request.Request(

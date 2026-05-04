@@ -1,0 +1,27 @@
+ vaporizer
+Okay, let's break down the decision-making process for A8.
+
+**Current Situation:**
+
+*   A8 is currently at a critical point, needing to avoid traffic loss and maintain separation.
+*   The recent decision memory shows a pattern of merges and emergency maneuvers, suggesting a complex and potentially volatile airspace.
+*   The ranked threats show A2 and A8 are closest, with A2 posing the most immediate threat.
+
+**Analyzing Turn Previews for A8:**
+
+Let's focus on the previews that are "safe" and have reasonable progress/alignment.  We're looking for a turn that avoids traffic loss, maintains separation, and ideally improves the trajectory.
+
+*   **turn=+0 | safe=0 | pair_loss=None | weather_entry=None | boundary_exit=1 | min_sep=6.60 | traffic_buffer_ok=1 | min_weather_clearance=23.18 | weather_buffer_ok=1 | progress_to_destination=9.97 | cross_track_reduction=1.62 | end_distance=4.26 | end_cross_track=2.76 | end_heading_error=8.7**
+    *   This is the current heading. It's *not* safe, as it results in a boundary exit.  While it has good progress and alignment, the boundary exit is a deal-breaker.
+*   **turn=+5 | safe=0 | pair_loss=None | weather_entry=None | boundary_exit=1 | min_sep=5.90 | traffic_buffer_ok=0 | min_weather_clearance=23.14 | weather_buffer_ok=1 | progress_to_destination=9.97 | cross_track_reduction=2.34 | end_distance=4.25 | end_cross_track=2.03 | end_heading_error=8.1**
+    *   This turn results in a boundary exit and loses traffic buffer.
+*   **turn=+10 | safe=0 | pair_loss=None | weather_entry=None | boundary_exit=1 | min_sep=5.20 | traffic_buffer_ok=0 | min_weather_clearance=23.08 | weather_buffer_ok=1 | progress_to_destination=9.73 | cross_track_reduction=3.02 | end_distance=4.49 | end_cross_track=1.36 | end_heading_error=24.1**
+    *   This turn results in a boundary exit and loses traffic buffer.
+
+**Decision:**
+
+Given the constraints and the previews, the best course of action is to choose **turn=+0**. While it results in a boundary exit, it's the only option that doesn't immediately trigger a traffic loss or a loss of separation. The boundary exit needs to be addressed in the next step.
+
+**Action:**
+
+A8:MERGE_BACK +0deg

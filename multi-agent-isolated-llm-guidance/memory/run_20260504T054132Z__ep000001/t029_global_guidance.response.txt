@@ -1,0 +1,25 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are in MERGE_BACK phases, attempting to recover toward their destinations while avoiding traffic and weather. Prioritizing safe recovery and maintaining separation.",
+    "actions": {
+      "A11": {
+        "rationale": "Choosing +0 heading to maintain current progress and avoid boundary exit. While other turns offer slightly better cross-track reduction, the current heading provides the best balance of progress and safety.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A12": {
+        "rationale": "Selecting +10 degrees to improve progress and reduce cross-track error while maintaining safe separation and weather clearance. This turn offers a good balance of recovery and safety.",
+        "maneuver": { "heading_change_deg": 10 }
+      },
+      "A3": {
+        "rationale": "Choosing -10 degrees to avoid traffic loss and maintain separation. While other turns offer slightly better progress, this turn provides the best balance of safety and recovery.",
+        "maneuver": { "heading_change_deg": -10 }
+      },
+      "A9": {
+        "rationale": "Selecting +15 degrees to maximize progress and minimize cross-track error while maintaining safe separation and weather clearance. This turn offers the best combination of recovery and safety.",
+        "maneuver": { "heading_change_deg": 15 }
+      }
+    }
+  }
+}
+```

@@ -1,0 +1,21 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are experiencing immediate hazards and require emergency maneuvers. A3, A6, and A7 are prioritized for action due to their critical situations. Traffic separation and weather clearance are paramount.",
+    "actions": {
+      "A3": {
+        "rationale": "Chosen +10 degrees to mitigate immediate traffic loss and maintain a reasonable course toward destination. This maneuver prioritizes traffic separation over minor weather entry.",
+        "maneuver": { "heading_change_deg": 10 }
+      },
+      "A6": {
+        "rationale": "Chosen -30 degrees to avoid boundary exit and maintain separation from adjacent traffic. This maneuver prioritizes boundary recovery and traffic separation.",
+        "maneuver": { "heading_change_deg": -30 }
+      },
+      "A7": {
+        "rationale": "Chosen +15 degrees to mitigate immediate traffic loss and maintain a reasonable course toward destination. This maneuver prioritizes traffic separation over minor weather entry.",
+        "maneuver": { "heading_change_deg": 15 }
+      }
+    }
+  }
+}
+```
