@@ -91,7 +91,12 @@ def _make_state(
 ) -> SimpleNamespace:
     return SimpleNamespace(
         agent_id=agent_id,
-        route=SimpleNamespace(linestring=LineString([(0.0, 0.0), (100.0, 0.0)])),
+        route=SimpleNamespace(
+            linestring=LineString([(0.0, 0.0), (100.0, 0.0)]),
+            origin="ORIG",
+            destination="DEST",
+            waypoint_names=("ORIG", "DEST"),
+        ),
         position=tuple(position),
         destination=tuple(destination),
         heading_rad=math.radians(float(heading_deg)),
@@ -608,7 +613,20 @@ class ControllerTests(unittest.TestCase):
             with patch.object(controller, "_ranked_threats", return_value=[]), patch.object(
                 controller,
                 "_preview_rows",
-                return_value=[],
+                return_value=[
+                    {
+                        "heading_change_deg": 5,
+                        "safe_over_preview": True,
+                        "pair_loss_step": None,
+                        "weather_entry_step": None,
+                        "boundary_exit_step": None,
+                        "min_sep_to_any": 8.0,
+                        "min_weather_clearance": 7.0,
+                        "progress_to_destination": 5.0,
+                        "cross_track_reduction": 1.0,
+                        "end_heading_error_to_dest_deg": 4.0,
+                    }
+                ],
             ), patch.object(controller, "_deterministic_best_turn", return_value=0), patch(
                 "rl_llm_multi.llm.ollama_invoke",
                 return_value={
@@ -925,6 +943,48 @@ class ControllerTests(unittest.TestCase):
         self.assertIn("HLTP MUMSO->MABAL", merge_prompt)
         self.assertIn("Turn right around the conflict", merge_prompt)
 
+    def test_global_vision_prompt_includes_action_candidates_not_text_table(self) -> None:
+        core = FakeCore([_make_state("A1", position=(10.0, 10.0), has_entered_sector=True)])
+        prompt = GlobalPromptBuilder().build_vision_prompt(
+            core,
+            step=5,
+            actionable=[{"agent_id": "A1", "call_name": "EXECUTE_TURN", "call_reason": "SECTOR_ENTRY"}],
+            entered_agent_ids=["A1"],
+            hltp_plans={},
+            threat_rows_by_agent={},
+            preview_rows_by_agent={
+                "A1": [
+                    {
+                        "heading_change_deg": 5,
+                        "safe_over_preview": True,
+                        "pair_loss_step": None,
+                        "weather_entry_step": None,
+                        "boundary_exit_step": None,
+                        "min_sep_to_any": 8.0,
+                        "min_weather_clearance": 7.0,
+                        "progress_to_destination": 5.0,
+                        "cross_track_reduction": 1.0,
+                        "end_heading_error_to_dest_deg": 4.0,
+                    }
+                ]
+            },
+            recent_decisions=[],
+            frame_paths=["/tmp/image_005.png"],
+        )
+
+        self.assertIn("VISION ACTION CANDIDATES", prompt)
+        self.assertIn("Use vision to choose tactical intent", prompt)
+        self.assertIn("choose among listed VISION ACTION CANDIDATES", prompt)
+        self.assertIn("choose only from the listed turns", prompt)
+        self.assertIn("Rows are guidance, not orders", prompt)
+        self.assertIn("visual common sense may justify another viable listed row", prompt)
+        self.assertIn("displayed_turns=[+5]", prompt)
+        self.assertIn("turn=+5", prompt)
+        self.assertNotIn("trust the candidate row", prompt)
+        self.assertNotIn("prefer the first row unless", prompt)
+        self.assertNotIn("Do not use a preview table", prompt)
+        self.assertNotIn("PER-AGENT TURN PREVIEWS", prompt)
+
     def test_invalid_hltp_waypoint_proposal_can_preserve_llm_rationale(self) -> None:
         controller = GlobalLangGraphGuidanceController.__new__(GlobalLangGraphGuidanceController)
         context = {
@@ -981,6 +1041,64 @@ class ControllerTests(unittest.TestCase):
         self.assertIn("\"A3\":", multi_prompt)
         self.assertIn("\"A4\":", multi_prompt)
         self.assertIn("must include every aircraft shown", multi_prompt)
+
+    def test_hltp_vision_prompt_uses_frames_as_real_context(self) -> None:
+        core = MultiAgentSectorCore(num_agents=1, num_weather_cells=1)
+        core.reset(seed=42, num_weather_cells=1)
+        contexts = [
+            {
+                "agent_id": "A1",
+                "state": {"position": (10.0, 10.0), "heading_deg": 45.0},
+                "origin_name": "ORIG",
+                "destination_name": "DEST",
+                "destination": (90.0, 10.0),
+                "route_waypoint_names": ["ORIG", "MID", "DEST"],
+                "conflict_partner_ids": ["A2"],
+                "conflict": {
+                    "agent_ids": ["A1", "A2"],
+                    "loss_step": 5,
+                    "min_step": 4,
+                    "min_sep": 4.2,
+                    "point": (20.0, 15.0),
+                },
+                "right_waypoint_candidates": [
+                    {
+                        "name": "RIGHT",
+                        "point": (25.0, 5.0),
+                        "route_progress": 20.0,
+                        "side_offset": -8.0,
+                        "distance_to_conflict": 6.0,
+                    },
+                ],
+                "merge_back_candidates": [
+                    {"name": "MID", "point": (50.0, 0.0), "route_progress": 50.0},
+                ],
+            }
+        ]
+
+        prompt = HLTPPromptBuilder().build_prompt(
+            core,
+            step=5,
+            contexts=contexts,
+            frame_paths=["/tmp/image_005.png", "/tmp/image_004.png"],
+        )
+        text_prompt = HLTPPromptBuilder().build_prompt(core, step=5, contexts=contexts, frame_paths=[])
+
+        self.assertIn("vision-first high-level tactical planner", prompt)
+        self.assertIn("HLTP VISION AIRCRAFT CONTEXT", prompt)
+        self.assertIn("frame_0 is the current snapshot", prompt)
+        self.assertIn("image_005.png", prompt)
+        self.assertIn("Ignore reward", prompt)
+        self.assertIn("origin=ORIG destination=DEST dest=(90.0,10.0)", prompt)
+        self.assertIn("min_step=4", prompt)
+        self.assertIn("RIGHT: pos=(25.0,5.0)", prompt)
+        self.assertIn("MID: pos=(50.0,0.0)", prompt)
+        self.assertNotIn("distance_to_conflict", prompt)
+        self.assertNotIn("right_offset", prompt)
+        self.assertNotIn("route_progress", prompt)
+        self.assertNotIn("placeholder only", prompt)
+        self.assertIn("distance_to_conflict", text_prompt)
+        self.assertIn("right_offset", text_prompt)
 
     def test_render_labels_two_weather_cells(self) -> None:
         core = MultiAgentSectorCore(num_agents=2, num_weather_cells=2)
@@ -1042,6 +1160,20 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(actions, {"A1": 5})
         image_paths = invoke_mock.call_args.kwargs["image_paths"]
         self.assertEqual([Path(path).name for path in image_paths], ["image_003.png", "image_002.png", "image_001.png", "image_000.png"])
+        prompt_text = invoke_mock.call_args.args[0]
+        self.assertIn("VISION-FIRST GLOBAL GUIDANCE TASK", prompt_text)
+        self.assertIn("VISION ACTION CANDIDATES", prompt_text)
+        self.assertIn("choose only from the listed turns", prompt_text)
+        self.assertIn("turn=+5", prompt_text)
+        self.assertIn("Ignore reward", prompt_text)
+        self.assertIn("origin=ORIG destination=DEST", prompt_text)
+        self.assertIn("dest=(90.0,10.0)", prompt_text)
+        self.assertIn("WEATHER MOTION SUMMARY", prompt_text)
+        self.assertIn("moving from near", prompt_text)
+        self.assertIn("toward", prompt_text)
+        self.assertIn("VISION MEMORY ADVISORY", prompt_text)
+        self.assertNotIn("PER-AGENT TURN PREVIEWS", prompt_text)
+        self.assertNotIn("each row predicts consequences", prompt_text)
         self.assertEqual(
             [Path(path).name for path in controller.last_normalized["debug"]["frame_paths"]],
             ["image_003.png", "image_002.png", "image_001.png", "image_000.png"],
@@ -1075,7 +1207,293 @@ class ControllerTests(unittest.TestCase):
 
         self.assertEqual(actions, {"A1": 5})
         self.assertIsNone(invoke_mock.call_args.kwargs["image_paths"])
+        self.assertIn("PER-AGENT TURN PREVIEWS", invoke_mock.call_args.args[0])
         self.assertEqual(controller.last_normalized["debug"]["frame_paths"], [])
+
+    def test_global_controller_vision_invalid_json_still_falls_back(self) -> None:
+        core = FakeCore([_make_state("A1", position=(10.0, 10.0), has_entered_sector=True)])
+        with tempfile.TemporaryDirectory() as tmpdir:
+            frame_dir = Path(tmpdir) / "frames"
+            frame_dir.mkdir()
+            for step in range(4):
+                (frame_dir / f"image_{step:03d}.png").touch()
+            controller = GlobalLangGraphGuidanceController(save_dir=tmpdir, retry_limit=0)
+            with patch.object(controller, "_ranked_threats", return_value=[]), patch.object(
+                controller,
+                "_preview_rows",
+                return_value=[],
+            ), patch.object(controller, "_deterministic_best_turn", return_value=15), patch(
+                "rl_llm_multi.llm.ollama_invoke",
+                return_value={
+                    "llm_status": "ok",
+                    "raw_text": "not-json",
+                    "error": "",
+                    "used_vision": True,
+                },
+            ) as invoke_mock:
+                actions = controller.choose_llm_actions(
+                    core,
+                    step=3,
+                    latest_frame_path=str(frame_dir / "image_003.png"),
+                    use_vision=True,
+                )
+
+        self.assertEqual(actions, {"A1": 15})
+        self.assertIn("VISION-FIRST GLOBAL GUIDANCE TASK", invoke_mock.call_args.args[0])
+        self.assertNotIn("PER-AGENT TURN PREVIEWS", invoke_mock.call_args.args[0])
+        self.assertEqual(controller.last_normalized["debug"]["fallback_agents"], ["A1"])
+
+    def test_vision_guardrail_preserves_safe_listed_merge_back_candidate(self) -> None:
+        controller = GlobalLangGraphGuidanceController.__new__(GlobalLangGraphGuidanceController)
+        core = FakeCore([
+            _make_state(
+                "A1",
+                position=(10.0, 10.0),
+                heading_deg=-30.0,
+                boundary_warning_active=True,
+                has_entered_sector=True,
+            )
+        ])
+        preview_rows = [
+            {
+                "heading_change_deg": 0,
+                "safe_over_preview": True,
+                "pair_loss_step": None,
+                "weather_entry_step": None,
+                "boundary_exit_step": None,
+                "min_sep_to_any": 9.0,
+                "min_weather_clearance": 6.0,
+                "traffic_buffer_ok": True,
+                "weather_buffer_ok": True,
+                "progress_to_destination": 2.0,
+                "cross_track_reduction": 0.0,
+                "end_heading_error_to_dest_deg": 25.0,
+            },
+            {
+                "heading_change_deg": 10,
+                "safe_over_preview": True,
+                "pair_loss_step": None,
+                "weather_entry_step": None,
+                "boundary_exit_step": None,
+                "min_sep_to_any": 8.0,
+                "min_weather_clearance": 5.0,
+                "traffic_buffer_ok": True,
+                "weather_buffer_ok": True,
+                "progress_to_destination": 7.0,
+                "cross_track_reduction": 2.0,
+                "end_heading_error_to_dest_deg": 5.0,
+            },
+        ]
+
+        state = controller._graph_guardrail_actions(
+            {
+                "core": core,
+                "use_vision": True,
+                "actionable": [{"agent_id": "A1", "call_name": "MERGE_BACK"}],
+                "candidate_actions": {
+                    "A1": {
+                        "rationale": "vision intentionally holds for tactical spacing",
+                        "maneuver": {"heading_change_deg": 0},
+                    }
+                },
+                "missing_agent_ids": [],
+                "preview_rows_by_agent": {"A1": preview_rows},
+            }
+        )
+
+        self.assertEqual(state["final_actions"]["A1"]["requested_heading_change_deg"], 0)
+        self.assertEqual(state["final_actions"]["A1"]["heading_change_deg"], 0)
+
+    def test_vision_guardrail_falls_back_for_unlisted_or_hard_unsafe_turn(self) -> None:
+        controller = GlobalLangGraphGuidanceController.__new__(GlobalLangGraphGuidanceController)
+        core = FakeCore([_make_state("A1", position=(10.0, 10.0), has_entered_sector=True)])
+        preview_rows = [
+            {
+                "heading_change_deg": 0,
+                "safe_over_preview": True,
+                "pair_loss_step": None,
+                "weather_entry_step": None,
+                "boundary_exit_step": None,
+                "min_sep_to_any": 9.0,
+                "min_weather_clearance": 6.0,
+                "traffic_buffer_ok": True,
+                "weather_buffer_ok": True,
+                "progress_to_destination": 2.0,
+                "cross_track_reduction": 0.0,
+                "end_heading_error_to_dest_deg": 10.0,
+            },
+            {
+                "heading_change_deg": 10,
+                "safe_over_preview": False,
+                "pair_loss_step": 2,
+                "weather_entry_step": None,
+                "boundary_exit_step": None,
+                "min_sep_to_any": 3.0,
+                "min_weather_clearance": 6.0,
+                "traffic_buffer_ok": False,
+                "weather_buffer_ok": True,
+                "progress_to_destination": 8.0,
+                "cross_track_reduction": 2.0,
+                "end_heading_error_to_dest_deg": 2.0,
+            },
+        ]
+
+        unsafe_state = controller._graph_guardrail_actions(
+            {
+                "core": core,
+                "use_vision": True,
+                "actionable": [{"agent_id": "A1", "call_name": "MERGE_BACK"}],
+                "candidate_actions": {"A1": {"maneuver": {"heading_change_deg": 10}}},
+                "missing_agent_ids": [],
+                "preview_rows_by_agent": {"A1": preview_rows},
+            }
+        )
+        unlisted_state = controller._graph_guardrail_actions(
+            {
+                "core": core,
+                "use_vision": True,
+                "actionable": [{"agent_id": "A1", "call_name": "MERGE_BACK"}],
+                "candidate_actions": {"A1": {"maneuver": {"heading_change_deg": -20}}},
+                "missing_agent_ids": [],
+                "preview_rows_by_agent": {"A1": preview_rows},
+            }
+        )
+
+        self.assertEqual(unsafe_state["final_actions"]["A1"]["requested_heading_change_deg"], 10)
+        self.assertEqual(unsafe_state["final_actions"]["A1"]["heading_change_deg"], 0)
+        self.assertEqual(unlisted_state["final_actions"]["A1"]["requested_heading_change_deg"], -20)
+        self.assertEqual(unlisted_state["final_actions"]["A1"]["heading_change_deg"], 0)
+
+    def test_vision_guardrail_uses_strongest_recovery_when_all_merge_back_candidates_exit_boundary(self) -> None:
+        controller = GlobalLangGraphGuidanceController.__new__(GlobalLangGraphGuidanceController)
+        core = FakeCore([_make_state("A1", position=(10.0, 10.0), has_entered_sector=True)])
+        preview_rows = [
+            {
+                "heading_change_deg": 0,
+                "safe_over_preview": False,
+                "pair_loss_step": None,
+                "weather_entry_step": None,
+                "boundary_exit_step": 1,
+                "min_sep_to_any": 9.0,
+                "min_weather_clearance": 6.0,
+                "traffic_buffer_ok": True,
+                "weather_buffer_ok": True,
+                "progress_to_destination": 2.0,
+                "cross_track_reduction": 0.0,
+                "end_heading_error_to_dest_deg": 25.0,
+            },
+            {
+                "heading_change_deg": 10,
+                "safe_over_preview": False,
+                "pair_loss_step": None,
+                "weather_entry_step": None,
+                "boundary_exit_step": 1,
+                "min_sep_to_any": 8.0,
+                "min_weather_clearance": 5.0,
+                "traffic_buffer_ok": True,
+                "weather_buffer_ok": True,
+                "progress_to_destination": 7.0,
+                "cross_track_reduction": 2.0,
+                "end_heading_error_to_dest_deg": 5.0,
+            },
+        ]
+
+        state = controller._graph_guardrail_actions(
+            {
+                "core": core,
+                "use_vision": True,
+                "actionable": [{"agent_id": "A1", "call_name": "MERGE_BACK"}],
+                "candidate_actions": {"A1": {"maneuver": {"heading_change_deg": 0}}},
+                "missing_agent_ids": [],
+                "preview_rows_by_agent": {"A1": preview_rows},
+            }
+        )
+
+        self.assertEqual(state["final_actions"]["A1"]["requested_heading_change_deg"], 0)
+        self.assertEqual(state["final_actions"]["A1"]["heading_change_deg"], 10)
+
+    def test_hltp_vision_call_receives_recent_frames(self) -> None:
+        core = FakeCore([
+            _make_state("A1", position=(10.0, 10.0), has_entered_sector=True, sector_entry_step=5),
+        ])
+        context = {
+            "agent_id": "A1",
+            "state": {"position": (10.0, 10.0), "heading_deg": 0.0},
+            "route_waypoint_names": ["ORIG", "MERGE"],
+            "conflict_partner_ids": ["A2"],
+            "conflict": {
+                "agent_ids": ["A1", "A2"],
+                "loss_step": 4,
+                "min_sep": 4.5,
+                "point": (20.0, 10.0),
+            },
+            "right_waypoint_candidates": [
+                {
+                    "name": "RIGHT",
+                    "point": (20.0, 5.0),
+                    "route_progress": 20.0,
+                    "side_offset": -5.0,
+                    "distance_to_conflict": 5.0,
+                },
+            ],
+            "merge_back_candidates": [
+                {"name": "MERGE", "point": (40.0, 0.0), "route_progress": 40.0},
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmpdir:
+            frame_paths = []
+            for step in range(4):
+                path = Path(tmpdir) / f"image_{3 - step:03d}.png"
+                path.touch()
+                frame_paths.append(str(path))
+            controller = GlobalLangGraphGuidanceController(save_dir=tmpdir)
+            with patch.object(controller, "_newly_entered_hltp_agent_ids", return_value=["A1"]), patch.object(
+                controller,
+                "_hltp_pair_conflicts",
+                return_value={("A1", "A2"): {"agent_ids": ("A1", "A2"), "loss_step": 4}},
+            ), patch.object(controller, "_hltp_contexts_for_step", return_value={"A1": context}), patch(
+                "rl_llm_multi.llm.ollama_invoke",
+                return_value={
+                    "llm_status": "ok",
+                    "raw_text": json.dumps(
+                        {
+                            "answer": {
+                                "plans": {
+                                    "A1": {
+                                        "first_waypoint_name": "RIGHT",
+                                        "merge_back_waypoint_name": "MERGE",
+                                        "rationale": "visual right deviation",
+                                    }
+                                }
+                            }
+                        }
+                    ),
+                    "error": "",
+                    "used_vision": True,
+                },
+            ) as invoke_mock:
+                state = controller._graph_hltp_on_sector_entry(
+                    {
+                        "core": core,
+                        "step": 5,
+                        "annotations": ["A1: ENTERED SECTOR"],
+                        "frame_paths": frame_paths,
+                        "use_vision": True,
+                    }
+                )
+
+            normalized = json.loads((Path(tmpdir) / "t005_hltp.normalized.json").read_text())
+
+        self.assertIn("A1", state["hltp_plans_created"])
+        self.assertEqual([Path(path).name for path in invoke_mock.call_args.kwargs["image_paths"]], ["image_003.png", "image_002.png", "image_001.png", "image_000.png"])
+        self.assertIn("vision-first high-level tactical planner", invoke_mock.call_args.args[0])
+        self.assertNotIn("distance_to_conflict", invoke_mock.call_args.args[0])
+        self.assertNotIn("right_offset", invoke_mock.call_args.args[0])
+        self.assertTrue(normalized["debug"]["used_vision"])
+        self.assertEqual(
+            [Path(path).name for path in normalized["debug"]["frame_paths"]],
+            ["image_003.png", "image_002.png", "image_001.png", "image_000.png"],
+        )
 
     def test_global_controller_smoke_runs_with_two_and_four_agents(self) -> None:
         for num_agents in (2, 4):

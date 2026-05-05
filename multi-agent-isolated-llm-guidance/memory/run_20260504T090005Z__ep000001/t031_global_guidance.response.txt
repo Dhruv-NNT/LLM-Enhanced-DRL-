@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is approaching the boundary and needs to recover toward WP059 while avoiding weather and traffic. The current heading is off-route and needs adjustment.",
+    "actions": {
+      "A4": {
+        "rationale": "The aircraft is drifting toward the boundary and needs a course correction to recover toward WP059. A +25-degree turn provides a good balance between progress toward the destination and avoiding the boundary, while also considering the current weather conditions. The visual trend shows a need for a more significant course correction than a smaller turn would provide.",
+        "maneuver": { "heading_change_deg": 25 }
+      }
+    }
+  }
+}
+```

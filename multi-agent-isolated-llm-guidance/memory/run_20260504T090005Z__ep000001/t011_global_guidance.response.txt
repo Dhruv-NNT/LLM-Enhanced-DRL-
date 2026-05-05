@@ -1,0 +1,25 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A3 is approaching the boundary and needs to recover towards the destination while avoiding the green ring. The recent memory shows a trend of MERGE_BACK with little recovery.",
+    "actions": {
+      "A1": {
+        "rationale": "A1 is on a stable heading and no change is needed.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A2": {
+        "rationale": "A2 is on a stable heading and no change is needed.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A3": {
+        "rationale": "A3 is approaching the boundary and needs to recover towards the destination while avoiding the green ring. A +10 degree turn provides a good balance between progress towards the destination and avoiding the green ring, while also maintaining safe separation from other traffic.",
+        "maneuver": { "heading_change_deg": 10 }
+      },
+      "A4": {
+        "rationale": "A4 is on a stable heading and no change is needed.",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+```

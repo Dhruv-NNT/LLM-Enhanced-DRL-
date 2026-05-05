@@ -1,0 +1,25 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is drifting toward the boundary and needs a recovery turn. Traffic and weather considerations are paramount.",
+    "actions": {
+      "A1": {
+        "rationale": "No immediate action required; maintaining current heading.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A2": {
+        "rationale": "No immediate action required; maintaining current heading.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A3": {
+        "rationale": "No immediate action required; maintaining current heading.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A4": {
+        "rationale": "A4 is drifting toward the boundary. A slight left turn is needed to recover visually and maintain separation from A2 and avoid the green ring.",
+        "maneuver": { "heading_change_deg": -10 }
+      }
+    }
+  }
+}
+```

@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A3 is drifting toward the boundary and needs to recover. A4 is also drifting toward the boundary and needs to recover.",
+    "actions": {
+      "A3": {
+        "rationale": "A3 is drifting toward the boundary. A turn of -15 degrees will reduce the cross-track error and avoid the boundary while maintaining a reasonable progress toward the destination.",
+        "maneuver": { "heading_change_deg": -15 }
+      },
+      "A4": {
+        "rationale": "A4 is drifting toward the boundary. A turn of +5 degrees will reduce the cross-track error and avoid the boundary while maintaining a reasonable progress toward the destination.",
+        "maneuver": { "heading_change_deg": 5 }
+      }
+    }
+  }
+}
+```

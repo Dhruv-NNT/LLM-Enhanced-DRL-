@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is on a MERGE_BACK heading towards MUMSO, but needs to recover visually while maintaining separation from A2 and avoiding the green ring. The aircraft is currently drifting away from its destination.",
+    "actions": {
+      "A4": {
+        "rationale": "A4 is drifting away from its destination and needs to recover visually. A slight right turn will help recover towards the destination while maintaining separation from A2 and avoiding the green ring.",
+        "maneuver": { "heading_change_deg": -5 }
+      }
+    }
+  }
+}
+```

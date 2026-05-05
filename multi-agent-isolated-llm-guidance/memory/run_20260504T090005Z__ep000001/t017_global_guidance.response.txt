@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A3 is drifting toward the boundary and needs to recover toward the destination while avoiding traffic and weather. The current heading is significantly off the desired track.",
+    "actions": {
+      "A3": {
+        "rationale": "The aircraft is drifting toward the boundary and needs to recover toward the destination. A turn of +10 degrees will provide a visual clearance from the conflict zone and avoid the green ring. It also offers a smooth return to the original route.",
+        "maneuver": { "heading_change_deg": 10 }
+      }
+    }
+  }
+}
+```

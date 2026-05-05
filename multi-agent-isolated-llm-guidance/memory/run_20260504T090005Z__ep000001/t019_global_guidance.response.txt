@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A3 is drifting right and needs to recover toward BOBOB while avoiding the green ring. A4 is drifting left and needs to recover toward WP059 while avoiding the green ring.",
+    "actions": {
+      "A3": {
+        "rationale": "The aircraft is drifting right and needs to recover toward BOBOB. A turn of +25 degrees will provide a good visual recovery while avoiding the green ring and maintaining separation from traffic.",
+        "maneuver": { "heading_change_deg": 25 }
+      },
+      "A4": {
+        "rationale": "The aircraft is drifting left and needs to recover toward WP059. A turn of -5 degrees will provide a good visual recovery while avoiding the green ring and maintaining separation from traffic.",
+        "maneuver": { "heading_change_deg": -5 }
+      }
+    }
+  }
+}
+```

@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Both A3 and A4 are on MERGE_BACK, needing to recover toward their destinations while avoiding traffic and weather. A3 is drifting towards the boundary, while A4 is drifting away from its destination.",
+    "actions": {
+      "A3": {
+        "rationale": "A3 is drifting towards the boundary. A slight right turn will help recover toward BOBOB while maintaining separation from A4 and avoiding the green ring.",
+        "maneuver": { "heading_change_deg": -5 }
+      },
+      "A4": {
+        "rationale": "A4 is drifting away from its destination. A slight left turn will help recover toward WP059 while maintaining separation from A3 and avoiding the green ring.",
+        "maneuver": { "heading_change_deg": 5 }
+      }
+    }
+  }
+}
+```

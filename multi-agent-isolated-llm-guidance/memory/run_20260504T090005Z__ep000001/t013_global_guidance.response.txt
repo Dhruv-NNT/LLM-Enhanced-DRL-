@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is drifting right of the desired route and approaching the boundary. A slight turn to the left is needed to recover towards the destination while maintaining safe separation from other traffic and avoiding weather.",
+    "actions": {
+      "A4": {
+        "rationale": "The aircraft is drifting right of the desired route and approaching the boundary. A turn of +25 degrees will help recover towards the destination while maintaining safe separation from other traffic and avoiding weather. The visual evidence shows a need to correct the drift and the +25 degree turn provides a good balance between recovery and separation.",
+        "maneuver": { "heading_change_deg": 25 }
+      }
+    }
+  }
+}
+```

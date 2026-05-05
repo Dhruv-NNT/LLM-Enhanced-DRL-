@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is drifting towards the boundary and needs a visual recovery. A2 is on a similar heading and poses a potential conflict.",
+    "actions": {
+      "A4": {
+        "rationale": "A4 is drifting towards the boundary. A slight left turn will visually recover the aircraft while maintaining separation from A2 and avoiding the boundary.",
+        "maneuver": { "heading_change_deg": -10 }
+      }
+    }
+  }
+}
+```

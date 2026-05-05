@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 and A3 are both on MERGE_BACK, with A2 needing to avoid the boundary and A3 needing to avoid weather. A4 is also on MERGE_BACK.",
+    "actions": {
+      "A2": {
+        "rationale": "A2 is drifting toward the boundary. A slight right turn will recover the aircraft toward its destination while maintaining separation from A4.",
+        "maneuver": { "heading_change_deg": -10 }
+      },
+      "A3": {
+        "rationale": "A3 is drifting toward developing weather. A slight right turn will recover the aircraft toward its destination while avoiding the weather.",
+        "maneuver": { "heading_change_deg": -5 }
+      }
+    }
+  }
+}
+```

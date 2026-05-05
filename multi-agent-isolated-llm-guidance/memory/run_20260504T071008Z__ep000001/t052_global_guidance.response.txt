@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is drifting towards the boundary and needs a slight correction to recover towards destination while maintaining separation from A2 and avoiding weather.",
+    "actions": {
+      "A4": {
+        "rationale": "A4 is drifting towards the boundary. A slight right turn will recover the aircraft towards destination while maintaining separation from A2 and avoiding the developing weather.",
+        "maneuver": { "heading_change_deg": -5 }
+      }
+    }
+  }
+}
+```

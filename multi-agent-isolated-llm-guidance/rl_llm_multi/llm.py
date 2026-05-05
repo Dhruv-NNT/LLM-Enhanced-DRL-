@@ -316,7 +316,7 @@ class MultiAgentPromptBuilder:
 
 
 class HLTPPromptBuilder:
-    """Build text-only high-level tactical planning prompts."""
+    """Build high-level tactical planning prompts."""
 
     def build_prompt(
         self,
@@ -327,10 +327,10 @@ class HLTPPromptBuilder:
         frame_paths: Sequence[str],
     ) -> str:
         sections = [
-            self._instructions_text(step, contexts),
-            self._agent_context_text(contexts),
+            self._vision_instructions_text(step, contexts) if frame_paths else self._instructions_text(step, contexts),
+            self._vision_agent_context_text(contexts) if frame_paths else self._agent_context_text(contexts),
             self._weather_text(core),
-            self._vision_placeholder_text(frame_paths),
+            self._vision_context_text(frame_paths),
         ]
         return "\n\n".join(section for section in sections if section)
 
@@ -345,6 +345,30 @@ class HLTPPromptBuilder:
             "- first_waypoint_name must be a named waypoint on the right side of the aircraft's original flight plan.\n"
             "- merge_back_waypoint_name must be a later named waypoint on the aircraft's original route.\n"
             "- Keep weather clear of the route with buffer; avoid the green ring when possible and never plan through yellow/red/magenta.\n"
+            f"{WEATHER_SEVERITY_LEGEND}\n"
+            "- This is advisory high-level context only; low-level safety guidance may override it.\n"
+            "OUTPUT RULES:\n"
+            "- Return EXACTLY ONE JSON object and no extra text.\n"
+            "- Use only waypoint names shown in the candidate lists.\n"
+            "- The placeholder strings below are not waypoint names; replace them with candidate names for each listed aircraft.\n"
+            "- The plans object must include every aircraft shown in this JSON shape.\n"
+            "STRICT JSON SHAPE:\n"
+            f"{json_shape}"
+        )
+
+    def _vision_instructions_text(self, step: int, contexts: Sequence[Dict[str, Any]]) -> str:
+        json_shape = self._strict_json_shape_text(contexts)
+        return (
+            "ROLE: You are a vision-first high-level tactical planner (HLTP) for aircraft that just entered the sector.\n"
+            "VISION HLTP TASK:\n"
+            f"- Inspect the four snapshots and concise text signals from current step {int(step)} through step 60.\n"
+            "- Judge origin-to-destination geometry, route direction, aircraft closure, weather rings, and likely safe right-side deviations from the images.\n"
+            "- For each listed aircraft, choose exactly two waypoint names that form a visual high-level plan.\n"
+            "- first_waypoint_name must be one of that aircraft's listed right-side first waypoint candidates.\n"
+            "- merge_back_waypoint_name must be one of that aircraft's listed original-route merge-back candidates.\n"
+            "- Prefer plans that visibly move away from conflict/weather first, then rejoin the original route toward destination.\n"
+            "- Ignore reward, total reward, failure/success, and scoreboard/status overlay text in the images.\n"
+            "- Keep weather clear with buffer: avoid the green ring when possible and never plan through yellow/red/magenta.\n"
             f"{WEATHER_SEVERITY_LEGEND}\n"
             "- This is advisory high-level context only; low-level safety guidance may override it.\n"
             "OUTPUT RULES:\n"
@@ -426,6 +450,51 @@ class HLTPPromptBuilder:
                 )
         return "\n".join(lines)
 
+    def _vision_agent_context_text(self, contexts: Sequence[Dict[str, Any]]) -> str:
+        lines = ["HLTP VISION AIRCRAFT CONTEXT:"]
+        if not contexts:
+            lines.append("- none")
+            return "\n".join(lines)
+        for context in contexts:
+            agent_id = str(context["agent_id"])
+            state = context["state"]
+            conflict = context["conflict"]
+            min_step = conflict.get("min_step", "n/a")
+            route_names = list(context.get("route_waypoint_names", []))
+            origin_name = str(context.get("origin_name") or (route_names[0] if route_names else "n/a"))
+            destination_name = str(context.get("destination_name") or (route_names[-1] if route_names else "n/a"))
+            destination = context.get("destination", (None, None))
+            destination_text = (
+                f"dest=({destination[0]:.1f},{destination[1]:.1f})"
+                if isinstance(destination, (list, tuple))
+                and len(destination) >= 2
+                and destination[0] is not None
+                and destination[1] is not None
+                else "dest=(n/a,n/a)"
+            )
+            lines.append(
+                (
+                    f"- {agent_id}: pos=({state['position'][0]:.1f},{state['position'][1]:.1f}) "
+                    f"heading={state['heading_deg']:+.1f} origin={origin_name} "
+                    f"destination={destination_name} {destination_text} route={'->'.join(route_names)}"
+                )
+            )
+            lines.append(
+                (
+                    f"  conflict_partners={','.join(context['conflict_partner_ids'])} "
+                    f"loss_step={conflict['loss_step']} min_step={min_step} "
+                    f"min_sep={conflict['min_sep']:.2f} "
+                    f"conflict_point=({conflict['point'][0]:.1f},{conflict['point'][1]:.1f})"
+                )
+            )
+            lines.append("  right-side first waypoint candidates (names and positions only):")
+            for row in context["right_waypoint_candidates"]:
+                lines.append(f"    - {row['name']}: pos=({row['point'][0]:.1f},{row['point'][1]:.1f})")
+            lines.append("  original-route merge-back candidates (names and positions only):")
+            for row in context["merge_back_candidates"]:
+                lines.append(f"    - {row['name']}: pos=({row['point'][0]:.1f},{row['point'][1]:.1f})")
+        return "\n".join(lines)
+
     def _weather_text(self, core: "MultiAgentSectorCore") -> str:
         weather = core.weather_dict()
         if weather is None:
@@ -451,12 +520,14 @@ class HLTPPromptBuilder:
             )
         return "\n".join(lines)
 
-    def _vision_placeholder_text(self, frame_paths: Sequence[str]) -> str:
+    def _vision_context_text(self, frame_paths: Sequence[str]) -> str:
         lines = ["VISION HLTP CONTEXT:"]
         if not frame_paths:
             lines.append("- none")
         else:
-            lines.append("- placeholder only; HLTP is currently text-only and does not inspect frames.")
+            lines.append("- frame_0 is the current snapshot; later frame indexes are older snapshots.")
+            lines.append("- Use motion across frames to infer whether conflicts are closing, opening, or drifting toward weather/boundary.")
+            lines.append("- Use candidate waypoint text to name the plan, but use the images to judge which candidate visually clears conflict and weather.")
             for idx, frame_path in enumerate(frame_paths):
                 lines.append(f"- frame_{idx}: {os.path.basename(frame_path)}")
         return "\n".join(lines)
@@ -1354,6 +1425,34 @@ class GlobalPromptBuilder:
         ]
         return "\n\n".join(section for section in sections if section)
 
+    def build_vision_prompt(
+        self,
+        core: "MultiAgentSectorCore",
+        *,
+        step: int,
+        actionable: List[Dict[str, Any]],
+        entered_agent_ids: List[str],
+        hltp_plans: Dict[str, Dict[str, Any]],
+        threat_rows_by_agent: Dict[str, List[Dict[str, Any]]],
+        preview_rows_by_agent: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+        recent_decisions: Sequence[Dict[str, Any]],
+        frame_paths: Sequence[str],
+    ) -> str:
+        preview_rows_by_agent = {} if preview_rows_by_agent is None else preview_rows_by_agent
+        sections = [
+            self._vision_instructions_text(actionable),
+            self._merge_back_vision_priority_text(actionable),
+            self._vision_frame_context_text(frame_paths),
+            self._vision_eligible_agents_text(core, actionable),
+            self._vision_entered_context_text(core, entered_agent_ids),
+            self._hltp_plans_text(hltp_plans),
+            self._vision_weather_text(core),
+            self._threats_text(threat_rows_by_agent),
+            self._vision_preview_text(preview_rows_by_agent),
+            self._vision_recent_memory_text(recent_decisions),
+        ]
+        return "\n\n".join(section for section in sections if section)
+
     def _instructions_text(self, actionable: List[Dict[str, Any]]) -> str:
         bins_text = ", ".join(str(value) for value in ACTION_BINS)
         agent_ids = ", ".join(str(item["agent_id"]) for item in actionable) or "none"
@@ -1402,6 +1501,51 @@ class GlobalPromptBuilder:
             "}"
         )
 
+    def _vision_instructions_text(self, actionable: List[Dict[str, Any]]) -> str:
+        bins_text = ", ".join(str(value) for value in ACTION_BINS)
+        agent_ids = ", ".join(str(item["agent_id"]) for item in actionable) or "none"
+        return (
+            "ROLE: You are a cautious vision-first ATCO helper for the entered aircraft listed below.\n"
+            "VISION-FIRST GLOBAL GUIDANCE TASK:\n"
+            f"- Return one maneuver for every GUIDANCE-ELIGIBLE agent: {agent_ids}.\n"
+            "- Inspect the four snapshots first, then use the concise text signals to anchor aircraft IDs, destinations, threats, weather, and memory.\n"
+            "- Use vision to choose tactical intent first: avoid traffic, avoid weather, recover to route, escape boundary, or hold.\n"
+            "- Then choose among listed VISION ACTION CANDIDATES to turn that intent into an executable maneuver.\n"
+            "- VISION ACTION CANDIDATES are guardrails, not orders; use visual common sense to choose among viable listed candidates.\n"
+            "- Do not return actions for aircraft that have not entered the sector.\n"
+            "- The controller already assigned each aircraft's phase; do not classify, rename, or output phases.\n"
+            f"- SAFE_R = {self.safe_r:.1f} units; prefer traffic separation >= {TRAFFIC_CAUTION_R:.1f} units.\n"
+            "- Ignore reward, total reward, failure/success, and scoreboard/status overlay text in the images.\n"
+            "- Avoid weather with buffer: stay outside the green ring when possible and never enter yellow/red/magenta.\n"
+            f"{WEATHER_SEVERITY_LEGEND}\n"
+            "VISUAL DECISION RULES:\n"
+            "- Infer current movement from the four frames, then compare current heading with destination direction.\n"
+            "- Choose one listed candidate turn that best matches the visual tactical intent without cutting through traffic or weather.\n"
+            "- Resolve imminent traffic closure before destination recovery or HLTP route preference.\n"
+            "- If an aircraft is drifting toward boundary or away from destination, choose the turn that visually recovers while keeping traffic/weather clear.\n"
+            "- During MERGE_BACK, recover toward destination only when the visual path does not cut through traffic or weather.\n"
+            "- Avoid repeating a recent ineffective turn pattern unless the current frames show it is now helping.\n"
+            "OUTPUT RULES:\n"
+            "- Return EXACTLY ONE JSON object and no extra text.\n"
+            "- Under actions, output only the listed aircraft IDs with rationale and maneuver; do not output call_name.\n"
+            f"- heading_change_deg must be one of {{{bins_text}}}.\n"
+            "- heading_change_deg must also match one displayed VISION ACTION CANDIDATES turn for that aircraft.\n"
+            "- Positive is left, negative is right, 0 means hold current heading.\n"
+            "- In the rationale, cite both visual evidence and the selected candidate row's key safety/recovery consequence.\n"
+            "STRICT JSON SHAPE:\n"
+            "{\n"
+            "  \"answer\": {\n"
+            "    \"scenario_summary\": \"<brief>\",\n"
+            "    \"actions\": {\n"
+            "      \"A1\": {\n"
+            "        \"rationale\": \"<brief>\",\n"
+            "        \"maneuver\": { \"heading_change_deg\": 0 }\n"
+            "      }\n"
+            "    }\n"
+            "  }\n"
+            "}"
+        )
+
     def _merge_back_priority_text(self, actionable: List[Dict[str, Any]]) -> str:
         if not any(str(item.get("call_name")) == "MERGE_BACK" for item in actionable):
             return ""
@@ -1420,6 +1564,19 @@ class GlobalPromptBuilder:
             "- Prefer reducing cross_track_abs.\n"
             "- Do not choose 0 just because it is safe if a nonzero safe row gives materially better progress, cross-track recovery, or heading alignment.\n"
             "- Use 0 only if it remains aligned and still makes good destination progress."
+        )
+
+    def _merge_back_vision_priority_text(self, actionable: List[Dict[str, Any]]) -> str:
+        if not any(str(item.get("call_name")) == "MERGE_BACK" for item in actionable):
+            return ""
+        return (
+            "MERGE_BACK VISUAL PRIORITY:\n"
+            "- Use the frames to judge whether the aircraft is outside/off-route, then choose a listed candidate that points back toward destination.\n"
+            "- Do not force merge-back through another aircraft's path or through weather rings.\n"
+            "- If recent memory shows repeated MERGE_BACK with little recovery, use vision to choose a stronger listed recovery candidate when it remains traffic/weather clear.\n"
+            "- You may choose any listed MERGE_BACK candidate, not necessarily the first, when the image shows a better tactical reason.\n"
+            "- If every row still has boundary_exit, the aircraft is already outside or about to leave; choose the listed row with strongest destination progress/cross-track recovery.\n"
+            "- Use 0 only when the aircraft is already visually aligned and the 0-row is a strong listed recovery choice."
         )
 
     def _agent_state_line(self, core: "MultiAgentSectorCore", agent_id: str) -> str:
@@ -1441,6 +1598,38 @@ class GlobalPromptBuilder:
             f"safe_streak={state.safe_streak}"
         )
 
+    def _route_context_for_state(self, state: Any) -> Tuple[str, str, str]:
+        route = getattr(state, "route", None)
+        waypoint_names = list(getattr(route, "waypoint_names", ()) or ())
+        origin_name = str(getattr(route, "origin", "") or (waypoint_names[0] if waypoint_names else "n/a"))
+        destination_name = str(
+            getattr(route, "destination", "") or (waypoint_names[-1] if waypoint_names else "n/a")
+        )
+        if waypoint_names:
+            route_text = "->".join(str(name) for name in waypoint_names)
+        else:
+            route_text = f"{origin_name}->{destination_name}" if origin_name != "n/a" or destination_name != "n/a" else "n/a"
+        return origin_name, destination_name, route_text
+
+    def _vision_agent_state_line(self, core: "MultiAgentSectorCore", agent_id: str) -> str:
+        state = core.get_agent(agent_id)
+        signed_xtrk, _, _ = line_signed_cross_track(state.route.linestring, state.position)
+        boundary_distance = core.boundary_distance(state)
+        origin_name, destination_name, route_text = self._route_context_for_state(state)
+        return (
+            f"{agent_id}: origin={origin_name} destination={destination_name} "
+            f"route={route_text} pos=({state.position[0]:.1f},{state.position[1]:.1f}) "
+            f"heading={math.degrees(state.heading_rad):+.1f} "
+            f"dest=({state.destination[0]:.1f},{state.destination[1]:.1f}) "
+            f"dist_dest={core.distance_to_destination(state):.2f} "
+            f"heading_err={_heading_error_to_destination(state):+.1f} "
+            f"xtrack={signed_xtrk:+.2f} "
+            f"boundary_dist={'n/a' if boundary_distance is None else f'{boundary_distance:.2f}'} "
+            f"warnings(pair_loss={state.predicted_pair_loss_step}, "
+            f"weather_entry={state.predicted_weather_entry_step}, "
+            f"boundary_exit={state.predicted_boundary_exit_step})"
+        )
+
     def _eligible_agents_text(
         self,
         core: "MultiAgentSectorCore",
@@ -1458,6 +1647,23 @@ class GlobalPromptBuilder:
             )
         return "\n".join(lines)
 
+    def _vision_eligible_agents_text(
+        self,
+        core: "MultiAgentSectorCore",
+        actionable: List[Dict[str, Any]],
+    ) -> str:
+        lines = ["GUIDANCE-ELIGIBLE DIRECTION CONTEXT:"]
+        if not actionable:
+            lines.append("- none")
+            return "\n".join(lines)
+        for item in actionable:
+            agent_id = str(item["agent_id"])
+            lines.append(
+                f"- {self._vision_agent_state_line(core, agent_id)} "
+                f"call_name={item['call_name']} call_reason={item.get('call_reason', '')}"
+            )
+        return "\n".join(lines)
+
     def _entered_context_text(self, core: "MultiAgentSectorCore", entered_agent_ids: List[str]) -> str:
         lines = ["ENTERED TRAFFIC CONTEXT:"]
         if not entered_agent_ids:
@@ -1465,6 +1671,15 @@ class GlobalPromptBuilder:
             return "\n".join(lines)
         for agent_id in entered_agent_ids:
             lines.append(f"- {self._agent_state_line(core, agent_id)}")
+        return "\n".join(lines)
+
+    def _vision_entered_context_text(self, core: "MultiAgentSectorCore", entered_agent_ids: List[str]) -> str:
+        lines = ["ENTERED TRAFFIC DIRECTION CONTEXT:"]
+        if not entered_agent_ids:
+            lines.append("- none")
+            return "\n".join(lines)
+        for agent_id in entered_agent_ids:
+            lines.append(f"- {self._vision_agent_state_line(core, agent_id)}")
         return "\n".join(lines)
 
     def _hltp_plans_text(self, hltp_plans: Dict[str, Dict[str, Any]]) -> str:
@@ -1511,6 +1726,62 @@ class GlobalPromptBuilder:
                     f"growth_nm_per_step={float(cell.get('major_growth_nm_per_step', 0.0)):+.2f} "
                     f"growth_stopped={int(bool(cell.get('growth_stopped', False)))} "
                     f"movement_stopped={int(bool(cell.get('movement_stopped', False)))}"
+                )
+            )
+        return "\n".join(lines)
+
+    def _nearest_waypoint_name(self, point: Tuple[float, float]) -> str:
+        try:
+            waypoint_map = load_waypoint_map()
+        except Exception:
+            return "unknown"
+        if not waypoint_map:
+            return "unknown"
+        px, py = float(point[0]), float(point[1])
+        return min(
+            waypoint_map,
+            key=lambda name: math.hypot(float(waypoint_map[name][0]) - px, float(waypoint_map[name][1]) - py),
+        )
+
+    def _vision_weather_text(self, core: "MultiAgentSectorCore") -> str:
+        weather = core.weather_dict()
+        if weather is None:
+            return "WEATHER MOTION SUMMARY:\n- none"
+        cells = weather.get("cells") if isinstance(weather.get("cells"), list) else [weather]
+        lines = [
+            "WEATHER MOTION SUMMARY:",
+            "- Ignore reward/status overlays; use solid rings as current weather and dashed green outlines as future movement.",
+            "- Green is caution; yellow/red/magenta are no-go regions.",
+            f"- required_clearance_buffer={core.weather_clearance_buffer_units:.2f} simulator units",
+        ]
+        for cell in cells:
+            center = tuple(float(value) for value in cell.get("center", (0.0, 0.0)))
+            heading_rad = float(cell.get("motion_heading_rad", 0.0))
+            speed = float(cell.get("speed_units_per_step", 0.0))
+            future = (
+                center[0] + speed * math.cos(heading_rad) * 4.0,
+                center[1] + speed * math.sin(heading_rad) * 4.0,
+            )
+            now_name = self._nearest_waypoint_name(center)
+            future_name = self._nearest_waypoint_name(future)
+            growth = float(cell.get("major_growth_nm_per_step", 0.0))
+            if bool(cell.get("growth_stopped", False)) or abs(growth) < 1e-6:
+                growth_text = "stable size"
+            elif growth > 0.0:
+                growth_text = f"growing {growth:+.2f}nm/step"
+            else:
+                growth_text = f"shrinking {growth:+.2f}nm/step"
+            if bool(cell.get("movement_stopped", False)) or abs(speed) < 1e-6:
+                motion_text = f"stationary near {now_name}"
+            else:
+                motion_text = (
+                    f"moving from near {now_name} toward {future_name} "
+                    f"heading={math.degrees(heading_rad):+.1f} speed={speed:.2f}/step"
+                )
+            lines.append(
+                (
+                    f"- {cell.get('cell_id', 'W?')}: center=({center[0]:.1f},{center[1]:.1f}) "
+                    f"{motion_text}; {growth_text}; major_nm={float(cell.get('major_radius_nm', 0.0)):.2f}"
                 )
             )
         return "\n".join(lines)
@@ -1568,6 +1839,43 @@ class GlobalPromptBuilder:
                 )
         return "\n".join(lines)
 
+    def _vision_preview_text(self, preview_rows_by_agent: Dict[str, List[Dict[str, Any]]]) -> str:
+        lines = [
+            "VISION ACTION CANDIDATES:",
+            "- Rows are simulator-tested executable turns for the current phase; choose only from the listed turns for that aircraft.",
+            "- Rows are guidance, not orders; use vision to choose tactical intent and then choose among viable listed candidates.",
+            "- Rows are sorted best-to-worst by the controller's safety/recovery heuristic, but visual common sense may justify another viable listed row.",
+            "- safe=1 means no predicted traffic loss, weather entry, or boundary exit and the traffic/weather buffers remain satisfied.",
+            "- pair_loss/weather_entry/boundary_exit show first predicted bad step; None means not predicted.",
+            "- Do not choose a row with pair_loss or weather_entry if another listed row avoids that problem.",
+            "- For MERGE_BACK, among acceptable rows, use the image to choose the candidate with the best tactical recovery.",
+            "- If all MERGE_BACK rows have boundary_exit, choose the strongest recovery row; do not hold at 0 unless 0 is actually best.",
+        ]
+        if not preview_rows_by_agent:
+            lines.append("- none")
+            return "\n".join(lines)
+        for agent_id, rows in sorted(preview_rows_by_agent.items()):
+            if not rows:
+                lines.append(f"- {agent_id}: none")
+                continue
+            displayed_turns = ", ".join(f"{int(row['heading_change_deg']):+d}" for row in rows[:PREVIEW_TOP_K])
+            lines.append(f"- {agent_id}: displayed_turns=[{displayed_turns}]")
+            for row in rows[:PREVIEW_TOP_K]:
+                lines.append(
+                    "  "
+                    f"turn={int(row['heading_change_deg']):+d} | "
+                    f"safe={int(bool(row['safe_over_preview']))} | "
+                    f"pair_loss={row['pair_loss_step']} | "
+                    f"weather_entry={row['weather_entry_step']} | "
+                    f"boundary_exit={row['boundary_exit_step']} | "
+                    f"min_sep={float(row['min_sep_to_any']):.2f} | "
+                    f"weather_clearance={float(row['min_weather_clearance']):.2f} | "
+                    f"progress_to_destination={float(row.get('progress_to_destination', 0.0)):.2f} | "
+                    f"cross_track_reduction={float(row.get('cross_track_reduction', 0.0)):.2f} | "
+                    f"end_heading_error={float(row['end_heading_error_to_dest_deg']):.1f}"
+                )
+        return "\n".join(lines)
+
     def _recent_memory_text(self, recent_decisions: Sequence[Dict[str, Any]]) -> str:
         lines = ["RECENT GLOBAL DECISION MEMORY:"]
         if not recent_decisions:
@@ -1584,6 +1892,17 @@ class GlobalPromptBuilder:
             lines.append(f"- step={item.get('step')}: " + "; ".join(fragments))
         return "\n".join(lines)
 
+    def _vision_recent_memory_text(self, recent_decisions: Sequence[Dict[str, Any]]) -> str:
+        lines = [self._recent_memory_text(recent_decisions)]
+        lines.extend(
+            [
+                "VISION MEMORY ADVISORY:",
+                "- Compare these recent turns against the four frames; repeat a turn only if the visual trend shows improved separation or recovery.",
+                "- Watch for oscillation, repeated holds near boundary, or repeated MERGE_BACK that still leaves the aircraft off-route.",
+            ]
+        )
+        return "\n".join(lines)
+
     def _frame_context_text(self, frame_paths: Sequence[str]) -> str:
         lines = ["VISION FRAME CONTEXT:"]
         if not frame_paths:
@@ -1594,6 +1913,24 @@ class GlobalPromptBuilder:
                 "- Solid concentric weather rings show each cell's current position.",
                 "- Faint dashed green outer ellipses show predicted future weather-cell positions; motion is from the solid cell toward the dashed outlines.",
                 "- Keep aircraft clear of both the current solid cell and its dashed future outlines with margin.",
+            ]
+        )
+        for idx, frame_path in enumerate(frame_paths):
+            lines.append(f"- frame_{idx}: {os.path.basename(frame_path)}")
+        return "\n".join(lines)
+
+    def _vision_frame_context_text(self, frame_paths: Sequence[str]) -> str:
+        lines = ["VISION FRAME CONTEXT:"]
+        if not frame_paths:
+            lines.append("- none")
+            return "\n".join(lines)
+        lines.extend(
+            [
+                "- frame_0 is the current snapshot; frame_1, frame_2, and frame_3 are progressively older.",
+                "- Use aircraft labels, route/destination geometry, and frame-to-frame motion to infer where each aircraft is going next.",
+                "- Ignore reward, total reward, failure/success, and any scoreboard/status overlay text.",
+                "- Solid concentric weather rings show current cells; faint dashed green outer ellipses show predicted future weather positions.",
+                "- Keep aircraft clear of current weather and dashed future outlines with margin.",
             ]
         )
         for idx, frame_path in enumerate(frame_paths):
@@ -1858,17 +2195,22 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             for other_id in conflict["agent_ids"]
             if str(other_id) != str(agent_id)
         )
+        route_names = list(state.route.waypoint_names)
         return {
             "agent_id": str(agent_id),
             "state": {
                 "position": tuple(float(value) for value in state.position),
                 "heading_deg": float(math.degrees(state.heading_rad)),
             },
-            "route_waypoint_names": list(state.route.waypoint_names),
+            "origin_name": str(getattr(state.route, "origin", route_names[0])),
+            "destination_name": str(getattr(state.route, "destination", route_names[-1])),
+            "destination": tuple(float(value) for value in state.destination),
+            "route_waypoint_names": route_names,
             "conflict_partner_ids": list(partner_ids),
             "conflict": {
                 "agent_ids": list(conflict["agent_ids"]),
                 "loss_step": conflict.get("loss_step"),
+                "min_step": conflict.get("min_step"),
                 "min_sep": float(conflict.get("min_sep", 999.0)),
                 "point": tuple(float(value) for value in conflict_point),
             },
@@ -2082,7 +2424,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
                 "call_name": "HLTP",
                 "llm_status": debug.get("llm_status"),
                 "parse_status": debug.get("parse_status"),
-                "used_vision": False,
+                "used_vision": debug.get("used_vision"),
             }
             handle.write(json.dumps(row) + "\n")
 
@@ -2126,7 +2468,8 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             contexts=list(contexts_by_agent.values()),
             frame_paths=list(state.get("frame_paths", [])),
         )
-        llm_result = ollama_invoke(prompt_text, image_paths=None)
+        hltp_image_paths = list(state.get("frame_paths", [])) if state.get("use_vision") else None
+        llm_result = ollama_invoke(prompt_text, image_paths=hltp_image_paths)
         expected_agent_ids = sorted(contexts_by_agent)
         parsed_payload: Dict[str, Any] = {}
         candidate_plans: Dict[str, Dict[str, Any]] = {}
@@ -2197,8 +2540,8 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             "parse_status": parse_status,
             "fallback_agents": fallback_agents,
             "eligible_agent_ids": expected_agent_ids,
-            "used_vision": False,
-            "frame_paths": [],
+            "used_vision": bool(state.get("use_vision", False) and state.get("frame_paths")),
+            "frame_paths": list(state.get("frame_paths", [])) if state.get("use_vision") else [],
             "model": OLLAMA_MODEL,
             "weather": core.weather_dict(),
         }
@@ -2371,22 +2714,36 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
                 call_name,
                 fixed_actions=None,
             )
-        prompt_text = self.global_builder.build_prompt(
-            core,
-            step=int(state["step"]),
-            actionable=actionable,
-            entered_agent_ids=list(state.get("entered_agent_ids", [])),
-            hltp_plans=self._active_hltp_plan_dicts(state.get("entered_agent_ids", [])),
-            threat_rows_by_agent=threat_rows_by_agent,
-            preview_rows_by_agent=preview_rows_by_agent,
-            recent_decisions=self.recent_decisions,
-            frame_paths=list(state.get("frame_paths", [])),
-        )
+        active_hltp_plans = self._active_hltp_plan_dicts(state.get("entered_agent_ids", []))
+        if state.get("use_vision"):
+            prompt_text = self.global_builder.build_vision_prompt(
+                core,
+                step=int(state["step"]),
+                actionable=actionable,
+                entered_agent_ids=list(state.get("entered_agent_ids", [])),
+                hltp_plans=active_hltp_plans,
+                threat_rows_by_agent=threat_rows_by_agent,
+                preview_rows_by_agent=preview_rows_by_agent,
+                recent_decisions=self.recent_decisions,
+                frame_paths=list(state.get("frame_paths", [])),
+            )
+        else:
+            prompt_text = self.global_builder.build_prompt(
+                core,
+                step=int(state["step"]),
+                actionable=actionable,
+                entered_agent_ids=list(state.get("entered_agent_ids", [])),
+                hltp_plans=active_hltp_plans,
+                threat_rows_by_agent=threat_rows_by_agent,
+                preview_rows_by_agent=preview_rows_by_agent,
+                recent_decisions=self.recent_decisions,
+                frame_paths=list(state.get("frame_paths", [])),
+            )
         return {
             **state,
             "threat_rows_by_agent": threat_rows_by_agent,
             "preview_rows_by_agent": preview_rows_by_agent,
-            "hltp_plans": self._active_hltp_plan_dicts(state.get("entered_agent_ids", [])),
+            "hltp_plans": active_hltp_plans,
             "prompt_text": prompt_text,
         }
 
@@ -2480,12 +2837,55 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         except Exception:
             return 0
 
+    def _resolve_vision_turn_with_candidates(
+        self,
+        core: "MultiAgentSectorCore",
+        agent_id: str,
+        call_name: str,
+        requested_turn: int,
+        preview_rows: Sequence[Dict[str, Any]],
+    ) -> int:
+        if not preview_rows:
+            return self._resolve_turn_for_call(core, agent_id, call_name, requested_turn)
+
+        best_row = min(
+            preview_rows,
+            key=lambda candidate: self._candidate_sort_key_for_call(call_name, candidate),
+        )
+        best_turn = int(best_row.get("heading_change_deg", 0))
+
+        rows_by_turn = {
+            int(row.get("heading_change_deg", 0)): row
+            for row in preview_rows
+        }
+        requested_row = rows_by_turn.get(int(requested_turn))
+        if requested_row is None:
+            return best_turn
+
+        has_pair_clear_row = any(row.get("pair_loss_step") is None for row in preview_rows)
+        has_weather_clear_row = any(row.get("weather_entry_step") is None for row in preview_rows)
+        if has_pair_clear_row and requested_row.get("pair_loss_step") is not None:
+            return best_turn
+        if has_weather_clear_row and requested_row.get("weather_entry_step") is not None:
+            return best_turn
+
+        if call_name == "MERGE_BACK":
+            all_boundary_exit = all(row.get("boundary_exit_step") is not None for row in preview_rows)
+            if all_boundary_exit:
+                return best_turn
+            return int(requested_turn)
+
+        if bool(requested_row.get("safe_over_preview", False)):
+            return int(requested_turn)
+        return best_turn
+
     def _graph_guardrail_actions(self, state: Dict[str, Any]) -> Dict[str, Any]:
         core = state["core"]
         candidate_actions = dict(state.get("candidate_actions", {}))
         final_actions: Dict[str, Dict[str, Any]] = {}
         invalid_agent_ids: List[str] = []
         stage_by_agent = {str(item["agent_id"]): str(item["call_name"]) for item in state.get("actionable", [])}
+        preview_rows_by_agent = state.get("preview_rows_by_agent", {})
         for agent_id, action_payload in candidate_actions.items():
             if agent_id not in stage_by_agent:
                 continue
@@ -2494,7 +2894,16 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
                 continue
             call_name = stage_by_agent[agent_id]
             requested_turn = self._raw_requested_turn(action_payload)
-            applied_turn = self._resolve_turn_for_call(core, agent_id, call_name, requested_turn)
+            if state.get("use_vision"):
+                applied_turn = self._resolve_vision_turn_with_candidates(
+                    core,
+                    agent_id,
+                    call_name,
+                    requested_turn,
+                    preview_rows_by_agent.get(agent_id, []) if isinstance(preview_rows_by_agent, dict) else [],
+                )
+            else:
+                applied_turn = self._resolve_turn_for_call(core, agent_id, call_name, requested_turn)
             rationale = action_payload.get("rationale", "")
             final_actions[agent_id] = {
                 "call_name": call_name,

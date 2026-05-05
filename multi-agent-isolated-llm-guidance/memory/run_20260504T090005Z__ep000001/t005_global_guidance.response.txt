@@ -1,0 +1,21 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Sector entry for A1, A3, and A4. A1 is tracking towards WP061, A3 towards BOBOB, and A4 towards WP059. All aircraft are currently clear of weather and traffic.",
+    "actions": {
+      "A1": {
+        "rationale": "A1 is currently tracking towards WP061. A heading of +25 degrees will provide a good visual clearance from potential traffic and maintain progress towards the destination.",
+        "maneuver": { "heading_change_deg": 25 }
+      },
+      "A3": {
+        "rationale": "A3 is currently tracking towards BOBOB. A heading of -30 degrees will provide a good visual clearance from potential traffic and maintain progress towards the destination.",
+        "maneuver": { "heading_change_deg": -30 }
+      },
+      "A4": {
+        "rationale": "A4 is currently tracking towards WP059. A heading of -30 degrees will provide a good visual clearance from potential traffic and maintain progress towards the destination.",
+        "maneuver": { "heading_change_deg": -30 }
+      }
+    }
+  }
+}
+```

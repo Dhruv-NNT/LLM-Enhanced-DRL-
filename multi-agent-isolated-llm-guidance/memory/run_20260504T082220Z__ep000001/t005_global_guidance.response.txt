@@ -1,0 +1,21 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Sector entry for A1, A3, and A4. A1 is approaching OTLON, A3 is approaching SUSAR, and A4 is approaching LUSMO. Monitor for traffic and weather.",
+    "actions": {
+      "A1": {
+        "rationale": "Maintain current heading to facilitate sector entry and monitor traffic.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A3": {
+        "rationale": "Maintain current heading to facilitate sector entry and monitor traffic.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A4": {
+        "rationale": "Maintain current heading to facilitate sector entry and monitor traffic.",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+```

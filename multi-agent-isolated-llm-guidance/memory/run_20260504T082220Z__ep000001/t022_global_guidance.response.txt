@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A3 and A4 are both on MERGE_BACK, needing to recover toward their destinations while avoiding boundary and weather. A3 is closer to the boundary and needs to recover more aggressively.",
+    "actions": {
+      "A3": {
+        "rationale": "A3 is close to the boundary and needs to recover toward BOBOB. A slight turn to the right will help recover while maintaining separation from A2 and avoiding the green ring.",
+        "maneuver": { "heading_change_deg": -15 }
+      },
+      "A4": {
+        "rationale": "A4 is drifting away from its destination and needs to recover toward WP059. A slight turn to the left will help recover while maintaining separation from A2 and avoiding the green ring.",
+        "maneuver": { "heading_change_deg": 5 }
+      }
+    }
+  }
+}
+```

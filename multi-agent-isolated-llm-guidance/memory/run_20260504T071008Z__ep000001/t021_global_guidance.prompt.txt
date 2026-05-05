@@ -1,0 +1,88 @@
+ROLE: You are a cautious vision-first ATCO helper for the entered aircraft listed below.
+VISION-FIRST GLOBAL GUIDANCE TASK:
+- Return one maneuver for every GUIDANCE-ELIGIBLE agent: A3, A2.
+- Inspect the four snapshots first, then use the concise text signals to anchor aircraft IDs, destinations, threats, weather, and memory.
+- Do not use a preview table; choose from the visual trend, destination geometry, traffic closure, weather rings, and boundary pressure.
+- Do not return actions for aircraft that have not entered the sector.
+- The controller already assigned each aircraft's phase; do not classify, rename, or output phases.
+- SAFE_R = 5.0 units; prefer traffic separation >= 6.5 units.
+- Avoid weather with buffer: stay outside the green ring when possible and never enter yellow/red/magenta.
+- Weather severity rings: green=light precipitation, yellow=moderate rain/rain and hail, red=heavy to very heavy precipitation, magenta=extreme convective activity.
+- Treat the green outer ring as a caution/buffer region: avoid it with the required clearance buffer whenever any safe alternative exists.
+- Yellow, red, and magenta are the terminal convective core; never plan through them.
+VISUAL DECISION RULES:
+- Resolve imminent traffic closure before destination recovery or HLTP route preference.
+- If an aircraft is drifting toward boundary or away from destination, choose the turn that visually recovers while keeping traffic/weather clear.
+- During MERGE_BACK, recover toward destination only when the visual path does not cut through traffic or weather.
+- Avoid repeating a recent ineffective turn pattern unless the current frames show it is now helping.
+OUTPUT RULES:
+- Return EXACTLY ONE JSON object and no extra text.
+- Under actions, output only the listed aircraft IDs with rationale and maneuver; do not output call_name.
+- heading_change_deg must be one of {-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30}.
+- Positive is left, negative is right, 0 means hold current heading.
+- In the rationale, briefly cite visual evidence such as closing traffic, weather/boundary clearance, or destination recovery.
+STRICT JSON SHAPE:
+{
+  "answer": {
+    "scenario_summary": "<brief>",
+    "actions": {
+      "A1": {
+        "rationale": "<brief>",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+
+MERGE_BACK VISUAL PRIORITY:
+- Use the frames to judge whether the aircraft is outside/off-route and which turn visibly points back toward destination.
+- Do not force merge-back through another aircraft's path or through weather rings.
+- If recent memory shows repeated MERGE_BACK with little recovery, choose a stronger or different-direction recovery only if the current visual trend supports it.
+- Use 0 only when the aircraft is already visually aligned and still closing on destination.
+
+VISION FRAME CONTEXT:
+- frame_0 is the current snapshot; frame_1, frame_2, and frame_3 are progressively older.
+- Use aircraft labels, route/destination geometry, and frame-to-frame motion to infer where each aircraft is going next.
+- Solid concentric weather rings show current cells; faint dashed green outer ellipses show predicted future weather positions.
+- Keep aircraft clear of current weather and dashed future outlines with margin.
+- frame_0: image_021.png
+- frame_1: image_020.png
+- frame_2: image_019.png
+- frame_3: image_018.png
+
+GUIDANCE-ELIGIBLE AGENTS THIS STEP:
+- A3: pos=(58.6,44.2) heading=-52.7 dest=(82.0,34.2) dist_dest=25.47 heading_err=+29.6 xtrack=-10.58 boundary_dist=4.50 pair_loss=None weather_entry=None boundary_exit=3 weather_clearance=6.86 safe_streak=11 call_name=MERGE_BACK call_reason=BOUNDARY_LOOKAHEAD
+- A2: pos=(66.1,71.1) heading=+97.4 dest=(40.1,80.2) dist_dest=27.53 heading_err=+63.5 xtrack=-13.12 boundary_dist=5.16 pair_loss=None weather_entry=None boundary_exit=6 weather_clearance=19.72 safe_streak=11 call_name=MERGE_BACK call_reason=BOUNDARY_LOOKAHEAD
+
+ENTERED TRAFFIC CONTEXT:
+- A1: pos=(31.1,51.5) heading=+161.3 dest=(23.2,54.4) dist_dest=8.42 heading_err=-2.0 xtrack=+0.26 boundary_dist=4.19 pair_loss=None weather_entry=None boundary_exit=None weather_clearance=7.96 safe_streak=22
+- A2: pos=(66.1,71.1) heading=+97.4 dest=(40.1,80.2) dist_dest=27.53 heading_err=+63.5 xtrack=-13.12 boundary_dist=5.16 pair_loss=None weather_entry=None boundary_exit=6 weather_clearance=19.72 safe_streak=11
+- A3: pos=(58.6,44.2) heading=-52.7 dest=(82.0,34.2) dist_dest=25.47 heading_err=+29.6 xtrack=-10.58 boundary_dist=4.50 pair_loss=None weather_entry=None boundary_exit=3 weather_clearance=6.86 safe_streak=11
+- A4: pos=(48.0,73.7) heading=+148.6 dest=(18.6,60.2) dist_dest=32.32 heading_err=+55.9 xtrack=-11.55 boundary_dist=0.09 pair_loss=None weather_entry=None boundary_exit=1 weather_clearance=10.71 safe_streak=9
+
+HIGH-LEVEL TACTICAL PLANS:
+- A2: HLTP ONAPO->MUMSO. HLTP rationale: ONAPO provides a visual clearance from the conflict with A3 and avoids the green ring. MUMSO allows a smooth return to the original route.. Advisory only; current safety logic may override.
+- A3: HLTP MABAL->OMLIV. HLTP rationale: MABAL provides a visual separation from A4 and avoids the developing weather. OMLIV allows a smooth return to the original route.. Advisory only; current safety logic may override.
+- A4: HLTP MUMSO->ELGOR. HLTP rationale: MUMSO provides a visual separation from A3 and avoids the developing weather. ELGOR allows a smooth return to the original route.. Advisory only; current safety logic may override.
+
+GLOBAL WEATHER:
+- green is a caution/buffer ring; yellow/red/magenta are terminal no-go regions
+- Weather severity rings: green=light precipitation, yellow=moderate rain/rain and hail, red=heavy to very heavy precipitation, magenta=extreme convective activity.
+- Treat the green outer ring as a caution/buffer region: avoid it with the required clearance buffer whenever any safe alternative exists.
+- Yellow, red, and magenta are the terminal convective core; never plan through them.
+- required_clearance_buffer=0.74 simulator units
+- W1: center=(35.3,62.3) major_radius_nm=12.61 minor_radius_nm=7.74 orientation_deg=+40.2 motion_heading_deg=+50.2 speed_units_per_step=0.37 growth_nm_per_step=+0.45 growth_stopped=0 movement_stopped=0
+- W2: center=(64.7,50.5) major_radius_nm=8.20 minor_radius_nm=5.01 orientation_deg=+91.0 motion_heading_deg=+50.2 speed_units_per_step=0.19 growth_nm_per_step=+0.24 growth_stopped=0 movement_stopped=0
+
+RANKED TRAFFIC THREATS:
+- A2: A4 dist=18.28 loss=None min_sep=19.62; A3 dist=27.97 loss=None min_sep=31.11; A1 dist=40.11 loss=None min_sep=42.20
+- A3: A2 dist=27.97 loss=None min_sep=31.11; A1 dist=28.39 loss=None min_sep=32.00; A4 dist=31.31 loss=None min_sep=34.82
+
+RECENT GLOBAL DECISION MEMORY:
+- step=15: A2:MERGE_BACK +0deg; A3:MERGE_BACK +0deg
+- step=16: A4:MERGE_BACK +0deg
+- step=18: A2:MERGE_BACK +0deg; A3:MERGE_BACK +30deg
+- step=19: A4:MERGE_BACK +0deg
+VISION MEMORY ADVISORY:
+- Compare these recent turns against the four frames; repeat a turn only if the visual trend shows improved separation or recovery.
+- Watch for oscillation, repeated holds near boundary, or repeated MERGE_BACK that still leaves the aircraft off-route.

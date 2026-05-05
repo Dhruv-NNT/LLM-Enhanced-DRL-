@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 is approaching its destination, but needs to avoid A4 and the green ring. A4 is also approaching its destination and needs to avoid A3 and the developing weather.",
+    "actions": {
+      "A2": {
+        "rationale": "A2 is drifting toward the green ring and A4. A slight turn to the right will provide clearance from both.",
+        "maneuver": { "heading_change_deg": -10 }
+      }
+    }
+  }
+}
+```

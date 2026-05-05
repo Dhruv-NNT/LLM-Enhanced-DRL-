@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 and A3 are both drifting toward the boundary and require corrective action. A2 is closer to the boundary and requires a more aggressive turn to recover. A3 is further out and can recover with a gentler turn.",
+    "actions": {
+      "A2": {
+        "rationale": "A2 is drifting towards the boundary. A more aggressive turn is needed to recover and maintain separation from A4.",
+        "maneuver": { "heading_change_deg": -30 }
+      },
+      "A3": {
+        "rationale": "A3 is drifting towards the boundary. A gentler turn is needed to recover and maintain separation from A4.",
+        "maneuver": { "heading_change_deg": -10 }
+      }
+    }
+  }
+}
+```

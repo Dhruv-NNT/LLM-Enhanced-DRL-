@@ -1,0 +1,21 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Sector entry for A1, A3, and A4. A3 and A4 are advised to adjust routes to avoid developing weather and maintain separation. A1 is clear for now.",
+    "actions": {
+      "A1": {
+        "rationale": "Maintain current heading to continue sector entry and monitor traffic.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A3": {
+        "rationale": "Adjust heading slightly left to avoid developing weather and maintain separation from A4.",
+        "maneuver": { "heading_change_deg": -5 }
+      },
+      "A4": {
+        "rationale": "Adjust heading slightly left to avoid developing weather and maintain separation from A3.",
+        "maneuver": { "heading_change_deg": -5 }
+      }
+    }
+  }
+}
+```

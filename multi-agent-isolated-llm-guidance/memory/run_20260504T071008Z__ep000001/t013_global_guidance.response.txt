@@ -1,0 +1,25 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is drifting towards the boundary and slightly off-route. A3 is nearby, requiring a visual separation. The aircraft is also approaching a developing weather cell.",
+    "actions": {
+      "A1": {
+        "rationale": "Maintaining current heading.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A2": {
+        "rationale": "Maintaining current heading.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A3": {
+        "rationale": "Maintaining current heading.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A4": {
+        "rationale": "A slight turn to the right to visually separate from A3 and recover towards the destination while avoiding the developing weather.",
+        "maneuver": { "heading_change_deg": -5 }
+      }
+    }
+  }
+}
+```

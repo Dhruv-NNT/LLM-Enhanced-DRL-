@@ -1,0 +1,298 @@
+{
+  "answer": {
+    "scenario_summary": "A4 is drifting towards the boundary and needs a recovery turn. A2 is also on a MERGE_BACK trajectory.",
+    "actions": {
+      "A4": {
+        "call_name": "MERGE_BACK",
+        "rationale": "A4 is drifting towards the boundary. A slight right turn will recover the aircraft visually while maintaining separation from A2 and avoiding the boundary.",
+        "source": "llm",
+        "requested_heading_change_deg": -5,
+        "maneuver": {
+          "heading_change_deg": 0
+        }
+      }
+    }
+  },
+  "threat_rows_by_agent": {
+    "A4": [
+      {
+        "intruder_id": "A2",
+        "intruder_position": [
+          60.44543960412169,
+          100.0
+        ],
+        "intruder_heading_deg": 97.36254848733604,
+        "current_distance": 45.57484145386755,
+        "bearing_error_deg": -144.30107618804854,
+        "predicted_loss_step": null,
+        "predicted_min_sep": 42.3699029385309,
+        "predicted_min_step": 12
+      }
+    ]
+  },
+  "preview_rows_by_agent": {
+    "A4": [
+      {
+        "heading_change_deg": 30,
+        "pair_loss_step": null,
+        "weather_entry_step": null,
+        "boundary_exit_step": 1,
+        "min_sep_to_any": 42.9838539578423,
+        "min_weather_clearance": 34.827476578645275,
+        "traffic_buffer_ok": true,
+        "weather_buffer_ok": true,
+        "safe_over_preview": false,
+        "end_heading_error_to_dest_deg": 96.92910827653759,
+        "start_distance_to_destination": 36.52150905112999,
+        "end_distance_to_destination": 37.000981415669635,
+        "progress_to_destination": -0.4794723645396459,
+        "start_cross_track_abs": 36.52150905112999,
+        "end_cross_track_abs": 37.000981415669635,
+        "cross_track_reduction": -0.4794723645396459
+      },
+      {
+        "heading_change_deg": 25,
+        "pair_loss_step": null,
+        "weather_entry_step": null,
+        "boundary_exit_step": 1,
+        "min_sep_to_any": 42.89954318734055,
+        "min_weather_clearance": 34.970160888418825,
+        "traffic_buffer_ok": true,
+        "weather_buffer_ok": true,
+        "safe_over_preview": false,
+        "end_heading_error_to_dest_deg": 101.68012223466582,
+        "start_distance_to_destination": 36.52150905112999,
+        "end_distance_to_destination": 38.733965961830656,
+        "progress_to_destination": -2.2124569107006664,
+        "start_cross_track_abs": 36.52150905112999,
+        "end_cross_track_abs": 38.733965961830656,
+        "cross_track_reduction": -2.2124569107006664
+      },
+      {
+        "heading_change_deg": 20,
+        "pair_loss_step": null,
+        "weather_entry_step": null,
+        "boundary_exit_step": 1,
+        "min_sep_to_any": 42.88249238279603,
+        "min_weather_clearance": 35.11170761591508,
+        "traffic_buffer_ok": true,
+        "weather_buffer_ok": true,
+        "safe_over_preview": false,
+        "end_heading_error_to_dest_deg": 106.51986226837664,
+        "start_distance_to_destination": 36.52150905112999,
+        "end_distance_to_destination": 39.93835373128731,
+        "progress_to_destination": -3.4168446801573182,
+        "start_cross_track_abs": 36.52150905112999,
+        "end_cross_track_abs": 39.93835373128731,
+        "cross_track_reduction": -3.4168446801573182
+      },
+      {
+        "heading_change_deg": 15,
+        "pair_loss_step": null,
+        "weather_entry_step": null,
+        "boundary_exit_step": 1,
+        "min_sep_to_any": 42.88249238279603,
+        "min_weather_clearance": 35.25086828622978,
+        "traffic_buffer_ok": true,
+        "weather_buffer_ok": true,
+        "safe_over_preview": false,
+        "end_heading_error_to_dest_deg": 111.51986226837664,
+        "start_distance_to_destination": 36.52150905112999,
+        "end_distance_to_destination": 39.93835373128731,
+        "progress_to_destination": -3.4168446801573182,
+        "start_cross_track_abs": 36.52150905112999,
+        "end_cross_track_abs": 39.93835373128731,
+        "cross_track_reduction": -3.4168446801573182
+      },
+      {
+        "heading_change_deg": 10,
+        "pair_loss_step": null,
+        "weather_entry_step": null,
+        "boundary_exit_step": 1,
+        "min_sep_to_any": 42.88249238279603,
+        "min_weather_clearance": 35.38673113534915,
+        "traffic_buffer_ok": true,
+        "weather_buffer_ok": true,
+        "safe_over_preview": false,
+        "end_heading_error_to_dest_deg": 116.51986226837664,
+        "start_distance_to_destination": 36.52150905112999,
+        "end_distance_to_destination": 39.93835373128731,
+        "progress_to_destination": -3.4168446801573182,
+        "start_cross_track_abs": 36.52150905112999,
+        "end_cross_track_abs": 39.93835373128731,
+        "cross_track_reduction": -3.4168446801573182
+      },
+      {
+        "heading_change_deg": 5,
+        "pair_loss_step": null,
+        "weather_entry_step": null,
+        "boundary_exit_step": 1,
+        "min_sep_to_any": 42.88249238279603,
+        "min_weather_clearance": 35.51826268416885,
+        "traffic_buffer_ok": true,
+        "weather_buffer_ok": true,
+        "safe_over_preview": false,
+        "end_heading_error_to_dest_deg": 121.51986226837664,
+        "start_distance_to_destination": 36.52150905112999,
+        "end_distance_to_destination": 39.93835373128731,
+        "progress_to_destination": -3.4168446801573182,
+        "start_cross_track_abs": 36.52150905112999,
+        "end_cross_track_abs": 39.93835373128731,
+        "cross_track_reduction": -3.4168446801573182
+      },
+      {
+        "heading_change_deg": 0,
+        "pair_loss_step": null,
+        "weather_entry_step": null,
+        "boundary_exit_step": 1,
+        "min_sep_to_any": 42.88249238279603,
+        "min_weather_clearance": 35.64443279967793,
+        "traffic_buffer_ok": true,
+        "weather_buffer_ok": true,
+        "safe_over_preview": false,
+        "end_heading_error_to_dest_deg": 126.51986226837664,
+        "start_distance_to_destination": 36.52150905112999,
+        "end_distance_to_destination": 39.93835373128731,
+        "progress_to_destination": -3.4168446801573182,
+        "start_cross_track_abs": 36.52150905112999,
+        "end_cross_track_abs": 39.93835373128731,
+        "cross_track_reduction": -3.4168446801573182
+      }
+    ]
+  },
+  "hltp_plans": {
+    "A2": {
+      "agent_id": "A2",
+      "first_waypoint_name": "ONAPO",
+      "merge_back_waypoint_name": "MUMSO",
+      "short_context": "HLTP ONAPO->MUMSO",
+      "source": "llm",
+      "created_step": 7,
+      "conflict_partner_ids": [
+        "A3"
+      ],
+      "rationale": "ONAPO provides a visual clearance from the conflict with A3 and avoids the green ring. MUMSO allows a smooth return to the original route."
+    },
+    "A4": {
+      "agent_id": "A4",
+      "first_waypoint_name": "MUMSO",
+      "merge_back_waypoint_name": "ELGOR",
+      "short_context": "HLTP MUMSO->ELGOR",
+      "source": "llm",
+      "created_step": 5,
+      "conflict_partner_ids": [
+        "A3"
+      ],
+      "rationale": "MUMSO provides a visual separation from A3 and avoids the developing weather. ELGOR allows a smooth return to the original route."
+    }
+  },
+  "debug": {
+    "llm_status": "ok",
+    "llm_error": "",
+    "parse_status": "ok",
+    "fallback_reason": "",
+    "fallback_agents": [],
+    "retry_count": 0,
+    "used_vision": true,
+    "frame_paths": [
+      "multi-agent-isolated-llm-guidance/outputs/global_text_test_6/image_043.png",
+      "multi-agent-isolated-llm-guidance/outputs/global_text_test_6/image_042.png",
+      "multi-agent-isolated-llm-guidance/outputs/global_text_test_6/image_041.png",
+      "multi-agent-isolated-llm-guidance/outputs/global_text_test_6/image_040.png"
+    ],
+    "eligible_agent_ids": [
+      "A4"
+    ],
+    "entered_agent_ids": [
+      "A2",
+      "A4"
+    ],
+    "stage_by_agent": {
+      "A4": "MERGE_BACK"
+    },
+    "hltp_plans": {
+      "A2": {
+        "agent_id": "A2",
+        "first_waypoint_name": "ONAPO",
+        "merge_back_waypoint_name": "MUMSO",
+        "short_context": "HLTP ONAPO->MUMSO",
+        "source": "llm",
+        "created_step": 7,
+        "conflict_partner_ids": [
+          "A3"
+        ],
+        "rationale": "ONAPO provides a visual clearance from the conflict with A3 and avoids the green ring. MUMSO allows a smooth return to the original route."
+      },
+      "A4": {
+        "agent_id": "A4",
+        "first_waypoint_name": "MUMSO",
+        "merge_back_waypoint_name": "ELGOR",
+        "short_context": "HLTP MUMSO->ELGOR",
+        "source": "llm",
+        "created_step": 5,
+        "conflict_partner_ids": [
+          "A3"
+        ],
+        "rationale": "MUMSO provides a visual separation from A3 and avoids the developing weather. ELGOR allows a smooth return to the original route."
+      }
+    },
+    "weather": {
+      "cell_id": "W1",
+      "center": [
+        37.18058338315127,
+        64.54516119380304
+      ],
+      "major_radius_nm": 16.243670303379,
+      "minor_radius_nm": 9.969576460594952,
+      "major_radius_units": 5.42407054865865,
+      "minor_radius_units": 4.153990191914563,
+      "minor_ratio": 0.613751465918456,
+      "angle_rad": 0.7012372151706965,
+      "motion_heading_rad": 0.8760444114976647,
+      "speed_units_per_step": 0.0,
+      "major_growth_nm_per_step": 0.0,
+      "growth_stopped": true,
+      "movement_stopped": true,
+      "cells": [
+        {
+          "cell_id": "W1",
+          "center": [
+            37.18058338315127,
+            64.54516119380304
+          ],
+          "major_radius_nm": 16.243670303379,
+          "minor_radius_nm": 9.969576460594952,
+          "major_radius_units": 5.42407054865865,
+          "minor_radius_units": 4.153990191914563,
+          "minor_ratio": 0.613751465918456,
+          "angle_rad": 0.7012372151706965,
+          "motion_heading_rad": 0.8760444114976647,
+          "speed_units_per_step": 0.0,
+          "major_growth_nm_per_step": 0.0,
+          "growth_stopped": true,
+          "movement_stopped": true
+        },
+        {
+          "cell_id": "W2",
+          "center": [
+            67.42039356273808,
+            53.69383338708119
+          ],
+          "major_radius_nm": 13.46794597814322,
+          "minor_radius_nm": 8.22799780855721,
+          "major_radius_units": 4.497203388557836,
+          "minor_radius_units": 3.4283324202321706,
+          "minor_ratio": 0.6109318987401802,
+          "angle_rad": 1.5876204605582767,
+          "motion_heading_rad": 0.8760444114976647,
+          "speed_units_per_step": 0.1919242952645281,
+          "major_growth_nm_per_step": 0.2394769428089918,
+          "growth_stopped": false,
+          "movement_stopped": false
+        }
+      ],
+      "num_weather_cells": 2
+    },
+    "model": "gemma3:12b"
+  }
+}

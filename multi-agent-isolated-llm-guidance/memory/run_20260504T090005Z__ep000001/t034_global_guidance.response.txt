@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is on a MERGE_BACK phase, slightly off-route and heading towards the green ring. The aircraft needs to recover towards the destination while avoiding weather and traffic.",
+    "actions": {
+      "A4": {
+        "rationale": "The aircraft is slightly off-route and heading towards the green ring. A +10 degree turn will help recover towards the destination while avoiding the green ring and maintaining safe separation from other traffic. The visual trend shows a need for a moderate course correction.",
+        "maneuver": { "heading_change_deg": 10 }
+      }
+    }
+  }
+}
+```

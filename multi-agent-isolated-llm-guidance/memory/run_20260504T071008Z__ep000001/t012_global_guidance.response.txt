@@ -1,0 +1,21 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are maneuvering to avoid traffic and weather. A2 and A3 are merging back towards their routes while A4 is executing an emergency maneuver.",
+    "actions": {
+      "A2": {
+        "rationale": "Maintain current heading to continue merging back towards the original route while avoiding traffic and weather.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A3": {
+        "rationale": "Maintain current heading to continue merging back towards the original route while avoiding traffic and weather.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A4": {
+        "rationale": "Execute a left turn to avoid immediate traffic conflict with A3.",
+        "maneuver": { "heading_change_deg": -30 }
+      }
+    }
+  }
+}
+```

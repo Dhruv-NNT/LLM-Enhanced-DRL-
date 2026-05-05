@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 is on a MERGE_BACK heading towards DAMOG, but is drifting slightly off-route. A3 and A4 are also on MERGE_BACK headings.",
+    "actions": {
+      "A1": {
+        "rationale": "No action required; maintaining current heading.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A2": {
+        "rationale": "Slightly off-route; a small left turn will help recover towards DAMOG without cutting through traffic or weather.",
+        "maneuver": { "heading_change_deg": -5 }
+      }
+    }
+  }
+}
+```

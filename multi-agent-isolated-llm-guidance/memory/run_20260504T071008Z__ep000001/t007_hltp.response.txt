@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "plans": {
+      "A2": {
+        "first_waypoint_name": "ONAPO",
+        "merge_back_waypoint_name": "MUMSO",
+        "rationale": "ONAPO provides a visual clearance from the conflict with A3 and avoids the green ring. MUMSO allows a smooth return to the original route."
+      }
+    }
+  }
+}
+```

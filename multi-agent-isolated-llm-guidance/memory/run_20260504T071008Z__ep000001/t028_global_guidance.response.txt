@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is on a MERGE_BACK heading towards MUMSO, but needs a slight adjustment to avoid potential conflict with A2 and maintain visual clearance from the green ring.",
+    "actions": {
+      "A4": {
+        "rationale": "Slight right turn to visually clear A2 and maintain separation while progressing towards MUMSO.",
+        "maneuver": { "heading_change_deg": -5 }
+      }
+    }
+  }
+}
+```

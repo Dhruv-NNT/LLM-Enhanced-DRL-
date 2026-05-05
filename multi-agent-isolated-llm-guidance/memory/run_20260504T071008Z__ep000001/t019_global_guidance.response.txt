@@ -1,0 +1,25 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is drifting toward the boundary and needs a slight adjustment to recover toward destination while maintaining separation from A2 and avoiding weather.",
+    "actions": {
+      "A1": {
+        "rationale": "No action needed; maintaining current heading.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A2": {
+        "rationale": "No action needed; maintaining current heading.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A3": {
+        "rationale": "No action needed; maintaining current heading.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A4": {
+        "rationale": "Slight right turn to recover toward destination and maintain separation from A2 and avoid the boundary.",
+        "maneuver": { "heading_change_deg": -5 }
+      }
+    }
+  }
+}
+```

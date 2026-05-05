@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 is approaching the boundary and needs a course correction to avoid it. A4 is also approaching the boundary and needs a course correction to avoid it.",
+    "actions": {
+      "A2": {
+        "rationale": "A2 is drifting toward the boundary. A turn of -10 degrees will help avoid the boundary while maintaining progress towards the destination.",
+        "maneuver": { "heading_change_deg": -10 }
+      },
+      "A4": {
+        "rationale": "A4 is approaching the boundary. A turn of -5 degrees will help avoid the boundary while maintaining progress towards the destination.",
+        "maneuver": { "heading_change_deg": -5 }
+      }
+    }
+  }
+}
+```

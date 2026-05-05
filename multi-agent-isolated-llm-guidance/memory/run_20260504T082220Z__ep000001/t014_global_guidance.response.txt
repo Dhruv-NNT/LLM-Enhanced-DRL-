@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 is on a MERGE_BACK heading towards DAMOG, but needs a slight adjustment to avoid potential boundary conflict and maintain visual alignment with the route.",
+    "actions": {
+      "A2": {
+        "rationale": "Slight adjustment to the left to maintain visual alignment with the route and avoid potential boundary conflict.",
+        "maneuver": { "heading_change_deg": -5 }
+      }
+    }
+  }
+}
+```

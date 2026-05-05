@@ -1,0 +1,84 @@
+ROLE: You are a vision-first high-level tactical planner (HLTP) for aircraft that just entered the sector.
+VISION HLTP TASK:
+- Inspect the four snapshots and concise text signals from current step 5 through step 60.
+- Judge origin-to-destination geometry, route direction, aircraft closure, weather rings, and likely safe right-side deviations from the images.
+- For each listed aircraft, choose exactly two waypoint names that form a visual high-level plan.
+- first_waypoint_name must be one of that aircraft's listed right-side first waypoint candidates.
+- merge_back_waypoint_name must be one of that aircraft's listed original-route merge-back candidates.
+- Prefer plans that visibly move away from conflict/weather first, then rejoin the original route toward destination.
+- Ignore reward, total reward, failure/success, and scoreboard/status overlay text in the images.
+- Keep weather clear with buffer: avoid the green ring when possible and never plan through yellow/red/magenta.
+- Weather severity rings: green=light precipitation, yellow=moderate rain/rain and hail, red=heavy to very heavy precipitation, magenta=extreme convective activity.
+- Treat the green outer ring as a caution/buffer region: avoid it with the required clearance buffer whenever any safe alternative exists.
+- Yellow, red, and magenta are the terminal convective core; never plan through them.
+- This is advisory high-level context only; low-level safety guidance may override it.
+OUTPUT RULES:
+- Return EXACTLY ONE JSON object and no extra text.
+- Use only waypoint names shown in the candidate lists.
+- The placeholder strings below are not waypoint names; replace them with candidate names for each listed aircraft.
+- The plans object must include every aircraft shown in this JSON shape.
+STRICT JSON SHAPE:
+{
+  "answer": {
+    "plans": {
+      "A3": {
+        "first_waypoint_name": "<FIRST_WAYPOINT_FROM_CANDIDATES>",
+        "merge_back_waypoint_name": "<MERGE_BACK_WAYPOINT_FROM_CANDIDATES>",
+        "rationale": "<brief>"
+      },
+      "A4": {
+        "first_waypoint_name": "<FIRST_WAYPOINT_FROM_CANDIDATES>",
+        "merge_back_waypoint_name": "<MERGE_BACK_WAYPOINT_FROM_CANDIDATES>",
+        "rationale": "<brief>"
+      }
+    }
+  }
+}
+
+HLTP VISION AIRCRAFT CONTEXT:
+- A3: pos=(46.8,72.8) heading=-47.7 origin=DAMOG destination=BOBOB dest=(82.0,34.2) route=DAMOG->SUSAR->MUMSO->ELGOR->LEBIN->OMLIV->BOBOB
+  conflict_partners=A4 loss_step=8 min_step=8 min_sep=4.27 conflict_point=(59.5,61.9)
+  right-side first waypoint candidates (names and positions only):
+    - MABAL: pos=(44.2,61.8)
+    - BUNTO: pos=(60.0,41.7)
+    - LIPRO: pos=(43.8,47.4)
+    - OMBAP: pos=(70.9,38.0)
+    - KILOT: pos=(33.5,50.9)
+    - WP071: pos=(33.2,42.2)
+    - OTLON: pos=(26.7,53.3)
+    - PEKLA: pos=(22.1,39.4)
+  original-route merge-back candidates (names and positions only):
+    - LEBIN: pos=(62.0,56.1)
+    - OMLIV: pos=(69.4,48.0)
+    - BOBOB: pos=(82.0,34.2)
+- A4: pos=(77.3,63.9) heading=-176.4 origin=PT222 destination=WP059 dest=(18.6,60.2) route=PT222->LUSMO->OPULA->ELGOR->MABAL->VISAT->WP059
+  conflict_partners=A3 loss_step=8 min_step=8 min_sep=4.27 conflict_point=(59.5,61.9)
+  right-side first waypoint candidates (names and positions only):
+    - MUMSO: pos=(50.7,68.5)
+    - SUSAR: pos=(45.3,74.5)
+    - MABLI: pos=(64.3,82.2)
+    - DAMOG: pos=(40.1,80.2)
+    - PT111: pos=(68.2,89.5)
+  original-route merge-back candidates (names and positions only):
+    - ELGOR: pos=(56.1,62.6)
+    - MABAL: pos=(44.2,61.8)
+    - VISAT: pos=(30.5,61.0)
+    - WP059: pos=(18.6,60.2)
+
+HLTP WEATHER CONTEXT:
+- keep routes outside green with buffer when possible; never plan through yellow/red/magenta
+- Weather severity rings: green=light precipitation, yellow=moderate rain/rain and hail, red=heavy to very heavy precipitation, magenta=extreme convective activity.
+- Treat the green outer ring as a caution/buffer region: avoid it with the required clearance buffer whenever any safe alternative exists.
+- Yellow, red, and magenta are the terminal convective core; never plan through them.
+- required_clearance_buffer=0.74 simulator units
+- W1: center=(31.5,57.8) major_nm=5.34 minor_nm=3.27 motion_heading_deg=+50.2 growth_nm_per_step=+0.45 growth_stopped=0 movement_stopped=0
+- W2: center=(62.8,48.1) major_nm=4.37 minor_nm=2.67 motion_heading_deg=+50.2 growth_nm_per_step=+0.24 growth_stopped=0 movement_stopped=0
+
+VISION HLTP CONTEXT:
+- frame_0 is the current snapshot; later frame indexes are older snapshots.
+- Use motion across frames to infer whether conflicts are closing, opening, or drifting toward weather/boundary.
+- Use candidate waypoint text to name the plan, but use the images to judge which candidate visually clears conflict and weather.
+- frame_0: image_005.png
+- frame_1: image_004.png
+- frame_2: image_003.png
+- frame_3: image_002.png

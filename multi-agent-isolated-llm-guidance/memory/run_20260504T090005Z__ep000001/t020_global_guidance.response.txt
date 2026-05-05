@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A4 is approaching WP059 and needs to recover toward the destination while avoiding traffic and weather. The aircraft is currently drifting toward the boundary.",
+    "actions": {
+      "A4": {
+        "rationale": "The aircraft is drifting toward the boundary. A turn of +5 degrees will provide a visual recovery toward the destination while maintaining adequate separation from traffic and avoiding the green ring. The recent memory shows a similar turn was used previously.",
+        "maneuver": { "heading_change_deg": 5 }
+      }
+    }
+  }
+}
+```

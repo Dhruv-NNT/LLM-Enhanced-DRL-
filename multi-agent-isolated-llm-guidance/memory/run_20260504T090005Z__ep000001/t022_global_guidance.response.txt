@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are maneuvering within a constrained airspace. Traffic separation and weather avoidance are primary concerns. A3 and A4 are currently on MERGE_BACK procedures.",
+    "actions": {
+      "A1": {
+        "rationale": "The aircraft is slightly off-route and needs a gentle correction to the left. A -10 degree turn provides a good balance between progress towards the destination and maintaining safe separation from surrounding traffic. It avoids the need for a more aggressive turn.",
+        "maneuver": { "heading_change_deg": -10 }
+      }
+    }
+  }
+}
+```

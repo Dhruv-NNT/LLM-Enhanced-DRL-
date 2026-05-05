@@ -1,0 +1,13 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 is approaching the boundary and needs a slight adjustment to maintain separation from A4 and avoid the green ring. A4 is also approaching the boundary and needs a slight adjustment to maintain separation from A2 and avoid the green ring.",
+    "actions": {
+      "A2": {
+        "rationale": "Slight left turn to maintain separation from A4 and avoid the green ring.",
+        "maneuver": { "heading_change_deg": -5 }
+      }
+    }
+  }
+}
+```

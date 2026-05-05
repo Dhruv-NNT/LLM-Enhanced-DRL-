@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A1 is drifting right and needs a course correction to maintain separation and progress towards WP061. A4 is drifting left and needs a course correction to maintain separation and progress towards WP059.",
+    "actions": {
+      "A1": {
+        "rationale": "The aircraft is drifting right, and a -25 degree turn will correct the course while maintaining adequate separation from surrounding traffic and avoiding weather. The visual evidence shows a need to correct the course to the left.",
+        "maneuver": { "heading_change_deg": -25 }
+      },
+      "A4": {
+        "rationale": "The aircraft is drifting left and a +30 degree turn will correct the course while maintaining adequate separation from surrounding traffic and avoiding weather. The visual evidence shows a need to correct the course to the right.",
+        "maneuver": { "heading_change_deg": 30 }
+      }
+    }
+  }
+}
+```

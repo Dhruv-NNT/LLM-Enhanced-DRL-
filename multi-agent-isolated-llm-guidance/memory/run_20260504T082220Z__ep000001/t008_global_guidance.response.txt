@@ -1,0 +1,21 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Traffic is converging near the conflict zone. A3 and A4 are both approaching the area and require visual clearance. A3 needs to avoid the green ring and maintain separation from A4. A4 needs to avoid the green ring and maintain separation from A3.",
+    "actions": {
+      "A1": {
+        "rationale": "Maintain current heading to avoid traffic and boundary.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A3": {
+        "rationale": "Turn right to avoid the green ring and maintain separation from A4.",
+        "maneuver": { "heading_change_deg": -30 }
+      },
+      "A4": {
+        "rationale": "Turn right to avoid the green ring and maintain separation from A3.",
+        "maneuver": { "heading_change_deg": -25 }
+      }
+    }
+  }
+}
+```

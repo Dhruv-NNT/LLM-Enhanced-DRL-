@@ -1,0 +1,21 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "Multiple aircraft are maneuvering in a congested airspace. A3 and A4 are both attempting to recover toward their destinations while avoiding traffic and weather. A2 is also attempting to recover toward its destination.",
+    "actions": {
+      "A2": {
+        "rationale": "A2 is currently drifting slightly off-route. A small heading adjustment of +0 degrees will maintain current heading and allow for visual assessment of the situation.",
+        "maneuver": { "heading_change_deg": 0 }
+      },
+      "A3": {
+        "rationale": "A3 is approaching a boundary exit. A heading change of -20 degrees will provide a visual clearance from the conflict zone and avoid the green ring while progressing toward the destination.",
+        "maneuver": { "heading_change_deg": -20 }
+      },
+      "A4": {
+        "rationale": "A4 is approaching a boundary exit. A heading change of +5 degrees will provide a visual clearance from the conflict zone and avoid the green ring while progressing toward the destination.",
+        "maneuver": { "heading_change_deg": 5 }
+      }
+    }
+  }
+}
+```

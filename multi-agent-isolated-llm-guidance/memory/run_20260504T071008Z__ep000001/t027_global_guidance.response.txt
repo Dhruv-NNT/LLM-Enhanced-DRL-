@@ -1,0 +1,17 @@
+```json
+{
+  "answer": {
+    "scenario_summary": "A2 and A3 are both MERGE_BACK and need to recover toward their destinations while maintaining separation and avoiding weather. A4 is also MERGE_BACK.",
+    "actions": {
+      "A2": {
+        "rationale": "A2 is drifting toward the boundary and needs a slight correction to recover toward its destination while maintaining separation from A4.",
+        "maneuver": { "heading_change_deg": -5 }
+      },
+      "A3": {
+        "rationale": "A3 is drifting toward the boundary and needs a slight correction to recover toward its destination while maintaining separation from A2 and avoiding weather.",
+        "maneuver": { "heading_change_deg": -15 }
+      }
+    }
+  }
+}
+```

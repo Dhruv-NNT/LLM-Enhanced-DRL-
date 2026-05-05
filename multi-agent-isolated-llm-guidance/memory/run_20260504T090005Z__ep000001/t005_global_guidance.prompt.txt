@@ -1,0 +1,115 @@
+ROLE: You are a cautious vision-first ATCO helper for the entered aircraft listed below.
+VISION-FIRST GLOBAL GUIDANCE TASK:
+- Return one maneuver for every GUIDANCE-ELIGIBLE agent: A3, A4, A1.
+- Inspect the four snapshots first, then use the concise text signals to anchor aircraft IDs, destinations, threats, weather, and memory.
+- Use vision to choose tactical intent first: avoid traffic, avoid weather, recover to route, escape boundary, or hold.
+- Then choose among listed VISION ACTION CANDIDATES to turn that intent into an executable maneuver.
+- VISION ACTION CANDIDATES are guardrails, not orders; use visual common sense to choose among viable listed candidates.
+- Do not return actions for aircraft that have not entered the sector.
+- The controller already assigned each aircraft's phase; do not classify, rename, or output phases.
+- SAFE_R = 5.0 units; prefer traffic separation >= 6.5 units.
+- Ignore reward, total reward, failure/success, and scoreboard/status overlay text in the images.
+- Avoid weather with buffer: stay outside the green ring when possible and never enter yellow/red/magenta.
+- Weather severity rings: green=light precipitation, yellow=moderate rain/rain and hail, red=heavy to very heavy precipitation, magenta=extreme convective activity.
+- Treat the green outer ring as a caution/buffer region: avoid it with the required clearance buffer whenever any safe alternative exists.
+- Yellow, red, and magenta are the terminal convective core; never plan through them.
+VISUAL DECISION RULES:
+- Infer current movement from the four frames, then compare current heading with destination direction.
+- Choose one listed candidate turn that best matches the visual tactical intent without cutting through traffic or weather.
+- Resolve imminent traffic closure before destination recovery or HLTP route preference.
+- If an aircraft is drifting toward boundary or away from destination, choose the turn that visually recovers while keeping traffic/weather clear.
+- During MERGE_BACK, recover toward destination only when the visual path does not cut through traffic or weather.
+- Avoid repeating a recent ineffective turn pattern unless the current frames show it is now helping.
+OUTPUT RULES:
+- Return EXACTLY ONE JSON object and no extra text.
+- Under actions, output only the listed aircraft IDs with rationale and maneuver; do not output call_name.
+- heading_change_deg must be one of {-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30}.
+- heading_change_deg must also match one displayed VISION ACTION CANDIDATES turn for that aircraft.
+- Positive is left, negative is right, 0 means hold current heading.
+- In the rationale, cite both visual evidence and the selected candidate row's key safety/recovery consequence.
+STRICT JSON SHAPE:
+{
+  "answer": {
+    "scenario_summary": "<brief>",
+    "actions": {
+      "A1": {
+        "rationale": "<brief>",
+        "maneuver": { "heading_change_deg": 0 }
+      }
+    }
+  }
+}
+
+VISION FRAME CONTEXT:
+- frame_0 is the current snapshot; frame_1, frame_2, and frame_3 are progressively older.
+- Use aircraft labels, route/destination geometry, and frame-to-frame motion to infer where each aircraft is going next.
+- Ignore reward, total reward, failure/success, and any scoreboard/status overlay text.
+- Solid concentric weather rings show current cells; faint dashed green outer ellipses show predicted future weather positions.
+- Keep aircraft clear of current weather and dashed future outlines with margin.
+- frame_0: image_005.png
+- frame_1: image_004.png
+- frame_2: image_003.png
+- frame_3: image_002.png
+
+GUIDANCE-ELIGIBLE DIRECTION CONTEXT:
+- A3: origin=DAMOG destination=BOBOB route=DAMOG->SUSAR->MUMSO->ELGOR->LEBIN->OMLIV->BOBOB pos=(46.8,72.8) heading=-47.7 dest=(82.0,34.2) dist_dest=52.21 heading_err=+0.0 xtrack=+0.00 boundary_dist=0.48 warnings(pair_loss=8, weather_entry=None, boundary_exit=None) call_name=EXECUTE_TURN call_reason=SECTOR_ENTRY
+- A4: origin=PT222 destination=WP059 route=PT222->LUSMO->OPULA->ELGOR->MABAL->VISAT->WP059 pos=(77.3,63.9) heading=-176.4 dest=(18.6,60.2) dist_dest=58.88 heading_err=+0.0 xtrack=+0.00 boundary_dist=0.97 warnings(pair_loss=8, weather_entry=None, boundary_exit=None) call_name=EXECUTE_TURN call_reason=SECTOR_ENTRY
+- A1: origin=OMBAP destination=WP061 route=OMBAP->BUNTO->LIPRO->KILOT->OTLON->WP061 pos=(61.4,41.2) heading=+161.3 dest=(23.2,54.4) dist_dest=40.41 heading_err=-0.4 xtrack=-0.00 boundary_dist=0.95 warnings(pair_loss=None, weather_entry=None, boundary_exit=None) call_name=EXECUTE_TURN call_reason=SECTOR_ENTRY
+
+ENTERED TRAFFIC DIRECTION CONTEXT:
+- A1: origin=OMBAP destination=WP061 route=OMBAP->BUNTO->LIPRO->KILOT->OTLON->WP061 pos=(61.4,41.2) heading=+161.3 dest=(23.2,54.4) dist_dest=40.41 heading_err=-0.4 xtrack=-0.00 boundary_dist=0.95 warnings(pair_loss=None, weather_entry=None, boundary_exit=None)
+- A3: origin=DAMOG destination=BOBOB route=DAMOG->SUSAR->MUMSO->ELGOR->LEBIN->OMLIV->BOBOB pos=(46.8,72.8) heading=-47.7 dest=(82.0,34.2) dist_dest=52.21 heading_err=+0.0 xtrack=+0.00 boundary_dist=0.48 warnings(pair_loss=8, weather_entry=None, boundary_exit=None)
+- A4: origin=PT222 destination=WP059 route=PT222->LUSMO->OPULA->ELGOR->MABAL->VISAT->WP059 pos=(77.3,63.9) heading=-176.4 dest=(18.6,60.2) dist_dest=58.88 heading_err=+0.0 xtrack=+0.00 boundary_dist=0.97 warnings(pair_loss=8, weather_entry=None, boundary_exit=None)
+
+HIGH-LEVEL TACTICAL PLANS:
+- A3: HLTP MABAL->OMLIV. HLTP rationale: MABAL provides a visual clearance from the conflict zone and avoids the green ring. OMLIV offers a smooth return to the original route.. Advisory only; current safety logic may override.
+- A4: HLTP SUSAR->ELGOR. HLTP rationale: SUSAR provides a visual clearance from the conflict zone and avoids the green ring. ELGOR offers a smooth return to the original route.. Advisory only; current safety logic may override.
+
+WEATHER MOTION SUMMARY:
+- Ignore reward/status overlays; use solid rings as current weather and dashed green outlines as future movement.
+- Green is caution; yellow/red/magenta are no-go regions.
+- required_clearance_buffer=0.74 simulator units
+- W1: center=(31.5,57.8) moving from near VISAT toward VISAT heading=+50.2 speed=0.37/step; growing +0.45nm/step; major_nm=5.34
+- W2: center=(62.8,48.1) moving from near OMLIV toward OMLIV heading=+50.2 speed=0.19/step; growing +0.24nm/step; major_nm=4.37
+
+RANKED TRAFFIC THREATS:
+- A1: A2 dist=13.82 loss=None min_sep=14.41; A3 dist=34.78 loss=None min_sep=18.47; A4 dist=27.74 loss=None min_sep=22.43
+- A3: A4 dist=31.78 loss=8 min_sep=4.27; A2 dist=42.21 loss=None min_sep=10.21; A1 dist=34.78 loss=None min_sep=18.47
+- A4: A3 dist=31.78 loss=8 min_sep=4.27; A2 dist=22.46 loss=None min_sep=10.02; A1 dist=27.74 loss=None min_sep=22.43
+
+VISION ACTION CANDIDATES:
+- Rows are simulator-tested executable turns for the current phase; choose only from the listed turns for that aircraft.
+- Rows are guidance, not orders; use vision to choose tactical intent and then choose among viable listed candidates.
+- Rows are sorted best-to-worst by the controller's safety/recovery heuristic, but visual common sense may justify another viable listed row.
+- safe=1 means no predicted traffic loss, weather entry, or boundary exit and the traffic/weather buffers remain satisfied.
+- pair_loss/weather_entry/boundary_exit show first predicted bad step; None means not predicted.
+- Do not choose a row with pair_loss or weather_entry if another listed row avoids that problem.
+- For MERGE_BACK, among acceptable rows, use the image to choose the candidate with the best tactical recovery.
+- If all MERGE_BACK rows have boundary_exit, choose the strongest recovery row; do not hold at 0 unless 0 is actually best.
+- A1: displayed_turns=[+25, +20, +15, +10, +5, +0]
+  turn=+25 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=14.60 | weather_clearance=6.54 | progress_to_destination=13.56 | cross_track_reduction=-6.90 | end_heading_error=40.2
+  turn=+20 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=14.59 | weather_clearance=6.39 | progress_to_destination=14.39 | cross_track_reduction=-5.62 | end_heading_error=32.8
+  turn=+15 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=14.56 | weather_clearance=6.24 | progress_to_destination=15.07 | cross_track_reduction=-4.29 | end_heading_error=25.1
+  turn=+10 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=14.52 | weather_clearance=6.07 | progress_to_destination=15.57 | cross_track_reduction=-2.93 | end_heading_error=17.1
+  turn=+5 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=14.47 | weather_clearance=5.91 | progress_to_destination=15.88 | cross_track_reduction=-1.55 | end_heading_error=8.9
+  turn=+0 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=14.41 | weather_clearance=5.74 | progress_to_destination=16.00 | cross_track_reduction=-0.16 | end_heading_error=0.7
+- A3: displayed_turns=[-30, -25, -20, -15, +30, -10]
+  turn=-30 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=10.27 | weather_clearance=11.64 | progress_to_destination=15.91 | cross_track_reduction=-10.01 | end_heading_error=46.0
+  turn=-25 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=9.38 | weather_clearance=10.15 | progress_to_destination=17.09 | cross_track_reduction=-8.46 | end_heading_error=39.0
+  turn=-20 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=7.64 | weather_clearance=8.83 | progress_to_destination=18.10 | cross_track_reduction=-6.85 | end_heading_error=31.6
+  turn=-15 | safe=0 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=5.92 | weather_clearance=7.76 | progress_to_destination=18.91 | cross_track_reduction=-5.18 | end_heading_error=24.0
+  turn=+30 | safe=0 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=5.04 | weather_clearance=15.00 | progress_to_destination=15.92 | cross_track_reduction=-9.99 | end_heading_error=46.0
+  turn=-10 | safe=0 | pair_loss=10 | weather_entry=None | boundary_exit=None | min_sep=4.28 | weather_clearance=7.05 | progress_to_destination=19.51 | cross_track_reduction=-3.48 | end_heading_error=16.1
+- A4: displayed_turns=[-30, -25, -20, -15, -10, -5]
+  turn=-30 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=11.46 | weather_clearance=18.33 | progress_to_destination=16.13 | cross_track_reduction=-10.00 | end_heading_error=43.5
+  turn=-25 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=10.07 | weather_clearance=17.50 | progress_to_destination=17.26 | cross_track_reduction=-8.46 | end_heading_error=36.7
+  turn=-20 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=8.70 | weather_clearance=16.57 | progress_to_destination=18.21 | cross_track_reduction=-6.84 | end_heading_error=29.7
+  turn=-15 | safe=1 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=7.37 | weather_clearance=15.53 | progress_to_destination=18.98 | cross_track_reduction=-5.18 | end_heading_error=22.5
+  turn=-10 | safe=0 | pair_loss=None | weather_entry=None | boundary_exit=None | min_sep=6.13 | weather_clearance=14.36 | progress_to_destination=19.54 | cross_track_reduction=-3.48 | end_heading_error=15.1
+  turn=-5 | safe=0 | pair_loss=9 | weather_entry=None | boundary_exit=None | min_sep=4.92 | weather_clearance=13.14 | progress_to_destination=17.90 | cross_track_reduction=-1.57 | end_heading_error=7.2
+
+RECENT GLOBAL DECISION MEMORY:
+- none
+VISION MEMORY ADVISORY:
+- Compare these recent turns against the four frames; repeat a turn only if the visual trend shows improved separation or recovery.
+- Watch for oscillation, repeated holds near boundary, or repeated MERGE_BACK that still leaves the aircraft off-route.
