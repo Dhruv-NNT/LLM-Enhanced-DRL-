@@ -1,10 +1,18 @@
-# Vision-Based LLM Guidance README
+# Integrated LLM Guidance README
 
-This document explains how the vision-based LLM guidance system works in the
-`multi-agent-isolated-llm-guidance` folder.
+This document explains how both text-based and vision-based LLM guidance work
+in the `multi-agent-isolated-llm-guidance` folder.
 
-The explanation follows the current default code path used by the episode
-runner when `--use-vision` is enabled:
+Both modes use the same simulator, the same global controller, the same stage
+logic, the same candidate-turn previews, the same fallback logic, and the same
+reward/termination logic.
+
+The main difference is the LLM input:
+
+- text mode sends only structured text,
+- vision mode sends structured text plus recent rendered frames.
+
+The shared code path is:
 
 ```text
 run_llm_episode_gif_multi_agent.py
@@ -12,16 +20,13 @@ run_llm_episode_gif_multi_agent.py
   -> JointGuidanceEnv
   -> MultiAgentSectorCore
   -> GlobalLangGraphGuidanceController
-  -> rendered frame paths
-  -> Ollama vision prompt with text plus images
+  -> text prompt or vision prompt
+  -> Ollama response
   -> validated heading changes
   -> simulator step
 ```
 
-Vision mode is enabled by passing `--use-vision`. In this mode, the controller
-still sends structured text to the LLM, but it also attaches recent rendered
-simulation frames. The LLM is asked to inspect the images first, then use the
-text and simulator-tested candidate rows to choose executable heading changes.
+Text mode is used by default. Vision mode is enabled by passing `--use-vision`.
 
 ## 1. What The System Does
 
@@ -50,16 +55,22 @@ The LLM does not own the simulator. The simulator owns aircraft movement,
 weather movement, reward calculation, rendering, collision checks, weather
 checks, and episode termination.
 
-The LLM is used as an air traffic control helper. In vision mode, it receives:
+The LLM is used as an air traffic control helper.
 
-- rendered frames showing aircraft, routes, waypoints, weather, and recent
-  motion,
+In text mode, it receives:
+
 - text that names aircraft and destinations,
 - text that lists predicted threats,
-- text that lists simulator-tested candidate turns.
+- text that lists simulator-tested candidate turns,
+- text that lists recent controller memory.
 
-It then chooses a heading change for each aircraft that needs guidance in the
-current step.
+In vision mode, it receives all of the above plus:
+
+- rendered frames showing aircraft, routes, waypoints, weather, and recent
+  motion.
+
+In both modes, it chooses a heading change for each aircraft that needs guidance
+in the current step.
 
 The controller validates the LLM response before passing the final actions back
 to the simulator.
@@ -225,13 +236,19 @@ This helps avoid immediate collisions at shared or nearby origins.
 
 ## 6. What Happens When A Simulation Starts
 
+The normal text command is:
+
+```bash
+python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py
+```
+
 The normal vision command is:
 
 ```bash
 python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision
 ```
 
-Without `--use-vision`, the same runner uses the text-only prompt path.
+The only mode flag is `--use-vision`. Without it, the runner uses text mode.
 
 Startup happens in this order:
 
@@ -244,7 +261,7 @@ Startup happens in this order:
 7. `JointGuidanceEnv` creates a `MultiAgentSectorCore`.
 8. The environment is reset.
 9. The first frame is rendered as `image_000.png`.
-10. The controller can use that frame path during the first guidance call.
+10. The controller can use that frame path during guidance.
 11. The main episode loop starts.
 
 ## 7. What Environment Reset Does
@@ -309,15 +326,16 @@ The loop is:
 ```text
 while not done and not truncated:
     latest_frame_path = image_<current step>.png
-    actions = controller.choose_llm_actions(..., use_vision=True)
+    actions = controller.choose_llm_actions(..., use_vision=<mode>)
     annotate current frame if there are labels
     env.step(actions)
     render next frame
 ```
 
 Guidance is chosen before the next simulator step.
-The current frame path is important in vision mode because it tells the
-controller which rendered image can be attached to the LLM call.
+In text mode, the current frame path is mostly used for saved-frame annotation.
+In vision mode, it also tells the controller which rendered image can be
+attached to the LLM call.
 
 Example:
 
@@ -327,7 +345,8 @@ Example:
 4. During that step, an aircraft may enter the sector.
 5. The next frame is rendered.
 6. On the next loop, the controller sees that sector entry and can request LLM
-   guidance using the latest rendered frame and recent older frames.
+   guidance. In vision mode, that request can include the latest rendered frame
+   and recent older frames.
 
 ## 10. Route Following Before Sector Entry
 
@@ -483,24 +502,38 @@ predicted_boundary_exit_step
 If a hazard is predicted, `safe_streak` becomes zero. If no hazard is predicted,
 `safe_streak` increases by one.
 
-## 16. The Global Vision Controller
+## 16. The Global LLM Controller
 
 The default controller is `GlobalLangGraphGuidanceController`.
 
-In vision mode, it is called once per simulator step with `use_vision=True`:
+It is called once per simulator step. The `use_vision` flag selects the prompt
+mode:
 
 ```python
 controller.choose_llm_actions(
     env.core,
     step=env.n_step,
     latest_frame_path=latest_frame_path,
-    use_vision=True,
+    use_vision=False,  # text mode
 )
 ```
 
-When `use_vision` is true, the controller looks for the current rendered frame
-and up to three recent older frames. Existing frame files are attached to the
-Ollama request as base64 images.
+or:
+
+```python
+controller.choose_llm_actions(
+    env.core,
+    step=env.n_step,
+    latest_frame_path=latest_frame_path,
+    use_vision=True,   # vision mode
+)
+```
+
+When `use_vision=False`, the controller builds a text-only prompt.
+
+When `use_vision=True`, the controller looks for the current rendered frame and
+up to three recent older frames. Existing frame files are attached to the Ollama
+request as base64 images.
 
 The controller still asks for all due aircraft in one global prompt. It does not
 make one separate LLM call per aircraft.
@@ -535,6 +568,8 @@ An entered aircraft is:
 The node also creates frame annotations for aircraft that entered the sector at
 the current step.
 
+In text mode, this node does not attach images to the LLM call.
+
 In vision mode, this node calls `_recent_frame_paths()`. It starts from the
 latest frame path, such as `image_012.png`, then searches backward for recent
 frames:
@@ -566,15 +601,19 @@ The node:
 4. builds planning context for conflicted aircraft,
 5. finds right-side waypoint candidates,
 6. finds later merge-back waypoint candidates,
-7. builds an HLTP vision prompt when frames are available,
-8. calls the LLM with text plus images,
+7. builds an HLTP prompt,
+8. calls the LLM,
 9. validates returned waypoint names,
 10. uses deterministic fallback if the LLM plan is missing or invalid,
 11. stores the plan.
 
-The HLTP vision prompt asks the LLM to inspect the snapshots, judge route
-geometry, closure, weather rings, and safe right-side deviations, then return
-JSON like:
+In text mode, the HLTP prompt asks the LLM to use the listed aircraft context,
+conflict context, candidate waypoints, and weather context.
+
+In vision mode, the HLTP prompt also asks the LLM to inspect the snapshots,
+judge route geometry, closure, weather rings, and safe right-side deviations.
+
+Both modes return JSON like:
 
 ```json
 {
@@ -590,9 +629,9 @@ JSON like:
 }
 ```
 
-The stored HLTP plan is later included in the normal global vision guidance
-prompt. It can help the LLM understand tactical intent, but current safety
-previews and turn constraints can override it.
+The stored HLTP plan is later included in the normal global guidance prompt. It
+can help the LLM understand tactical intent, but current safety previews and
+turn constraints can override it.
 
 If no conflict is predicted for a newly entered aircraft, the annotation says
 that no HLTP conflict was detected.
@@ -675,7 +714,7 @@ This keeps merge-back focused on destination recovery.
 
 ## 21. build_global_context
 
-This node builds the vision prompt.
+This node builds the LLM prompt for the current mode.
 
 For each actionable aircraft, it creates:
 
@@ -687,13 +726,38 @@ It also gathers:
 - entered traffic context,
 - advisory HLTP plans,
 - global weather context,
-- recent decision memory,
-- recent frame paths.
+- recent decision memory.
 
-When `use_vision=True`, the controller calls
-`GlobalPromptBuilder.build_vision_prompt()`.
+In vision mode, it also gathers recent frame paths.
 
-The final vision prompt sections are:
+When `use_vision=False`, the controller calls:
+
+```text
+GlobalPromptBuilder.build_prompt()
+```
+
+The main text prompt sections are:
+
+```text
+GLOBAL GUIDANCE TASK
+MERGE_BACK PRIORITY
+GUIDANCE-ELIGIBLE AGENTS THIS STEP
+ENTERED TRAFFIC CONTEXT
+HIGH-LEVEL TACTICAL PLANS
+GLOBAL WEATHER
+RANKED TRAFFIC THREATS
+PER-AGENT TURN PREVIEWS
+RECENT GLOBAL DECISION MEMORY
+FRAME CONTEXT
+```
+
+When `use_vision=True`, the controller calls:
+
+```text
+GlobalPromptBuilder.build_vision_prompt()
+```
+
+The main vision prompt sections are:
 
 ```text
 VISION-FIRST GLOBAL GUIDANCE TASK
@@ -709,14 +773,28 @@ RECENT GLOBAL DECISION MEMORY
 VISION MEMORY ADVISORY
 ```
 
-The vision prompt tells the LLM to inspect the frames first, then use the text
-signals to anchor aircraft ids, destinations, threats, weather, memory, and
-candidate turns.
+The text prompt tells the LLM to use structured state and simulator-tested
+preview rows.
 
-## 22. Vision Action Candidates
+The vision prompt tells the LLM to inspect frames first, then use text signals
+to anchor aircraft ids, destinations, threats, weather, memory, and candidate
+turns.
 
-Vision action candidates are the most important guardrail in the vision
-guidance system.
+## 22. Turn Previews And Vision Action Candidates
+
+Turn previews are the most important guardrail in both guidance modes.
+
+In text mode, this prompt section is called:
+
+```text
+PER-AGENT TURN PREVIEWS
+```
+
+In vision mode, this prompt section is called:
+
+```text
+VISION ACTION CANDIDATES
+```
 
 The controller does not simply ask:
 
@@ -727,9 +805,14 @@ What should the aircraft do?
 It asks:
 
 ```text
-Look at the frames to understand the tactical situation.
-Then choose one of these listed candidate turns.
+Here are the legal turns.
+Here is what the simulator predicts for each turn.
+Choose one of these listed turns.
 ```
+
+In vision mode, the prompt also says to inspect frames first so the LLM can use
+the image to understand the tactical situation before choosing from the listed
+turns.
 
 For each allowed turn, the controller:
 
@@ -739,7 +822,7 @@ For each allowed turn, the controller:
 4. simulates forward for `TURN_PREVIEW_STEPS`,
 5. records the result.
 
-Each vision candidate row contains:
+Each row contains:
 
 ```text
 heading_change_deg
@@ -779,8 +862,11 @@ end_cross_track=2.00 | end_heading_error=6.5
 ```
 
 This tells the LLM what is expected to happen if that turn is selected now.
-The image helps the LLM choose tactical intent, while the candidate row turns
-that intent into an executable simulator action.
+
+In text mode, the LLM uses these rows as the main decision evidence.
+
+In vision mode, the image helps the LLM choose tactical intent, while the
+candidate row turns that intent into an executable simulator action.
 
 ## 23. Candidate Row Sorting
 
@@ -817,23 +903,15 @@ For merge-back, sorting is safety-first and then recovery-focused:
 This means merge-back still avoids traffic and weather first. Once actions are
 safe, it prefers actions that recover the aircraft toward its destination.
 
-## 24. Vision Prompt Safety Rules
+## 24. Prompt Safety Rules
 
-The prompt tells the LLM to act as a cautious vision-first air traffic control
-helper.
+Both prompts tell the LLM to act as a cautious air traffic control helper.
 
-The main rules are:
+Rules shared by both modes:
 
 - return one maneuver for every listed guidance-eligible aircraft,
-- inspect the recent snapshots first,
-- infer current motion from the frames,
-- use text to anchor aircraft ids, destinations, threats, weather, and memory,
-- choose visual tactical intent first,
-- then choose a listed vision action candidate,
 - do not return actions for aircraft that are not listed,
 - do not rename or output the call stages,
-- ignore reward, total reward, success/failure, and scoreboard overlays in the
-  images,
 - use candidate rows as guardrails,
 - prefer safe rows over unsafe rows,
 - prefer traffic and weather buffer satisfaction,
@@ -842,9 +920,19 @@ The main rules are:
 - avoid the green weather ring when possible,
 - never enter yellow, red, or magenta weather,
 - during merge-back, do not recover through traffic or weather,
-- avoid repeating recent ineffective turn patterns unless the frames show that
-  the repeated turn is now helping,
 - return exactly one JSON object and no extra text.
+
+Extra vision-mode rules:
+
+- inspect the recent snapshots first,
+- infer current motion from the frames,
+- use text to anchor aircraft ids, destinations, threats, weather, and memory,
+- choose visual tactical intent first,
+- then choose a listed vision action candidate,
+- ignore reward, total reward, success/failure, and scoreboard overlays in the
+  images,
+- avoid repeating recent ineffective turn patterns unless the frames show that
+  the repeated turn is now helping.
 
 The prompt also states:
 
@@ -878,15 +966,18 @@ The LLM should not output `call_name`; the controller already knows the call
 type for each aircraft.
 
 The simulator uses only the final heading change. Rationale text is kept in the
-logs for debugging. In vision mode, the prompt asks the rationale to cite both
-visual evidence and the selected candidate row consequence.
+logs for debugging.
+
+In text mode, the rationale should cite the chosen candidate row consequences.
+
+In vision mode, the rationale should cite both visual evidence and the selected
+candidate row consequence.
 
 ## 26. call_llm
 
 If there are no actionable aircraft, the controller skips the LLM call.
 
-If there are actionable aircraft, it sends the prompt and available frame images
-to Ollama:
+If there are actionable aircraft, it sends the prompt to Ollama:
 
 ```text
 <OLLAMA_HOST>/api/chat
@@ -911,6 +1002,10 @@ The request uses:
 - `top_p = 0.95`,
 - `num_ctx = 32768`,
 - the configured max token value.
+
+In text mode, the request contains:
+
+- the text prompt only.
 
 In vision mode, the request contains:
 
@@ -979,6 +1074,9 @@ applied turn: +5
 For emergency guidance, this prevents a zero-degree hold.
 
 For merge-back, this prevents a turn that points away from destination recovery.
+
+In text mode, this is the main turn guardrail: the requested value is snapped to
+a legal action bin and then to a legal turn for the current call type.
 
 Vision mode has an extra candidate-row safety resolver:
 
@@ -1406,8 +1504,9 @@ Each local observation has 24 values:
 23. weather center distance,
 24. weather relative bearing.
 
-The LLM does not see this raw vector directly. In vision mode, it sees rendered
-frames plus readable text created from the important parts of this state.
+The LLM does not see this raw vector directly. In both modes, the prompt builder
+turns important parts of this state into readable text. In vision mode, the LLM
+also receives rendered frames.
 
 ## 41. Logs And Outputs
 
@@ -1592,56 +1691,92 @@ The phrase "three-call" refers to the three main low-level guidance phases:
 2. `EMERGENCY_MANEUVER`,
 3. `MERGE_BACK`.
 
-## 46. Relationship To Text Mode
+## 46. Relationship Between Text And Vision Modes
 
-Vision mode is enabled with:
+Text mode is the default:
 
 ```bash
---use-vision
+python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py
 ```
 
-Without that flag, the same runner uses the text-only prompt path.
-
-Vision mode does not remove the structured text. It adds images on top of the
-same simulator state and candidate-row machinery.
-
-The main differences are:
-
-- the controller gathers recent frame paths,
-- the prompt uses `build_vision_prompt()`,
-- Ollama receives text plus images,
-- the LLM is told to inspect frames first,
-- the candidate section is called `VISION ACTION CANDIDATES`,
-- vision-specific guardrails can replace an unsafe chosen candidate with the
-  best sorted candidate.
-
-## 47. Running A Vision Episode
-
-Basic run:
+Vision mode is enabled with:
 
 ```bash
 python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision
 ```
 
-More aircraft:
+Vision mode does not replace text mode. It adds images on top of the same
+structured text, simulator state, candidate rows, fallback logic, reward logic,
+and termination logic.
+
+The main differences are:
+
+- text mode uses `GlobalPromptBuilder.build_prompt()`,
+- vision mode uses `GlobalPromptBuilder.build_vision_prompt()`,
+- text mode sends only text to Ollama,
+- vision mode sends text plus available frame images,
+- text mode calls the candidate section `PER-AGENT TURN PREVIEWS`,
+- vision mode calls the candidate section `VISION ACTION CANDIDATES`,
+- vision mode tells the LLM to inspect frames first,
+- vision mode has extra candidate-row safety replacement logic.
+
+## 47. Running Episodes
+
+Basic text run:
+
+```bash
+python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py
+```
+
+Basic vision run:
+
+```bash
+python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision
+```
+
+Text run with more aircraft:
+
+```bash
+python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --num-agents 8
+```
+
+Vision run with more aircraft:
 
 ```bash
 python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision --num-agents 8
 ```
 
-Two weather cells:
+Text run with two weather cells:
+
+```bash
+python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --num-weather-cells 2
+```
+
+Vision run with two weather cells:
 
 ```bash
 python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision --num-weather-cells 2
 ```
 
-Specific routes:
+Text run with specific routes:
+
+```bash
+python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --num-agents 2 --route-ids PATH5_REV PATH6
+```
+
+Vision run with specific routes:
 
 ```bash
 python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision --num-agents 2 --route-ids PATH5_REV PATH6
 ```
 
-Shorter time limit:
+Text run with shorter time limit:
+
+```bash
+python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --episode-step-cap 10
+```
+
+Vision run with shorter time limit:
 
 ```bash
 python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision --episode-step-cap 10
@@ -1678,7 +1813,8 @@ The simplest model is:
 2. The simulator predicts near-future hazards.
 3. The controller decides whether any entered aircraft needs guidance.
 4. The controller simulates possible turns before asking the LLM.
-5. The LLM inspects frames and chooses from the displayed turn consequences.
+5. The LLM chooses from the displayed turn consequences. In vision mode, it also
+   inspects frames before choosing.
 6. The controller cleans up the answer and fills missing actions.
 7. The simulator applies the final heading changes.
 8. The episode ends when all aircraft finish, a collision happens, terminal
@@ -1700,6 +1836,7 @@ rl_llm_multi/llm.py
   _preview_rows()
   _candidate_sort_key()
   _merge_back_candidate_sort_key()
+  GlobalPromptBuilder.build_prompt()
   GlobalPromptBuilder.build_vision_prompt()
   _graph_parse_validate_retry()
   _graph_guardrail_actions()
@@ -1710,5 +1847,5 @@ evaluate.py
   evaluate_episode()
 ```
 
-These functions explain almost all behavior in the vision-based LLM guidance
+These functions explain almost all behavior in the integrated LLM guidance
 loop.
