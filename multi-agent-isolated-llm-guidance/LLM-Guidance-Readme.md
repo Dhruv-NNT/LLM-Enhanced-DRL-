@@ -1280,99 +1280,55 @@ It is treated as a guidance risk and appears in preview rows.
 
 ## 37. Reward
 
-The reward is one team reward value for the whole step.
+The simulator now uses per-aircraft dense rewards plus one shared terminal
+outcome. This keeps normal step rewards bounded as the scenario scales from 2
+to 12 aircraft, while making collision, weather failure, truncation, and team
+success dominate the final quality of the trajectory.
 
-The simulator computes one scalar called `reward`. It stores it in
-`core.reward`, adds it into `core.total_reward`, and gives the same value to
-every aircraft that is still active after the step. In `JointGuidanceEnv`, this
-same scalar is returned as `team_reward`.
-
-Exact formula:
+Per-aircraft dense reward:
 
 ```text
-reward = 0.0
+progress = clip(distance_reduction / speed, -1.0, 1.0)
+cross_track = clip(abs(cross_track_error) / SAFE_R, 0.0, 2.0)
+traffic_risk = bounded value in [0.0, 1.0]
+weather_risk = bounded value in [0.0, 1.0]
 
-if any aircraft has launched:
-    reward += mean(progress_toward_destination)
-
-reward -= 0.01
-
-if any aircraft has launched:
-    reward -= 0.01 * mean(abs(cross_track_error))
-
-reward -= 0.05 * threat_count
-reward -= 0.05 * weather_risk_count
-reward += 2.0 * newly_finished
-
-if collision:
-    reward -= 10.0
-
-if weather_failure:
-    reward -= 10.0
-
-if team_success:
-    reward += 20.0
+agent_dense_reward =
+    + 1.0 * progress
+    - 0.02
+    - 0.20 * cross_track
+    - 1.00 * traffic_risk
+    - 1.00 * weather_risk
+    + 3.00 if this aircraft just finished
 ```
 
-The exact parts are:
+Terminal reward:
 
-- `mean(progress_toward_destination)`: average progress made by launched
-  aircraft. For each launched aircraft, progress is
-  `previous_distance_to_destination - current_distance_to_destination`. If an
-  aircraft gets closer to its destination, this value is positive. If it moves
-  away, this value is negative.
-- `-0.01`: fixed step cost. This is applied every simulator step.
-- `-0.01 * mean(abs(cross_track_error))`: route-deviation penalty. Cross-track
-  error means how far launched aircraft are from their route line. Larger
-  route deviation gives a larger penalty.
-- `-0.05 * threat_count`: hazard penalty. `threat_count` is the number of
-  launched aircraft with `hazard_predicted = True`.
-- `-0.05 * weather_risk_count`: weather-risk penalty. `weather_risk_count` is
-  the number of launched aircraft with `weather_predicted = True`.
-- `+2.0 * newly_finished`: destination bonus. Each aircraft that newly reaches
-  its destination during this step adds `+2.0`.
-- `-10.0` for `collision`: collision penalty. This is added when any active
-  aircraft pair is closer than `SAFE_R`.
-- `-10.0` for `weather_failure`: terminal weather penalty. This is added when
-  any active aircraft enters the terminal weather core.
-- `+20.0` for `team_success`: success bonus. This is added only when all
-  aircraft finish without collision, weather failure, or truncation.
+```text
+team success:     +80
+collision:        -80
+weather failure:  -80
+truncation:       -30
+```
 
 Important details:
 
-- There is no separate numeric penalty for truncation in the reward formula.
-  A truncated step still receives the normal progress, cross-track, hazard,
-  weather-risk, and step-cost terms.
-- Collision and weather failure are separate checks. If both happen in the same
-  step, both `-10.0` penalties apply.
-- Weather risk can be penalized twice. If `weather_predicted = True`, then
-  `hazard_predicted` is also true, so one aircraft can add `-0.05` through
-  `threat_count` and another `-0.05` through `weather_risk_count`.
-- A just-finished aircraft contributes to the reward calculation and can add
-  `+2.0`, even though it is no longer active after the step.
-
-Simple example:
-
-```text
-mean progress toward destination = +1.50
-mean abs cross-track error = 4.00
-threat_count = 2
-weather_risk_count = 1
-newly_finished = 1
-collision = False
-weather_failure = False
-team_success = False
-
-reward = 0.0
-reward += 1.50
-reward -= 0.01
-reward -= 0.01 * 4.00      = -0.04
-reward -= 0.05 * 2         = -0.10
-reward -= 0.05 * 1         = -0.05
-reward += 2.0 * 1          = +2.00
-
-final reward = 3.30
-```
+- The simulator stores per-agent total rewards in `agent_rewards`.
+- It stores dense-only rewards in `agent_dense_rewards`.
+- It stores the terminal component in `terminal_reward`.
+- `team_reward` is the mean per-agent total reward for the step.
+- MAPPO trains from `agent_dense_rewards`, then adds `terminal_reward` to the
+  last stored transition of every aircraft trajectory in that episode.
+- The MAPPO critic is agent-conditioned. It receives `global_state + agent_id`
+  so it can learn a separate value baseline for each aircraft in the same
+  global situation.
+- MAPPO updates are performed only after an episode ends, so the terminal
+  outcome is present before the rollout buffer is cleared.
+- Training logs mean reward components to TensorBoard under
+  `train/reward_component/*`.
+- Dense components are clipped before summing. The final reward is not blindly
+  clipped, so terminal failure remains meaningfully worse than a normal bad
+  step.
 
 The LLM does not directly optimize reward. It sees rendered frames, structured
 vision prompts, and candidate rows.

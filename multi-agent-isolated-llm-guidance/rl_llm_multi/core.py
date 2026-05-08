@@ -28,12 +28,16 @@ from configs import (
     NUM_WEATHER_CELLS_DEFAULT,
     PAIR_RISK_BUFFER,
     REWARD_COLLISION_PENALTY,
+    REWARD_CROSS_TRACK_CLIP,
     REWARD_CROSS_TRACK_SCALE,
     REWARD_FINISHED_AIRCRAFT,
     REWARD_GREEN_WEATHER_PENETRATION_SCALE,
+    REWARD_PROGRESS_CLIP,
+    REWARD_PROGRESS_SCALE,
     REWARD_STEP_PENALTY,
     REWARD_TEAM_SUCCESS,
     REWARD_TERMINAL_WEATHER_PENALTY,
+    REWARD_TRUNCATION_PENALTY,
     REWARD_TRAFFIC_RISK_PENALTY,
     REWARD_WEATHER_RISK_PENALTY,
     ROUTE_RECOVERY_XTRACK_UNITS,
@@ -137,6 +141,10 @@ class MultiAgentSectorCore:
         self.n_step = 0
         self.reward = 0.0
         self.total_reward = 0.0
+        self.agent_rewards: Dict[str, float] = {}
+        self.agent_dense_rewards: Dict[str, float] = {}
+        self.last_reward_components: Dict[str, Dict[str, float]] = {}
+        self.last_terminal_reward = 0.0
         self.last_team_done = False
         self.last_team_truncated = False
         self.last_team_success = False
@@ -178,6 +186,10 @@ class MultiAgentSectorCore:
         self.n_step = 0
         self.reward = 0.0
         self.total_reward = 0.0
+        self.agent_rewards = {}
+        self.agent_dense_rewards = {}
+        self.last_reward_components = {}
+        self.last_terminal_reward = 0.0
         self.last_team_done = False
         self.last_team_truncated = False
         self.last_team_success = False
@@ -633,6 +645,45 @@ class MultiAgentSectorCore:
             )
             state.threat_agents = tuple(agent for agent, _ in ranked_threats[:3])
 
+    def _lookahead_risk(self, step: Optional[int], horizon_steps: int = HAZARD_LOOKAHEAD_STEPS) -> float:
+        if step is None:
+            return 0.0
+        horizon = max(float(horizon_steps), 1.0)
+        return float(np.clip(1.0 - ((float(step) - 1.0) / horizon), 0.0, 1.0))
+
+    def _traffic_risk_score(self, state: AgentState, collision_agents: set[str]) -> float:
+        if state.agent_id in collision_agents:
+            return 1.0
+        step_risk = self._lookahead_risk(state.predicted_pair_loss_step)
+        sep_risk = 0.0
+        if math.isfinite(state.predicted_min_sep):
+            caution_distance = max(self.safe_r * PAIR_RISK_BUFFER, 1e-6)
+            sep_risk = float(np.clip((caution_distance - state.predicted_min_sep) / caution_distance, 0.0, 1.0))
+        return max(step_risk, sep_risk)
+
+    def _weather_risk_score(self, state: AgentState) -> float:
+        terminal_clearance = self.weather_terminal_signed_clearance(state.position)
+        if terminal_clearance < 0.0:
+            return 1.0
+
+        step_risk = self._lookahead_risk(state.predicted_weather_entry_step)
+        buffer = max(float(self.weather_clearance_buffer_units), 1e-6)
+        clearance_risk = 0.0
+        if math.isfinite(state.predicted_weather_clearance):
+            clearance_risk = float(np.clip((buffer - state.predicted_weather_clearance) / buffer, 0.0, 1.0))
+
+        green_risk = 0.0
+        green_clearance = self.weather_signed_clearance(state.position)
+        if green_clearance < 0.0:
+            green_risk = float(
+                np.clip(
+                    REWARD_GREEN_WEATHER_PENETRATION_SCALE * abs(float(green_clearance)) / buffer,
+                    0.0,
+                    1.0,
+                )
+            )
+        return max(step_risk, clearance_risk, green_risk)
+
     def step(
         self,
         action_dict: Optional[Dict[str, int]] = None,
@@ -646,6 +697,11 @@ class MultiAgentSectorCore:
         Dict[str, Any],
     ]:
         action_dict = action_dict or {}
+        previously_finished = {
+            agent_id
+            for agent_id, state in self.agent_states.items()
+            if state.finished
+        }
         previous_distances = {
             agent_id: self.distance_to_destination(state)
             for agent_id, state in self.agent_states.items()
@@ -668,7 +724,13 @@ class MultiAgentSectorCore:
         pairwise = self._pairwise_distances()
         self.last_pairwise_separations = pairwise
         active_ids = self.active_agent_ids
-        collision = any(distance < self.safe_r for distance in pairwise.values())
+        collision_pairs = {
+            pair
+            for pair, distance in pairwise.items()
+            if distance < self.safe_r
+        }
+        collision_agents = {agent_id for pair in collision_pairs for agent_id in pair}
+        collision = bool(collision_pairs)
         weather_violation_agents = [
             agent_id
             for agent_id in active_ids
@@ -696,59 +758,94 @@ class MultiAgentSectorCore:
         elif compute_predictions:
             self.risky_pairs = []
 
-        progress_values: List[float] = []
-        cross_tracks: List[float] = []
-        green_weather_penetrations: List[float] = []
-        newly_finished = 0
-        threat_count = 0
-        weather_risk_count = 0
+        reward_agent_ids = [
+            agent_id
+            for agent_id, state in self.agent_states.items()
+            if state.launched and agent_id not in previously_finished
+        ]
+        dense_rewards: Dict[str, float] = {}
+        reward_components: Dict[str, Dict[str, float]] = {}
         for state in self.agent_states.values():
-            if not state.launched:
+            if state.agent_id not in reward_agent_ids:
                 continue
-            progress_values.append(previous_distances[state.agent_id] - self.distance_to_destination(state))
-            signed_xtrk, _, _ = line_signed_cross_track(state.route.linestring, state.position)
-            cross_tracks.append(abs(signed_xtrk))
-            green_clearance = self.weather_signed_clearance(state.position)
-            terminal_clearance = self.weather_terminal_signed_clearance(state.position)
-            if green_clearance < 0.0 and terminal_clearance >= 0.0:
-                green_weather_penetrations.append(abs(float(green_clearance)))
-            if state.just_finished:
-                newly_finished += 1
-            if state.hazard_predicted:
-                threat_count += 1
-            if state.weather_predicted:
-                weather_risk_count += 1
-
-        reward = 0.0
-        if progress_values:
-            reward += float(np.mean(progress_values))
-        reward -= REWARD_STEP_PENALTY
-        if cross_tracks:
-            reward -= REWARD_CROSS_TRACK_SCALE * float(np.mean(cross_tracks))
-        if green_weather_penetrations:
-            reward -= REWARD_GREEN_WEATHER_PENETRATION_SCALE * float(
-                np.mean(green_weather_penetrations)
+            raw_progress = previous_distances[state.agent_id] - self.distance_to_destination(state)
+            progress = float(
+                np.clip(
+                    raw_progress / max(float(self.speed), 1e-6),
+                    -REWARD_PROGRESS_CLIP,
+                    REWARD_PROGRESS_CLIP,
+                )
             )
-        reward -= REWARD_TRAFFIC_RISK_PENALTY * threat_count
-        reward -= REWARD_WEATHER_RISK_PENALTY * weather_risk_count
-        reward += REWARD_FINISHED_AIRCRAFT * newly_finished
+            signed_xtrk, _, _ = line_signed_cross_track(state.route.linestring, state.position)
+            cross_track = float(
+                np.clip(
+                    abs(float(signed_xtrk)) / max(float(self.safe_r), 1e-6),
+                    0.0,
+                    REWARD_CROSS_TRACK_CLIP,
+                )
+            )
+            traffic_risk = self._traffic_risk_score(state, collision_agents)
+            weather_risk = self._weather_risk_score(state)
+            finish_bonus = REWARD_FINISHED_AIRCRAFT if state.just_finished else 0.0
+            dense_reward = (
+                REWARD_PROGRESS_SCALE * progress
+                - REWARD_STEP_PENALTY
+                - REWARD_CROSS_TRACK_SCALE * cross_track
+                - REWARD_TRAFFIC_RISK_PENALTY * traffic_risk
+                - REWARD_WEATHER_RISK_PENALTY * weather_risk
+                + finish_bonus
+            )
+            dense_rewards[state.agent_id] = float(dense_reward)
+            reward_components[state.agent_id] = {
+                "raw_progress": float(raw_progress),
+                "progress": float(progress),
+                "cross_track": float(cross_track),
+                "traffic_risk": float(traffic_risk),
+                "weather_risk": float(weather_risk),
+                "finish_bonus": float(finish_bonus),
+                "dense_reward": float(dense_reward),
+            }
+
+        terminal_reward = 0.0
         if collision:
-            reward -= REWARD_COLLISION_PENALTY
-        if weather_failure:
-            reward -= REWARD_TERMINAL_WEATHER_PENALTY
-        if team_success:
-            reward += REWARD_TEAM_SUCCESS
+            terminal_reward = -REWARD_COLLISION_PENALTY
+        elif weather_failure:
+            terminal_reward = -REWARD_TERMINAL_WEATHER_PENALTY
+        elif team_truncated:
+            terminal_reward = -REWARD_TRUNCATION_PENALTY
+        elif team_success:
+            terminal_reward = REWARD_TEAM_SUCCESS
+
+        agent_rewards = {
+            agent_id: float(dense_reward + terminal_reward)
+            for agent_id, dense_reward in dense_rewards.items()
+        }
+        reward = (
+            float(np.mean(list(agent_rewards.values())))
+            if agent_rewards
+            else float(terminal_reward)
+        )
 
         self.reward = reward
         self.total_reward += reward
+        self.agent_rewards = agent_rewards
+        self.agent_dense_rewards = dense_rewards
+        self.last_reward_components = reward_components
+        self.last_terminal_reward = float(terminal_reward)
         self.last_team_done = team_done
         self.last_team_truncated = team_truncated
         self.last_team_success = team_success
 
         observations = self.get_active_observations()
-        rewards = {agent_id: reward for agent_id in active_ids}
-        terminations = {agent_id: team_done for agent_id in active_ids}
-        truncations = {agent_id: team_truncated for agent_id in active_ids}
+        rewards = {
+            agent_id: float(agent_rewards.get(agent_id, reward))
+            for agent_id in reward_agent_ids
+        }
+        terminations = {
+            agent_id: bool(team_done or self.agent_states[agent_id].finished)
+            for agent_id in reward_agent_ids
+        }
+        truncations = {agent_id: team_truncated for agent_id in reward_agent_ids}
         infos = self.get_infos()
         return observations, rewards, terminations, truncations, infos
 
@@ -884,6 +981,10 @@ class MultiAgentSectorCore:
             "episode_truncated": self.last_team_truncated,
             "episode_success": self.last_team_success,
             "team_reward": self.reward,
+            "agent_rewards": dict(self.agent_rewards),
+            "agent_dense_rewards": dict(self.agent_dense_rewards),
+            "terminal_reward": float(self.last_terminal_reward),
+            "reward_components": copy.deepcopy(self.last_reward_components),
             "failure_reason": self.last_failure_reason,
             "max_agents_possible": len(build_route_catalog()),
             "weather": self.weather_dict(),

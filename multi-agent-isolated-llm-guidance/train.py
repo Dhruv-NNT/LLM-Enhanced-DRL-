@@ -120,6 +120,16 @@ def _log_eval(writer: SummaryWriter, stats: Dict[str, float], agent_steps: int) 
         writer.add_scalar(f"eval/{key}", float(value), agent_steps)
 
 
+def _eval_rank(stats: Dict[str, float]) -> tuple[float, float, float, float, float]:
+    return (
+        float(stats.get("success_rate", 0.0)),
+        -float(stats.get("collision_rate", 0.0)),
+        -float(stats.get("weather_rate", 0.0)),
+        -float(stats.get("truncation_rate", 0.0)),
+        float(stats.get("mean_return", -math.inf)),
+    )
+
+
 def _log_action_distribution(
     writer: SummaryWriter,
     actions: Dict[str, int],
@@ -139,6 +149,55 @@ def _log_action_distribution(
             counts[idx] / total,
             agent_steps,
         )
+
+
+def _mean_mapping_value(mapping: object) -> Optional[float]:
+    if not isinstance(mapping, dict) or not mapping:
+        return None
+    values = [float(value) for value in mapping.values()]
+    return sum(values) / float(len(values))
+
+
+def _log_reward_components(
+    writer: SummaryWriter,
+    common: Dict[str, object],
+    agent_steps: int,
+) -> None:
+    terminal_reward = float(common.get("terminal_reward", 0.0))
+    writer.add_scalar("train/reward/terminal_step", terminal_reward, agent_steps)
+
+    for name, value in (
+        ("agent_dense_mean", _mean_mapping_value(common.get("agent_dense_rewards"))),
+        ("agent_total_mean", _mean_mapping_value(common.get("agent_rewards"))),
+    ):
+        if value is not None:
+            writer.add_scalar(f"train/reward/{name}", value, agent_steps)
+
+    components = common.get("reward_components")
+    if not isinstance(components, dict) or not components:
+        return
+
+    component_keys = (
+        "raw_progress",
+        "progress",
+        "cross_track",
+        "traffic_risk",
+        "weather_risk",
+        "finish_bonus",
+        "dense_reward",
+    )
+    for key in component_keys:
+        values = [
+            float(parts[key])
+            for parts in components.values()
+            if isinstance(parts, dict) and key in parts
+        ]
+        if values:
+            writer.add_scalar(
+                f"train/reward_component/{key}_mean",
+                sum(values) / float(len(values)),
+                agent_steps,
+            )
 
 
 def _min_pairwise_separation(env: MultiAgentParallelEnv) -> float:
@@ -183,7 +242,7 @@ def main() -> None:
             print(f"Failed to load checkpoint {last_ckpt_path}: {exc}. Starting fresh.")
 
     writer = SummaryWriter(str(log_dir), purge_step=agent_steps)
-    best_eval_return = -math.inf
+    best_eval_stats: Optional[Dict[str, float]] = None
     next_update = agent_steps + int(args.update_agent_steps)
     next_eval = agent_steps + int(args.eval_freq)
     next_save = agent_steps + int(args.save_model_freq)
@@ -221,15 +280,18 @@ def main() -> None:
             ep_agent_steps = 0
             ep_env_steps = 0
 
-            while not done and not truncated and agent_steps < int(args.max_agent_steps):
+            while not done and not truncated:
                 active_ids = list(env.agents)
                 if not active_ids:
                     _, _, _, _, info = env.step({})
                     common = info["__common__"]
                     done = bool(common["episode_done"])
                     truncated = bool(common["episode_truncated"])
+                    if done or truncated:
+                        agent.add_terminal_bonus(episode, float(common.get("terminal_reward", 0.0)))
                     env_steps += 1
                     ep_env_steps += 1
+                    _log_reward_components(writer, common, agent_steps)
                     continue
 
                 policy_actions, records, entropy = agent.select_actions(
@@ -260,7 +322,13 @@ def main() -> None:
                     agent_id: bool(team_terminal or agent_id not in post_active)
                     for agent_id in active_ids
                 }
-                agent.store_outcomes(records, reward=team_reward, terminals=terminals)
+                agent.store_outcomes(
+                    records,
+                    reward=common.get("agent_dense_rewards", common.get("agent_rewards", team_reward)),
+                    terminals=terminals,
+                )
+                if team_terminal:
+                    agent.add_terminal_bonus(episode, float(common.get("terminal_reward", 0.0)))
 
                 step_agent_count = len(records)
                 agent_steps += step_agent_count
@@ -272,61 +340,13 @@ def main() -> None:
                 writer.add_scalar("train/team_reward_step", team_reward, agent_steps)
                 writer.add_scalar("train/active_agents", len(active_ids), agent_steps)
                 writer.add_scalar("train/action_entropy", entropy, agent_steps)
+                _log_reward_components(writer, common, agent_steps)
                 writer.add_scalar(
                     "train/min_pairwise_separation",
                     _min_pairwise_separation(env),
                     agent_steps,
                 )
                 _log_action_distribution(writer, final_actions, agent_steps)
-
-                if agent_steps >= next_update and len(agent.buffer) > 0:
-                    bootstrap = {}
-                    if not team_terminal:
-                        bootstrap = agent.bootstrap_values(
-                            env.state(),
-                            common["active_agents"],
-                            episode_id=episode,
-                        )
-                    metrics = agent.update(bootstrap)
-                    for key, value in metrics.items():
-                        writer.add_scalar(f"loss/{key}", value, agent_steps)
-                    agent.save_checkpoint(
-                        last_ckpt_path,
-                        agent_steps=agent_steps,
-                        env_steps=env_steps,
-                        episode=episode,
-                    )
-                    next_update = agent_steps + int(args.update_agent_steps)
-
-                if agent_steps >= next_eval:
-                    stats = evaluate_policy(
-                        agent,
-                        make_eval_env,
-                        n_episodes=int(args.n_eval_episodes),
-                        seed=int(args.seed) + 10_000,
-                        reset_options=reset_options,
-                    )
-                    _log_eval(writer, stats, agent_steps)
-                    agent.save_checkpoint(
-                        last_ckpt_path,
-                        agent_steps=agent_steps,
-                        env_steps=env_steps,
-                        episode=episode,
-                    )
-                    if stats["mean_return"] > best_eval_return:
-                        best_eval_return = stats["mean_return"]
-                        agent.save_model(best_model_path)
-                        print(
-                            f"[{agent_steps}] Best MAPPO model saved to {best_model_path} "
-                            f"mean_return={best_eval_return:.3f}"
-                        )
-                    next_eval = agent_steps + int(args.eval_freq)
-
-                if agent_steps >= next_save:
-                    checkpoint_path = log_dir / f"checkpoint_{agent_steps}.pt"
-                    agent.save_model(checkpoint_path)
-                    print(f"[{agent_steps}] Saved MAPPO model checkpoint to {checkpoint_path}")
-                    next_save = agent_steps + int(args.save_model_freq)
 
             common = info["__common__"]
             failure_reason = common["failure_reason"] or "none"
@@ -349,6 +369,52 @@ def main() -> None:
                 failure_counts["success"] / total_episodes,
                 agent_steps,
             )
+
+            if agent_steps >= next_update and len(agent.buffer) > 0:
+                metrics = agent.update()
+                for key, value in metrics.items():
+                    writer.add_scalar(f"loss/{key}", value, agent_steps)
+                agent.save_checkpoint(
+                    last_ckpt_path,
+                    agent_steps=agent_steps,
+                    env_steps=env_steps,
+                    episode=episode,
+                )
+                next_update = agent_steps + int(args.update_agent_steps)
+
+            if agent_steps >= next_eval:
+                stats = evaluate_policy(
+                    agent,
+                    make_eval_env,
+                    n_episodes=int(args.n_eval_episodes),
+                    seed=int(args.seed) + 10_000,
+                    reset_options=reset_options,
+                )
+                _log_eval(writer, stats, agent_steps)
+                agent.save_checkpoint(
+                    last_ckpt_path,
+                    agent_steps=agent_steps,
+                    env_steps=env_steps,
+                    episode=episode,
+                )
+                if best_eval_stats is None or _eval_rank(stats) > _eval_rank(best_eval_stats):
+                    best_eval_stats = dict(stats)
+                    agent.save_model(best_model_path)
+                    print(
+                        f"[{agent_steps}] Best MAPPO model saved to {best_model_path} "
+                        f"success={stats['success_rate']:.3f} "
+                        f"collision={stats['collision_rate']:.3f} "
+                        f"weather={stats['weather_rate']:.3f} "
+                        f"truncated={stats['truncation_rate']:.3f} "
+                        f"mean_return={stats['mean_return']:.3f}"
+                    )
+                next_eval = agent_steps + int(args.eval_freq)
+
+            if agent_steps >= next_save:
+                checkpoint_path = log_dir / f"checkpoint_{agent_steps}.pt"
+                agent.save_model(checkpoint_path)
+                print(f"[{agent_steps}] Saved MAPPO model checkpoint to {checkpoint_path}")
+                next_save = agent_steps + int(args.save_model_freq)
 
             if episode % 10 == 0:
                 elapsed = datetime.now() - start_time

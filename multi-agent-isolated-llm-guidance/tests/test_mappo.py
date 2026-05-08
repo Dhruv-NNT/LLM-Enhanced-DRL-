@@ -14,9 +14,15 @@ from configs import (  # noqa: E402
     ACTION_BINS,
     MAX_AGENTS,
     MAX_WEATHER_CELLS,
+    REWARD_COLLISION_PENALTY,
+    REWARD_CROSS_TRACK_CLIP,
     REWARD_CROSS_TRACK_SCALE,
     REWARD_GREEN_WEATHER_PENETRATION_SCALE,
+    REWARD_PROGRESS_CLIP,
+    REWARD_PROGRESS_SCALE,
     REWARD_STEP_PENALTY,
+    REWARD_WEATHER_RISK_PENALTY,
+    SAFE_R,
 )
 from rl_llm_multi import MAPPO, MultiAgentParallelEnv, MultiAgentSectorCore, WeatherCell  # noqa: E402
 from rl_llm_multi.mappo import evaluate_policy  # noqa: E402
@@ -77,6 +83,14 @@ class MAPPOTests(unittest.TestCase):
             self.assertGreaterEqual(action, 0)
             self.assertLess(action, len(ACTION_BINS))
 
+    def test_critic_is_agent_conditioned(self) -> None:
+        env = _make_env()
+        env.reset(seed=42)
+        agent = _make_agent(env)
+
+        expected_dim = int(env.state().shape[0]) + MAX_AGENTS
+        self.assertEqual(agent.policy.critic[0].in_features, expected_dim)
+
     def test_green_weather_ring_adds_penalty_without_termination(self) -> None:
         core = MultiAgentSectorCore(num_agents=1, num_weather_cells=1)
         core.reset(seed=42, num_weather_cells=1)
@@ -114,18 +128,57 @@ class MAPPOTests(unittest.TestCase):
         self.assertLess(core.weather_signed_clearance(state.position), 0.0)
         self.assertGreaterEqual(core.weather_terminal_signed_clearance(state.position), 0.0)
 
-        progress = previous_distance - core.distance_to_destination(state)
+        raw_progress = previous_distance - core.distance_to_destination(state)
+        progress = max(-REWARD_PROGRESS_CLIP, min(REWARD_PROGRESS_CLIP, raw_progress / core.speed))
         signed_xtrk, _, _ = line_signed_cross_track(state.route.linestring, state.position)
-        green_penalty = (
-            REWARD_GREEN_WEATHER_PENETRATION_SCALE
-            * abs(core.weather_signed_clearance(state.position))
+        cross_track = max(
+            0.0,
+            min(REWARD_CROSS_TRACK_CLIP, abs(signed_xtrk) / SAFE_R),
+        )
+        green_risk = max(
+            0.0,
+            min(
+                1.0,
+                REWARD_GREEN_WEATHER_PENETRATION_SCALE
+                * abs(core.weather_signed_clearance(state.position))
+                / core.weather_clearance_buffer_units,
+            ),
         )
         expected_without_green = (
-            progress
+            REWARD_PROGRESS_SCALE * progress
             - REWARD_STEP_PENALTY
-            - REWARD_CROSS_TRACK_SCALE * abs(signed_xtrk)
+            - REWARD_CROSS_TRACK_SCALE * cross_track
         )
-        self.assertAlmostEqual(core.reward, expected_without_green - green_penalty, places=6)
+        self.assertAlmostEqual(
+            core.reward,
+            expected_without_green - REWARD_WEATHER_RISK_PENALTY * green_risk,
+            places=6,
+        )
+
+    def test_collision_terminal_penalty_dominates_progress(self) -> None:
+        core = MultiAgentSectorCore(num_agents=2, num_weather_cells=1)
+        core.reset(seed=42, num_weather_cells=1)
+        core.weather_cells = []
+        core._sync_primary_weather_cell()
+
+        for idx, agent_id in enumerate(("A1", "A2")):
+            state = core.get_agent(agent_id)
+            state.position = (40.0, 40.0 + idx * (core.safe_r * 0.5))
+            state.destination = (90.0, 40.0 + idx * (core.safe_r * 0.5))
+            state.heading_rad = 0.0
+            state.launched = True
+            state.active = True
+            state.finished = False
+            state.has_entered_sector = True
+            state.inside_sector = True
+
+        _, rewards, terminations, _, info = core.step({}, compute_predictions=False)
+
+        self.assertEqual(info["failure_reason"], "collision")
+        self.assertEqual(info["terminal_reward"], -REWARD_COLLISION_PENALTY)
+        self.assertLess(core.reward, -70.0)
+        self.assertTrue(all(value < -70.0 for value in rewards.values()))
+        self.assertTrue(all(terminations.values()))
 
     def test_short_rollout_update_clears_buffer(self) -> None:
         env = _make_env()
@@ -147,7 +200,13 @@ class MAPPOTests(unittest.TestCase):
                 agent_id: bool(team_terminal or agent_id not in post_active)
                 for agent_id in active_ids
             }
-            agent.store_outcomes(records, reward=float(common["team_reward"]), terminals=terminals)
+            agent.store_outcomes(
+                records,
+                reward=common.get("agent_dense_rewards", common["agent_rewards"]),
+                terminals=terminals,
+            )
+            if team_terminal:
+                agent.add_terminal_bonus(0, float(common.get("terminal_reward", 0.0)))
             done = bool(common["episode_done"])
             truncated = bool(common["episode_truncated"])
 

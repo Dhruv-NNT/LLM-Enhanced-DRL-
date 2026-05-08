@@ -6,6 +6,7 @@ import os
 import random
 import time
 from collections import defaultdict
+from collections.abc import Mapping as MappingABC
 from dataclasses import dataclass
 from typing import Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
@@ -133,6 +134,16 @@ class RolloutBuffer:
     def __len__(self) -> int:
         return len(self.rewards)
 
+    def add_terminal_bonus(self, episode_id: int, reward: float) -> None:
+        if abs(float(reward)) <= 1e-12:
+            return
+        last_index_by_agent: Dict[str, int] = {}
+        for idx, (stored_episode_id, agent_id) in enumerate(zip(self.episode_ids, self.agent_ids)):
+            if int(stored_episode_id) == int(episode_id):
+                last_index_by_agent[str(agent_id)] = idx
+        for idx in last_index_by_agent.values():
+            self.rewards[idx] = float(self.rewards[idx]) + float(reward)
+
 
 class MAPPOActorCritic(nn.Module):
     """Shared actor with agent identity and centralized critic."""
@@ -149,6 +160,7 @@ class MAPPOActorCritic(nn.Module):
         self.max_agents = int(max_agents)
         self.action_dim = int(action_dim)
         actor_dim = self.global_state_dim + self.max_agents
+        critic_dim = self.global_state_dim + self.max_agents
         self.actor = nn.Sequential(
             nn.Linear(actor_dim, hidden_dim),
             nn.Tanh(),
@@ -158,7 +170,7 @@ class MAPPOActorCritic(nn.Module):
             nn.Softmax(dim=-1),
         )
         self.critic = nn.Sequential(
-            nn.Linear(self.global_state_dim, hidden_dim),
+            nn.Linear(critic_dim, hidden_dim),
             nn.Tanh(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.Tanh(),
@@ -191,7 +203,7 @@ class MAPPOActorCritic(nn.Module):
         else:
             action = dist.sample()
         logprob = dist.log_prob(action)
-        value = self.critic(global_state.unsqueeze(0)).squeeze(-1).squeeze(0)
+        value = self.critic(actor_input).squeeze(-1).squeeze(0)
         entropy = dist.entropy()
         return action.detach(), logprob.detach(), value.detach(), entropy.detach()
 
@@ -206,14 +218,21 @@ class MAPPOActorCritic(nn.Module):
         dist = Categorical(probs)
         logprobs = dist.log_prob(actions)
         entropy = dist.entropy()
-        values = self.critic(global_states).squeeze(-1)
+        values = self.critic(actor_input).squeeze(-1)
         return logprobs, values, entropy
 
     @torch.no_grad()
-    def value(self, global_state: torch.Tensor) -> torch.Tensor:
+    def value(self, global_state: torch.Tensor, agent_indices: torch.Tensor | int) -> torch.Tensor:
         if global_state.dim() == 1:
             global_state = global_state.unsqueeze(0)
-        return self.critic(global_state).squeeze(-1)
+        if isinstance(agent_indices, int):
+            indices = torch.tensor([agent_indices], dtype=torch.long, device=global_state.device)
+        else:
+            indices = torch.as_tensor(agent_indices, dtype=torch.long, device=global_state.device).view(-1)
+        if global_state.size(0) == 1 and indices.numel() > 1:
+            global_state = global_state.expand(indices.numel(), -1)
+        critic_input = self._actor_input(global_state, indices)
+        return self.critic(critic_input).squeeze(-1)
 
 
 class MAPPO:
@@ -233,7 +252,7 @@ class MAPPO:
         eps_clip: float = 0.2,
         mb_size: int = 256,
         gae_lambda: float = 0.95,
-        normalize_reward: bool = True,
+        normalize_reward: bool = False,
     ) -> None:
         self.global_state_dim = int(global_state_dim)
         self.action_dim = int(action_dim)
@@ -321,15 +340,23 @@ class MAPPO:
         self,
         records: Iterable[ActionRecord],
         *,
-        reward: float,
+        reward: float | Mapping[str, float],
         terminals: Mapping[str, bool],
     ) -> None:
         for record in records:
+            record_reward = (
+                float(reward.get(record.agent_id, 0.0))
+                if isinstance(reward, MappingABC)
+                else float(reward)
+            )
             self.buffer.add(
                 record,
-                reward=float(reward),
+                reward=record_reward,
                 terminal=bool(terminals.get(record.agent_id, False)),
             )
+
+    def add_terminal_bonus(self, episode_id: int, reward: float) -> None:
+        self.buffer.add_terminal_bonus(episode_id, reward)
 
     @torch.no_grad()
     def bootstrap_values(
@@ -343,8 +370,12 @@ class MAPPO:
             return {}
         state_tensor = self._state_tensor(global_state)
         norm_state = self._normalize_eval(state_tensor)
-        value = float(self.policy_old.value(norm_state).squeeze(0).item())
-        return {(int(episode_id), str(agent_id)): value for agent_id in active_agent_ids}
+        values: Dict[Tuple[int, str], float] = {}
+        for agent_id in active_agent_ids:
+            agent_index = agent_id_to_index(agent_id, self.max_agents)
+            value = float(self.policy_old.value(norm_state, agent_index).squeeze(0).item())
+            values[(int(episode_id), str(agent_id))] = value
+        return values
 
     def _compute_gae(
         self,
@@ -546,15 +577,16 @@ def evaluate_policy(
         while not done and not truncated:
             active_ids = list(env.agents)
             if not active_ids:
-                break
-            actions, _, _ = agent.select_actions(
-                env.state(),
-                active_ids,
-                episode_id=ep_idx,
-                deterministic=True,
-                store=False,
-            )
-            _, _, _, _, info = env.step(actions)
+                _, _, _, _, info = env.step({})
+            else:
+                actions, _, _ = agent.select_actions(
+                    env.state(),
+                    active_ids,
+                    episode_id=ep_idx,
+                    deterministic=True,
+                    store=False,
+                )
+                _, _, _, _, info = env.step(actions)
             common = info["__common__"]
             episode_return += float(common["team_reward"])
             done = bool(common["episode_done"])
