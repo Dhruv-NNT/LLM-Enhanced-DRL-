@@ -1,0 +1,24 @@
+{
+  "model_path": "multi-agent-isolated-llm-guidance/log/MAPPO/mappo_4agents_2weather/last.ckpt",
+  "num_episodes": 1,
+  "mean_return": 102.23084983860977,
+  "std_return": 0.0,
+  "success_rate": 0.0,
+  "collision_rate": 1.0,
+  "weather_rate": 0.0,
+  "truncation_rate": 0.0,
+  "episodes": [
+    {
+      "episode_index": 0,
+      "seed": 42,
+      "steps": 39,
+      "total_reward": 102.23084983860977,
+      "success": false,
+      "truncated": false,
+      "failure_reason": "collision",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "gif_path": "multi-agent-isolated-llm-guidance/outputs/mappo_eval/best_4agents_2weather/ep001.gif"
+    }
+  ]
+}

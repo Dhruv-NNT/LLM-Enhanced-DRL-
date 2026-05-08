@@ -4,3 +4,5 @@ Pillow
 shapely
 matplotlib
 numpy
+torch
+tensorboard

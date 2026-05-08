@@ -1,4 +1,4 @@
-"""Configuration for the isolated multi-agent pure-LLM guidance sandbox."""
+"""Configuration for the isolated multi-agent LLM/RL guidance sandbox."""
 
 from pathlib import Path
 
@@ -27,6 +27,7 @@ SECTOR_GEOJSON = DATA_ROOT / "test.geojson"
 # Environment defaults.
 ROUTE_MIRROR_SUFFIX = "_REV"
 MAX_AGENTS = 12
+MAX_WEATHER_CELLS = 2
 NUM_AGENTS_DEFAULT = 2
 ROUTE_IDS_DEFAULT = None
 SEED = 42
@@ -37,6 +38,17 @@ GOAL_RADIUS = 5.0
 AGENT_SPEED = 2.0
 MAX_STEP = 60
 ACTION_BINS = (-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30)
+
+# Team reward defaults.
+REWARD_STEP_PENALTY = 0.01
+REWARD_CROSS_TRACK_SCALE = 0.01
+REWARD_TRAFFIC_RISK_PENALTY = 0.05
+REWARD_WEATHER_RISK_PENALTY = 0.05
+REWARD_GREEN_WEATHER_PENETRATION_SCALE = 0.25
+REWARD_FINISHED_AIRCRAFT = 5.0
+REWARD_COLLISION_PENALTY = 10.0
+REWARD_TERMINAL_WEATHER_PENALTY = 25.0
+REWARD_TEAM_SUCCESS = 20.0
 
 # Hazard detection and recovery defaults.
 HAZARD_LOOKAHEAD_STEPS = 12
@@ -64,6 +76,39 @@ WEATHER_GROWTH_NM_PER_STEP_MAX = 0.60
 WEATHER_TRAIL_STEPS = 5
 WEATHER_INIT_TRIES = 300
 NUM_WEATHER_CELLS_DEFAULT = 1
+
+# Pure-RL MAPPO defaults.
+MAPPO_RUN_NAME = "isolated_multi_agent_mappo"
+MAPPO_LOG_DIR = PROJECT_ROOT / "log" / "MAPPO" / MAPPO_RUN_NAME
+MAPPO_BEST_MODEL_PATH = MAPPO_LOG_DIR / "best_model.pt"
+MAPPO_LAST_CKPT_PATH = MAPPO_LOG_DIR / "last.ckpt"
+MAPPO_EVAL_OUTPUT_DIR = PLOT_DIR / "mappo_eval"
+MAPPO_METRICS_DIR = PROJECT_ROOT / "evaluation" / "mappo"
+
+# GPU visibility for MAPPO train/eval.
+# Examples:
+#   None   -> respect shell CUDA_VISIBLE_DEVICES
+#   "0"    -> use only physical GPU 0
+#   "1"    -> use only physical GPU 1
+#   "0,1"  -> expose GPUs 0 and 1; current MAPPO still uses one visible GPU
+#   ""     -> hide GPUs and run on CPU
+MAPPO_CUDA_VISIBLE_DEVICES = 2,3,4
+
+MAPPO_MAX_AGENT_STEPS = 5_000_000
+MAPPO_UPDATE_AGENT_STEPS = 2_048
+MAPPO_EVAL_FREQ = 5_000
+MAPPO_N_EVAL_EPISODES = 10
+MAPPO_SAVE_MODEL_FREQ = 50_000
+
+MAPPO_LR_ACTOR = 1e-4
+MAPPO_LR_CRITIC = 3e-4
+MAPPO_GAMMA = 0.99
+MAPPO_K_EPOCHS = 5
+MAPPO_EPS_CLIP = 0.2
+MAPPO_MINIBATCH_SIZE = 256
+MAPPO_GAE_LAMBDA = 0.95
+MAPPO_HIDDEN_DIM = 128
+MAPPO_NORMALIZE_REWARD = True
 
 # Pure-LLM defaults.
 RUN_MODES = ("LLM_ONLY",)

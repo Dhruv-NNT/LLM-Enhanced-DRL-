@@ -23,9 +23,19 @@ from configs import (
     HAZARD_LOOKAHEAD_STEPS,
     LAUNCH_SEPARATION_R,
     MAX_AGENTS,
+    MAX_WEATHER_CELLS,
     MAX_STEP,
     NUM_WEATHER_CELLS_DEFAULT,
     PAIR_RISK_BUFFER,
+    REWARD_COLLISION_PENALTY,
+    REWARD_CROSS_TRACK_SCALE,
+    REWARD_FINISHED_AIRCRAFT,
+    REWARD_GREEN_WEATHER_PENETRATION_SCALE,
+    REWARD_STEP_PENALTY,
+    REWARD_TEAM_SUCCESS,
+    REWARD_TERMINAL_WEATHER_PENALTY,
+    REWARD_TRAFFIC_RISK_PENALTY,
+    REWARD_WEATHER_RISK_PENALTY,
     ROUTE_RECOVERY_XTRACK_UNITS,
     SAFE_R,
     WEATHER_CLEARANCE_BUFFER_NM,
@@ -688,6 +698,7 @@ class MultiAgentSectorCore:
 
         progress_values: List[float] = []
         cross_tracks: List[float] = []
+        green_weather_penetrations: List[float] = []
         newly_finished = 0
         threat_count = 0
         weather_risk_count = 0
@@ -697,6 +708,10 @@ class MultiAgentSectorCore:
             progress_values.append(previous_distances[state.agent_id] - self.distance_to_destination(state))
             signed_xtrk, _, _ = line_signed_cross_track(state.route.linestring, state.position)
             cross_tracks.append(abs(signed_xtrk))
+            green_clearance = self.weather_signed_clearance(state.position)
+            terminal_clearance = self.weather_terminal_signed_clearance(state.position)
+            if green_clearance < 0.0 and terminal_clearance >= 0.0:
+                green_weather_penetrations.append(abs(float(green_clearance)))
             if state.just_finished:
                 newly_finished += 1
             if state.hazard_predicted:
@@ -707,18 +722,22 @@ class MultiAgentSectorCore:
         reward = 0.0
         if progress_values:
             reward += float(np.mean(progress_values))
-        reward -= 0.01
+        reward -= REWARD_STEP_PENALTY
         if cross_tracks:
-            reward -= 0.01 * float(np.mean(cross_tracks))
-        reward -= 0.05 * threat_count
-        reward -= 0.05 * weather_risk_count
-        reward += 2.0 * newly_finished
+            reward -= REWARD_CROSS_TRACK_SCALE * float(np.mean(cross_tracks))
+        if green_weather_penetrations:
+            reward -= REWARD_GREEN_WEATHER_PENETRATION_SCALE * float(
+                np.mean(green_weather_penetrations)
+            )
+        reward -= REWARD_TRAFFIC_RISK_PENALTY * threat_count
+        reward -= REWARD_WEATHER_RISK_PENALTY * weather_risk_count
+        reward += REWARD_FINISHED_AIRCRAFT * newly_finished
         if collision:
-            reward -= 10.0
+            reward -= REWARD_COLLISION_PENALTY
         if weather_failure:
-            reward -= 10.0
+            reward -= REWARD_TERMINAL_WEATHER_PENALTY
         if team_success:
-            reward += 20.0
+            reward += REWARD_TEAM_SUCCESS
 
         self.reward = reward
         self.total_reward += reward
@@ -806,19 +825,21 @@ class MultiAgentSectorCore:
                 ]
             )
 
-        if self.weather_cell is None:
-            blocks.extend([0.0] * 8)
-        else:
+        for idx in range(MAX_WEATHER_CELLS):
+            cell = self.weather_cells[idx] if idx < len(self.weather_cells) else None
+            if cell is None:
+                blocks.extend([0.0] * 8)
+                continue
             blocks.extend(
                 [
                     1.0,
-                    self.weather_cell.center[0],
-                    self.weather_cell.center[1],
-                    self.weather_cell.major_radius_nm,
-                    self.weather_cell.minor_radius_nm,
-                    self.weather_cell.angle_rad,
-                    self.weather_cell.motion_heading_rad,
-                    self.weather_cell.speed_units_per_step,
+                    cell.center[0],
+                    cell.center[1],
+                    cell.major_radius_nm,
+                    cell.minor_radius_nm,
+                    cell.angle_rad,
+                    cell.motion_heading_rad,
+                    cell.speed_units_per_step,
                 ]
             )
         blocks.extend([float(self.n_step), float(self.reward), float(self.total_reward)])
