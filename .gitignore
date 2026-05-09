@@ -1,9 +1,9 @@
-multi-agent-isolated-llm-guidance/log/
+**/multi-agent-isolated-llm-guidance/log/
 *.pt
 events.out.tfevents.*
 
 # Training logs and generated outputs
-multi-agent-isolated-llm-guidance/log/
+**/multi-agent-isolated-llm-guidance/log/
 **/events.out.tfevents.*
 **/*.pt
 **/*.pth
