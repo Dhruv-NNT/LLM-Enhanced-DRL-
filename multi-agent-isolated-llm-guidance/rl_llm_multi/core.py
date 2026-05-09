@@ -21,6 +21,7 @@ from configs import (
     DESTINATION_ALIGNMENT_DEG,
     GOAL_RADIUS,
     HAZARD_LOOKAHEAD_STEPS,
+    HAZARD_RISK_DECAY_EXPONENT,
     LAUNCH_SEPARATION_R,
     MAX_AGENTS,
     MAX_WEATHER_CELLS,
@@ -143,6 +144,7 @@ class MultiAgentSectorCore:
         self.total_reward = 0.0
         self.agent_rewards: Dict[str, float] = {}
         self.agent_dense_rewards: Dict[str, float] = {}
+        self.agent_terminal_rewards: Dict[str, float] = {}
         self.last_reward_components: Dict[str, Dict[str, float]] = {}
         self.last_terminal_reward = 0.0
         self.last_team_done = False
@@ -188,6 +190,7 @@ class MultiAgentSectorCore:
         self.total_reward = 0.0
         self.agent_rewards = {}
         self.agent_dense_rewards = {}
+        self.agent_terminal_rewards = {}
         self.last_reward_components = {}
         self.last_terminal_reward = 0.0
         self.last_team_done = False
@@ -649,7 +652,9 @@ class MultiAgentSectorCore:
         if step is None:
             return 0.0
         horizon = max(float(horizon_steps), 1.0)
-        return float(np.clip(1.0 - ((float(step) - 1.0) / horizon), 0.0, 1.0))
+        linear_risk = float(np.clip(1.0 - ((float(step) - 1.0) / horizon), 0.0, 1.0))
+        exponent = max(float(HAZARD_RISK_DECAY_EXPONENT), 1e-6)
+        return float(linear_risk**exponent)
 
     def _traffic_risk_score(self, state: AgentState, collision_agents: set[str]) -> float:
         if state.agent_id in collision_agents:
@@ -786,9 +791,12 @@ class MultiAgentSectorCore:
             )
             traffic_risk = self._traffic_risk_score(state, collision_agents)
             weather_risk = self._weather_risk_score(state)
+            progress_risk_gate = float(np.clip(max(traffic_risk, weather_risk), 0.0, 1.0))
+            progress_safety_scale = 1.0 - progress_risk_gate if progress > 0.0 else 1.0
+            safe_progress = progress * progress_safety_scale
             finish_bonus = REWARD_FINISHED_AIRCRAFT if state.just_finished else 0.0
             dense_reward = (
-                REWARD_PROGRESS_SCALE * progress
+                REWARD_PROGRESS_SCALE * safe_progress
                 - REWARD_STEP_PENALTY
                 - REWARD_CROSS_TRACK_SCALE * cross_track
                 - REWARD_TRAFFIC_RISK_PENALTY * traffic_risk
@@ -799,6 +807,8 @@ class MultiAgentSectorCore:
             reward_components[state.agent_id] = {
                 "raw_progress": float(raw_progress),
                 "progress": float(progress),
+                "safe_progress": float(safe_progress),
+                "progress_safety_scale": float(progress_safety_scale),
                 "cross_track": float(cross_track),
                 "traffic_risk": float(traffic_risk),
                 "weather_risk": float(weather_risk),
@@ -806,19 +816,54 @@ class MultiAgentSectorCore:
                 "dense_reward": float(dense_reward),
             }
 
-        terminal_reward = 0.0
+        terminal_agent_ids = [
+            agent_id
+            for agent_id, state in self.agent_states.items()
+            if state.launched
+        ]
+        terminal_rewards = {agent_id: 0.0 for agent_id in terminal_agent_ids}
+        shared_scale = math.sqrt(max(float(self.num_agents), 1.0))
         if collision:
-            terminal_reward = -REWARD_COLLISION_PENALTY
+            shared_penalty = -REWARD_COLLISION_PENALTY / shared_scale
+            terminal_rewards = {agent_id: shared_penalty for agent_id in terminal_agent_ids}
+            for agent_id in collision_agents:
+                if agent_id in terminal_rewards:
+                    terminal_rewards[agent_id] = -REWARD_COLLISION_PENALTY
         elif weather_failure:
-            terminal_reward = -REWARD_TERMINAL_WEATHER_PENALTY
+            shared_penalty = -REWARD_TERMINAL_WEATHER_PENALTY / shared_scale
+            terminal_rewards = {agent_id: shared_penalty for agent_id in terminal_agent_ids}
+            for agent_id in weather_violation_agents:
+                if agent_id in terminal_rewards:
+                    terminal_rewards[agent_id] = -REWARD_TERMINAL_WEATHER_PENALTY
         elif team_truncated:
-            terminal_reward = -REWARD_TRUNCATION_PENALTY
+            shared_penalty = -REWARD_TRUNCATION_PENALTY / shared_scale
+            terminal_rewards = {agent_id: shared_penalty for agent_id in terminal_agent_ids}
+            for agent_id, state in self.agent_states.items():
+                if agent_id in terminal_rewards and state.launched and not state.finished:
+                    terminal_rewards[agent_id] = -REWARD_TRUNCATION_PENALTY
         elif team_success:
-            terminal_reward = REWARD_TEAM_SUCCESS
+            terminal_rewards = {
+                agent_id: REWARD_TEAM_SUCCESS
+                for agent_id in terminal_agent_ids
+            }
+
+        terminal_reward = (
+            float(np.mean(list(terminal_rewards.values())))
+            if terminal_rewards
+            else 0.0
+        )
+        reward_scope_ids = (
+            terminal_agent_ids
+            if team_done or team_truncated
+            else list(dense_rewards)
+        )
 
         agent_rewards = {
-            agent_id: float(dense_reward + terminal_reward)
-            for agent_id, dense_reward in dense_rewards.items()
+            agent_id: float(
+                dense_rewards.get(agent_id, 0.0)
+                + terminal_rewards.get(agent_id, 0.0)
+            )
+            for agent_id in reward_scope_ids
         }
         reward = (
             float(np.mean(list(agent_rewards.values())))
@@ -830,6 +875,7 @@ class MultiAgentSectorCore:
         self.total_reward += reward
         self.agent_rewards = agent_rewards
         self.agent_dense_rewards = dense_rewards
+        self.agent_terminal_rewards = terminal_rewards
         self.last_reward_components = reward_components
         self.last_terminal_reward = float(terminal_reward)
         self.last_team_done = team_done
@@ -983,6 +1029,7 @@ class MultiAgentSectorCore:
             "team_reward": self.reward,
             "agent_rewards": dict(self.agent_rewards),
             "agent_dense_rewards": dict(self.agent_dense_rewards),
+            "agent_terminal_rewards": dict(self.agent_terminal_rewards),
             "terminal_reward": float(self.last_terminal_reward),
             "reward_components": copy.deepcopy(self.last_reward_components),
             "failure_reason": self.last_failure_reason,

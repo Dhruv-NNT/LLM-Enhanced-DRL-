@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import sys
 import tempfile
 import unittest
@@ -14,6 +15,7 @@ from configs import (  # noqa: E402
     ACTION_BINS,
     MAX_AGENTS,
     MAX_WEATHER_CELLS,
+    HAZARD_RISK_DECAY_EXPONENT,
     REWARD_COLLISION_PENALTY,
     REWARD_CROSS_TRACK_CLIP,
     REWARD_CROSS_TRACK_SCALE,
@@ -115,6 +117,23 @@ class MAPPOTests(unittest.TestCase):
         self.assertIn("SiLU", actor_names)
         self.assertEqual(actor_names[-1], "Softmax")
 
+    def test_lookahead_risk_uses_slow_decay_curve(self) -> None:
+        core = MultiAgentSectorCore(num_agents=1, num_weather_cells=1)
+
+        self.assertAlmostEqual(core._lookahead_risk(1, horizon_steps=12), 1.0)
+        self.assertAlmostEqual(
+            core._lookahead_risk(6, horizon_steps=12),
+            (7.0 / 12.0) ** HAZARD_RISK_DECAY_EXPONENT,
+            places=6,
+        )
+        self.assertAlmostEqual(
+            core._lookahead_risk(12, horizon_steps=12),
+            (1.0 / 12.0) ** HAZARD_RISK_DECAY_EXPONENT,
+            places=6,
+        )
+        self.assertEqual(core._lookahead_risk(None, horizon_steps=12), 0.0)
+        self.assertEqual(core._lookahead_risk(13, horizon_steps=12), 0.0)
+
     def test_green_weather_ring_adds_penalty_without_termination(self) -> None:
         core = MultiAgentSectorCore(num_agents=1, num_weather_cells=1)
         core.reset(seed=42, num_weather_cells=1)
@@ -168,8 +187,9 @@ class MAPPOTests(unittest.TestCase):
                 / core.weather_clearance_buffer_units,
             ),
         )
+        safe_progress = progress * (1.0 - green_risk) if progress > 0.0 else progress
         expected_without_green = (
-            REWARD_PROGRESS_SCALE * progress
+            REWARD_PROGRESS_SCALE * safe_progress
             - REWARD_STEP_PENALTY
             - REWARD_CROSS_TRACK_SCALE * cross_track
         )
@@ -204,6 +224,41 @@ class MAPPOTests(unittest.TestCase):
         self.assertTrue(all(value < -70.0 for value in rewards.values()))
         self.assertTrue(all(terminations.values()))
 
+    def test_collision_terminal_penalty_blames_colliding_agents_more_than_bystander(self) -> None:
+        core = MultiAgentSectorCore(num_agents=3, num_weather_cells=1)
+        core.reset(seed=42, num_weather_cells=1)
+        core.weather_cells = []
+        core._sync_primary_weather_cell()
+
+        positions = {
+            "A1": (40.0, 40.0),
+            "A2": (40.0, 40.0 + core.safe_r * 0.5),
+            "A3": (10.0, 10.0),
+        }
+        for agent_id, position in positions.items():
+            state = core.get_agent(agent_id)
+            state.position = position
+            state.destination = (90.0, position[1])
+            state.heading_rad = 0.0
+            state.launched = True
+            state.active = True
+            state.finished = False
+            state.has_entered_sector = True
+            state.inside_sector = True
+
+        _, _, _, _, info = core.step({}, compute_predictions=False)
+
+        shared_penalty = -REWARD_COLLISION_PENALTY / math.sqrt(3.0)
+        terminal_rewards = info["agent_terminal_rewards"]
+        self.assertEqual(info["failure_reason"], "collision")
+        self.assertAlmostEqual(terminal_rewards["A1"], -REWARD_COLLISION_PENALTY)
+        self.assertAlmostEqual(terminal_rewards["A2"], -REWARD_COLLISION_PENALTY)
+        self.assertAlmostEqual(terminal_rewards["A3"], shared_penalty)
+        self.assertAlmostEqual(
+            info["terminal_reward"],
+            (-2.0 * REWARD_COLLISION_PENALTY + shared_penalty) / 3.0,
+        )
+
     def test_short_rollout_update_clears_buffer(self) -> None:
         env = _make_env()
         _, info = env.reset(seed=42)
@@ -230,7 +285,10 @@ class MAPPOTests(unittest.TestCase):
                 terminals=terminals,
             )
             if team_terminal:
-                agent.add_terminal_bonus(0, float(common.get("terminal_reward", 0.0)))
+                agent.add_terminal_bonus(
+                    0,
+                    common.get("agent_terminal_rewards", common.get("terminal_reward", 0.0)),
+                )
             done = bool(common["episode_done"])
             truncated = bool(common["episode_truncated"])
 

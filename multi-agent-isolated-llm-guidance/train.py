@@ -186,6 +186,8 @@ def _log_reward_components(
     component_keys = (
         "raw_progress",
         "progress",
+        "safe_progress",
+        "progress_safety_scale",
         "cross_track",
         "traffic_risk",
         "weather_risk",
@@ -294,7 +296,10 @@ def main() -> None:
                     done = bool(common["episode_done"])
                     truncated = bool(common["episode_truncated"])
                     if done or truncated:
-                        agent.add_terminal_bonus(episode, float(common.get("terminal_reward", 0.0)))
+                        agent.add_terminal_bonus(
+                            episode,
+                            common.get("agent_terminal_rewards", common.get("terminal_reward", 0.0)),
+                        )
                     env_steps += 1
                     ep_env_steps += 1
                     _log_reward_components(writer, common, agent_steps)
@@ -334,7 +339,10 @@ def main() -> None:
                     terminals=terminals,
                 )
                 if team_terminal:
-                    agent.add_terminal_bonus(episode, float(common.get("terminal_reward", 0.0)))
+                    agent.add_terminal_bonus(
+                        episode,
+                        common.get("agent_terminal_rewards", common.get("terminal_reward", 0.0)),
+                    )
 
                 step_agent_count = len(records)
                 agent_steps += step_agent_count

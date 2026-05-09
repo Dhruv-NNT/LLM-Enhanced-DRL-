@@ -188,15 +188,32 @@ class RolloutBuffer:
     def __len__(self) -> int:
         return len(self.rewards)
 
-    def add_terminal_bonus(self, episode_id: int, reward: float) -> None:
-        if abs(float(reward)) <= 1e-12:
-            return
+    def add_terminal_bonus(self, episode_id: int, reward: float | Mapping[str, float]) -> None:
+        if isinstance(reward, MappingABC):
+            rewards_by_agent = {
+                str(agent_id): float(value)
+                for agent_id, value in reward.items()
+                if abs(float(value)) > 1e-12
+            }
+            if not rewards_by_agent:
+                return
+        else:
+            scalar_reward = float(reward)
+            if abs(scalar_reward) <= 1e-12:
+                return
+            rewards_by_agent = None
+
         last_index_by_agent: Dict[str, int] = {}
         for idx, (stored_episode_id, agent_id) in enumerate(zip(self.episode_ids, self.agent_ids)):
             if int(stored_episode_id) == int(episode_id):
                 last_index_by_agent[str(agent_id)] = idx
-        for idx in last_index_by_agent.values():
-            self.rewards[idx] = float(self.rewards[idx]) + float(reward)
+        for agent_id, idx in last_index_by_agent.items():
+            bonus = (
+                rewards_by_agent.get(agent_id, 0.0)
+                if rewards_by_agent is not None
+                else scalar_reward
+            )
+            self.rewards[idx] = float(self.rewards[idx]) + float(bonus)
 
 
 class MAPPOActorCritic(nn.Module):
@@ -434,7 +451,7 @@ class MAPPO:
                 terminal=bool(terminals.get(record.agent_id, False)),
             )
 
-    def add_terminal_bonus(self, episode_id: int, reward: float) -> None:
+    def add_terminal_bonus(self, episode_id: int, reward: float | Mapping[str, float]) -> None:
         self.buffer.add_terminal_bonus(episode_id, reward)
 
     @torch.no_grad()
