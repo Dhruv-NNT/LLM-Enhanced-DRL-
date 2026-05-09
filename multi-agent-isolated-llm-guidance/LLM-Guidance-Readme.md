@@ -1322,6 +1322,9 @@ Important details:
 - The MAPPO critic is agent-conditioned. It receives `global_state + agent_id`
   so it can learn a separate value baseline for each aircraft in the same
   global situation.
+- The MAPPO actor and critic are separate configurable MLPs. The current
+  experiment uses hidden layers `(256, 256, 128)`, SiLU activations,
+  LayerNorm after hidden linear layers, and orthogonal initialization.
 - MAPPO updates are performed only after an episode ends, so the terminal
   outcome is present before the rollout buffer is cleared.
 - Training logs mean reward components to TensorBoard under

@@ -26,6 +26,60 @@ if device.type == "cuda":
     torch.backends.cudnn.benchmark = True
 
 
+def _activation_module(name: str) -> nn.Module:
+    key = str(name).lower()
+    if key == "tanh":
+        return nn.Tanh()
+    if key == "silu":
+        return nn.SiLU()
+    if key == "relu":
+        return nn.ReLU()
+    if key == "gelu":
+        return nn.GELU()
+    raise ValueError(f"Unsupported MAPPO activation: {name}")
+
+
+def _hidden_gain(name: str) -> float:
+    key = str(name).lower()
+    if key == "tanh":
+        return float(nn.init.calculate_gain("tanh"))
+    if key == "relu":
+        return float(nn.init.calculate_gain("relu"))
+    return float(np.sqrt(2.0))
+
+
+def _build_mlp(
+    input_dim: int,
+    output_dim: int,
+    hidden_dims: Sequence[int],
+    *,
+    activation: str,
+    use_layer_norm: bool,
+    final_activation: Optional[nn.Module] = None,
+) -> nn.Sequential:
+    dims = [int(input_dim), *[int(dim) for dim in hidden_dims]]
+    layers: List[nn.Module] = []
+    for in_dim, out_dim in zip(dims[:-1], dims[1:]):
+        layers.append(nn.Linear(in_dim, out_dim))
+        if use_layer_norm:
+            layers.append(nn.LayerNorm(out_dim))
+        layers.append(_activation_module(activation))
+    layers.append(nn.Linear(dims[-1], int(output_dim)))
+    if final_activation is not None:
+        layers.append(final_activation)
+    return nn.Sequential(*layers)
+
+
+def _orthogonal_init(module: nn.Module, *, activation: str, output_gain: float) -> None:
+    hidden_gain = _hidden_gain(activation)
+    linear_layers = [layer for layer in module.modules() if isinstance(layer, nn.Linear)]
+    for idx, layer in enumerate(linear_layers):
+        is_output = idx == len(linear_layers) - 1
+        gain = float(output_gain) if is_output else hidden_gain
+        nn.init.orthogonal_(layer.weight, gain=gain)
+        nn.init.constant_(layer.bias, 0.0)
+
+
 def _atomic_torch_save(obj, path: str) -> None:
     parent = os.path.dirname(os.path.abspath(path))
     os.makedirs(parent, exist_ok=True)
@@ -154,28 +208,39 @@ class MAPPOActorCritic(nn.Module):
         max_agents: int,
         action_dim: int,
         hidden_dim: int = 128,
+        hidden_dims: Optional[Sequence[int]] = None,
+        activation: str = "tanh",
+        use_layer_norm: bool = False,
+        orthogonal_init: bool = False,
     ) -> None:
         super().__init__()
         self.global_state_dim = int(global_state_dim)
         self.max_agents = int(max_agents)
         self.action_dim = int(action_dim)
+        self.hidden_dims = tuple(int(dim) for dim in (hidden_dims or (hidden_dim, hidden_dim)))
+        self.activation = str(activation)
+        self.use_layer_norm = bool(use_layer_norm)
+        self.orthogonal_init = bool(orthogonal_init)
         actor_dim = self.global_state_dim + self.max_agents
         critic_dim = self.global_state_dim + self.max_agents
-        self.actor = nn.Sequential(
-            nn.Linear(actor_dim, hidden_dim),
-            nn.Tanh(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.Tanh(),
-            nn.Linear(hidden_dim, self.action_dim),
-            nn.Softmax(dim=-1),
+        self.actor = _build_mlp(
+            actor_dim,
+            self.action_dim,
+            self.hidden_dims,
+            activation=self.activation,
+            use_layer_norm=self.use_layer_norm,
+            final_activation=nn.Softmax(dim=-1),
         )
-        self.critic = nn.Sequential(
-            nn.Linear(critic_dim, hidden_dim),
-            nn.Tanh(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.Tanh(),
-            nn.Linear(hidden_dim, 1),
+        self.critic = _build_mlp(
+            critic_dim,
+            1,
+            self.hidden_dims,
+            activation=self.activation,
+            use_layer_norm=self.use_layer_norm,
         )
+        if self.orthogonal_init:
+            _orthogonal_init(self.actor, activation=self.activation, output_gain=0.01)
+            _orthogonal_init(self.critic, activation=self.activation, output_gain=1.0)
 
     def _actor_input(self, global_states: torch.Tensor, agent_indices: torch.Tensor) -> torch.Tensor:
         if global_states.dim() == 1:
@@ -245,6 +310,10 @@ class MAPPO:
         *,
         max_agents: int = MAX_AGENTS,
         hidden_dim: int = 128,
+        hidden_dims: Optional[Sequence[int]] = None,
+        activation: str = "tanh",
+        use_layer_norm: bool = False,
+        orthogonal_init: bool = False,
         lr_actor: float = 1e-4,
         lr_critic: float = 3e-4,
         gamma: float = 0.99,
@@ -257,6 +326,10 @@ class MAPPO:
         self.global_state_dim = int(global_state_dim)
         self.action_dim = int(action_dim)
         self.max_agents = int(max_agents)
+        self.hidden_dims = tuple(int(dim) for dim in (hidden_dims or (hidden_dim, hidden_dim)))
+        self.activation = str(activation)
+        self.use_layer_norm = bool(use_layer_norm)
+        self.orthogonal_init = bool(orthogonal_init)
         self.gamma = float(gamma)
         self.K_epochs = int(K_epochs)
         self.eps_clip = float(eps_clip)
@@ -270,13 +343,19 @@ class MAPPO:
             self.global_state_dim,
             self.max_agents,
             self.action_dim,
-            hidden_dim=hidden_dim,
+            hidden_dims=self.hidden_dims,
+            activation=self.activation,
+            use_layer_norm=self.use_layer_norm,
+            orthogonal_init=self.orthogonal_init,
         ).to(device)
         self.policy_old = MAPPOActorCritic(
             self.global_state_dim,
             self.max_agents,
             self.action_dim,
-            hidden_dim=hidden_dim,
+            hidden_dims=self.hidden_dims,
+            activation=self.activation,
+            use_layer_norm=self.use_layer_norm,
+            orthogonal_init=self.orthogonal_init,
         ).to(device)
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.optimizer = torch.optim.Adam(

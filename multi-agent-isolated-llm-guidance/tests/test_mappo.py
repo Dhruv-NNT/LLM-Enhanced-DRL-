@@ -91,6 +91,30 @@ class MAPPOTests(unittest.TestCase):
         expected_dim = int(env.state().shape[0]) + MAX_AGENTS
         self.assertEqual(agent.policy.critic[0].in_features, expected_dim)
 
+    def test_configurable_mlp_architecture_uses_layer_norm_and_silu(self) -> None:
+        env = _make_env()
+        env.reset(seed=42)
+        agent = MAPPO(
+            global_state_dim=int(env.state().shape[0]),
+            action_dim=len(ACTION_BINS),
+            max_agents=MAX_AGENTS,
+            hidden_dims=(32, 32, 16),
+            activation="silu",
+            use_layer_norm=True,
+            orthogonal_init=True,
+            K_epochs=1,
+            mb_size=8,
+        )
+
+        actor_names = [module.__class__.__name__ for module in agent.policy.actor]
+        critic_names = [module.__class__.__name__ for module in agent.policy.critic]
+
+        self.assertEqual(actor_names.count("Linear"), 4)
+        self.assertEqual(critic_names.count("Linear"), 4)
+        self.assertIn("LayerNorm", actor_names)
+        self.assertIn("SiLU", actor_names)
+        self.assertEqual(actor_names[-1], "Softmax")
+
     def test_green_weather_ring_adds_penalty_without_termination(self) -> None:
         core = MultiAgentSectorCore(num_agents=1, num_weather_cells=1)
         core.reset(seed=42, num_weather_cells=1)
