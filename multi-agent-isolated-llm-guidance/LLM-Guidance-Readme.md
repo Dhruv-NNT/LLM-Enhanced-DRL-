@@ -1290,16 +1290,21 @@ Per-aircraft dense reward:
 ```text
 progress = clip(distance_reduction / speed, -1.0, 1.0)
 cross_track = clip(abs(cross_track_error) / SAFE_R, 0.0, 2.0)
+cross_track_recovery = clip((previous_cross_track - current_cross_track) / SAFE_R, 0.0, 1.0)
+heading_error = clip(abs(heading_error_to_destination) / 180.0, 0.0, 1.0)
+safety_scale = 1.0 - max(traffic_risk, weather_risk)
 traffic_risk = bounded value in [0.0, 1.0]
 weather_risk = bounded value in [0.0, 1.0]
 
 agent_dense_reward =
-    + 1.0 * progress
-    - 0.02
-    - 0.20 * cross_track
+    + 1.00 * safe_progress
+    - 0.03
+    - 0.40 * cross_track
+    + 0.45 * cross_track_recovery * safety_scale
+    - 0.60 * heading_error * safety_scale
     - 1.00 * traffic_risk
     - 1.00 * weather_risk
-    + 3.00 if this aircraft just finished
+    + 15.00 if this aircraft just finished
 ```
 
 Terminal reward:
@@ -1308,7 +1313,7 @@ Terminal reward:
 team success:     +80
 collision:        -80
 weather failure:  -80
-truncation:       -30
+truncation:       -70 plus an unfinished-distance penalty up to -30
 ```
 
 Important details:

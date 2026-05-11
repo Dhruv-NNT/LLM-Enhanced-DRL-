@@ -136,27 +136,6 @@ def _eval_rank(stats: Dict[str, float]) -> tuple[float, float, float, float, flo
     )
 
 
-def _log_action_distribution(
-    writer: SummaryWriter,
-    actions: Dict[str, int],
-    agent_steps: int,
-) -> None:
-    if not actions:
-        return
-    total = float(len(actions))
-    counts = {idx: 0 for idx in range(len(ACTION_BINS))}
-    for action_idx in actions.values():
-        idx = int(action_idx)
-        if idx in counts:
-            counts[idx] += 1
-    for idx, turn_deg in enumerate(ACTION_BINS):
-        writer.add_scalar(
-            f"train/action_bin_fraction/{turn_deg:+d}",
-            counts[idx] / total,
-            agent_steps,
-        )
-
-
 def _mean_mapping_value(mapping: object) -> Optional[float]:
     if not isinstance(mapping, dict) or not mapping:
         return None
@@ -164,53 +143,65 @@ def _mean_mapping_value(mapping: object) -> Optional[float]:
     return sum(values) / float(len(values))
 
 
-def _log_reward_components(
-    writer: SummaryWriter,
+ESSENTIAL_REWARD_COMPONENT_KEYS = (
+    "safe_progress",
+    "cross_track",
+    "safe_cross_track_recovery",
+    "heading_error_to_destination",
+    "safe_heading_penalty",
+    "traffic_risk",
+    "weather_risk",
+    "finish_bonus",
+)
+
+
+def _accumulate_reward_debug(
     common: Dict[str, object],
-    agent_steps: int,
+    sums: Dict[str, float],
+    counts: Dict[str, int],
 ) -> None:
-    terminal_reward = float(common.get("terminal_reward", 0.0))
-    writer.add_scalar("train/reward/terminal_step", terminal_reward, agent_steps)
-
-    for name, value in (
-        ("agent_dense_mean", _mean_mapping_value(common.get("agent_dense_rewards"))),
-        ("agent_total_mean", _mean_mapping_value(common.get("agent_rewards"))),
-    ):
-        if value is not None:
-            writer.add_scalar(f"train/reward/{name}", value, agent_steps)
-
+    dense_mean = _mean_mapping_value(common.get("agent_dense_rewards"))
+    if dense_mean is not None:
+        sums["agent_dense_mean"] = sums.get("agent_dense_mean", 0.0) + float(dense_mean)
+        counts["agent_dense_mean"] = counts.get("agent_dense_mean", 0) + 1
     components = common.get("reward_components")
     if not isinstance(components, dict) or not components:
         return
 
-    component_keys = (
-        "raw_progress",
-        "progress",
-        "safe_progress",
-        "progress_safety_scale",
-        "cross_track",
-        "traffic_risk",
-        "weather_risk",
-        "finish_bonus",
-        "dense_reward",
-    )
-    for key in component_keys:
+    for key in ESSENTIAL_REWARD_COMPONENT_KEYS:
         values = [
             float(parts[key])
             for parts in components.values()
             if isinstance(parts, dict) and key in parts
         ]
         if values:
+            sums[key] = sums.get(key, 0.0) + sum(values) / float(len(values))
+            counts[key] = counts.get(key, 0) + 1
+
+
+def _log_episode_reward_debug(
+    writer: SummaryWriter,
+    sums: Dict[str, float],
+    counts: Dict[str, int],
+    common: Dict[str, object],
+    episode: int,
+) -> None:
+    terminal_reward = float(common.get("terminal_reward", 0.0))
+    if abs(terminal_reward) > 1e-12:
+        writer.add_scalar("train/reward/terminal_episode", terminal_reward, episode)
+    if counts.get("agent_dense_mean", 0) > 0:
+        writer.add_scalar(
+            "train/reward/mean_step_behavior_reward",
+            sums["agent_dense_mean"] / float(counts["agent_dense_mean"]),
+            episode,
+        )
+    for key in ESSENTIAL_REWARD_COMPONENT_KEYS:
+        if counts.get(key, 0) > 0:
             writer.add_scalar(
                 f"train/reward_component/{key}_mean",
-                sum(values) / float(len(values)),
-                agent_steps,
+                sums[key] / float(counts[key]),
+                episode,
             )
-
-
-def _min_pairwise_separation(env: MultiAgentParallelEnv) -> float:
-    distances = list(env.core.last_pairwise_separations.values())
-    return float(min(distances)) if distances else 999.0
 
 
 def main() -> None:
@@ -285,14 +276,16 @@ def main() -> None:
             done = bool(info["__common__"]["episode_done"])
             truncated = bool(info["__common__"]["episode_truncated"])
             ep_return = 0.0
-            ep_agent_steps = 0
             ep_env_steps = 0
+            ep_reward_sums: Dict[str, float] = {}
+            ep_reward_counts: Dict[str, int] = {}
 
             while not done and not truncated:
                 active_ids = list(env.agents)
                 if not active_ids:
                     _, _, _, _, info = env.step({})
                     common = info["__common__"]
+                    team_reward = float(common["team_reward"])
                     done = bool(common["episode_done"])
                     truncated = bool(common["episode_truncated"])
                     if done or truncated:
@@ -302,10 +295,11 @@ def main() -> None:
                         )
                     env_steps += 1
                     ep_env_steps += 1
-                    _log_reward_components(writer, common, agent_steps)
+                    ep_return += team_reward
+                    _accumulate_reward_debug(common, ep_reward_sums, ep_reward_counts)
                     continue
 
-                policy_actions, records, entropy = agent.select_actions(
+                policy_actions, records, _entropy = agent.select_actions(
                     env.state(),
                     active_ids,
                     episode_id=episode,
@@ -347,20 +341,10 @@ def main() -> None:
                 step_agent_count = len(records)
                 agent_steps += step_agent_count
                 env_steps += 1
-                ep_agent_steps += step_agent_count
                 ep_env_steps += 1
                 ep_return += team_reward
 
-                writer.add_scalar("train/team_reward_step", team_reward, agent_steps)
-                writer.add_scalar("train/active_agents", len(active_ids), agent_steps)
-                writer.add_scalar("train/action_entropy", entropy, agent_steps)
-                _log_reward_components(writer, common, agent_steps)
-                writer.add_scalar(
-                    "train/min_pairwise_separation",
-                    _min_pairwise_separation(env),
-                    agent_steps,
-                )
-                _log_action_distribution(writer, final_actions, agent_steps)
+                _accumulate_reward_debug(common, ep_reward_sums, ep_reward_counts)
 
             common = info["__common__"]
             failure_reason = common["failure_reason"] or "none"
@@ -371,8 +355,7 @@ def main() -> None:
 
             episode += 1
             total_episodes = max(episode, 1)
-            writer.add_scalar("train/episode_return", ep_return, episode)
-            writer.add_scalar("train/episode_agent_steps", ep_agent_steps, episode)
+            writer.add_scalar("train/reward/episode_total_return", ep_return, episode)
             writer.add_scalar("train/episode_env_steps", ep_env_steps, episode)
             writer.add_scalar("train/success", int(bool(common["episode_success"])), episode)
             writer.add_scalar("train/collision", int(failure_reason == "collision"), episode)
@@ -383,6 +366,22 @@ def main() -> None:
                 failure_counts["success"] / total_episodes,
                 agent_steps,
             )
+            writer.add_scalar(
+                "train/collision_rate_running",
+                failure_counts["collision"] / total_episodes,
+                agent_steps,
+            )
+            writer.add_scalar(
+                "train/weather_rate_running",
+                failure_counts["weather"] / total_episodes,
+                agent_steps,
+            )
+            writer.add_scalar(
+                "train/truncation_rate_running",
+                failure_counts["truncated"] / total_episodes,
+                agent_steps,
+            )
+            _log_episode_reward_debug(writer, ep_reward_sums, ep_reward_counts, common, episode)
 
             if agent_steps >= next_update and len(agent.buffer) > 0:
                 metrics = agent.update()
@@ -467,12 +466,7 @@ def main() -> None:
         print(f"\nInterrupted. Saved checkpoint to {last_ckpt_path}")
         raise
     finally:
-        total_episodes = max(episode, 1)
         writer.add_scalar("train/episodes_total", episode, agent_steps)
-        writer.add_scalar("train/success_rate_running", failure_counts["success"] / total_episodes, agent_steps)
-        writer.add_scalar("train/collision_rate_running", failure_counts["collision"] / total_episodes, agent_steps)
-        writer.add_scalar("train/weather_rate_running", failure_counts["weather"] / total_episodes, agent_steps)
-        writer.add_scalar("train/truncation_rate_running", failure_counts["truncated"] / total_episodes, agent_steps)
         writer.close()
         print(
             "MAPPO training complete | episodes={} agent_steps={} env_steps={} elapsed={}".format(

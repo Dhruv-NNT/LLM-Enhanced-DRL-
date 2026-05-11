@@ -30,7 +30,10 @@ from configs import (
     PAIR_RISK_BUFFER,
     REWARD_COLLISION_PENALTY,
     REWARD_CROSS_TRACK_CLIP,
+    REWARD_CROSS_TRACK_RECOVERY_CLIP,
+    REWARD_CROSS_TRACK_RECOVERY_SCALE,
     REWARD_CROSS_TRACK_SCALE,
+    REWARD_DEST_HEADING_SCALE,
     REWARD_FINISHED_AIRCRAFT,
     REWARD_GREEN_WEATHER_PENETRATION_SCALE,
     REWARD_PROGRESS_CLIP,
@@ -39,6 +42,7 @@ from configs import (
     REWARD_TEAM_SUCCESS,
     REWARD_TERMINAL_WEATHER_PENALTY,
     REWARD_TRUNCATION_PENALTY,
+    REWARD_TRUNCATION_DISTANCE_PENALTY_SCALE,
     REWARD_TRAFFIC_RISK_PENALTY,
     REWARD_WEATHER_RISK_PENALTY,
     ROUTE_RECOVERY_XTRACK_UNITS,
@@ -305,6 +309,15 @@ class MultiAgentSectorCore:
 
     def distance_to_destination(self, state: AgentState) -> float:
         return float(np.linalg.norm(np.array(state.position) - np.array(state.destination)))
+
+    def heading_error_to_destination(self, state: AgentState) -> float:
+        if self.distance_to_destination(state) <= self.goal_radius:
+            return 0.0
+        dest_heading = math.atan2(
+            state.destination[1] - state.position[1],
+            state.destination[0] - state.position[0],
+        )
+        return abs(float(self._wrap_angle(dest_heading - state.heading_rad)))
 
     def nearest_neighbor(self, agent_id: str) -> Tuple[Optional[str], float]:
         state = self.agent_states[agent_id]
@@ -711,6 +724,10 @@ class MultiAgentSectorCore:
             agent_id: self.distance_to_destination(state)
             for agent_id, state in self.agent_states.items()
         }
+        previous_cross_tracks = {
+            agent_id: abs(float(line_signed_cross_track(state.route.linestring, state.position)[0]))
+            for agent_id, state in self.agent_states.items()
+        }
         self.n_step += 1
         self._launch_agents()
         self._advance_weather()
@@ -793,12 +810,27 @@ class MultiAgentSectorCore:
             weather_risk = self._weather_risk_score(state)
             progress_risk_gate = float(np.clip(max(traffic_risk, weather_risk), 0.0, 1.0))
             progress_safety_scale = 1.0 - progress_risk_gate if progress > 0.0 else 1.0
+            recovery_safety_scale = 1.0 - progress_risk_gate
             safe_progress = progress * progress_safety_scale
+            raw_cross_track_recovery = previous_cross_tracks[state.agent_id] - abs(float(signed_xtrk))
+            cross_track_recovery = float(
+                np.clip(
+                    raw_cross_track_recovery / max(float(self.safe_r), 1e-6),
+                    0.0,
+                    REWARD_CROSS_TRACK_RECOVERY_CLIP,
+                )
+            )
+            safe_cross_track_recovery = cross_track_recovery * recovery_safety_scale
+            heading_error = float(self.heading_error_to_destination(state))
+            heading_error_norm = float(np.clip(heading_error / math.pi, 0.0, 1.0))
+            safe_heading_penalty = heading_error_norm * recovery_safety_scale
             finish_bonus = REWARD_FINISHED_AIRCRAFT if state.just_finished else 0.0
             dense_reward = (
                 REWARD_PROGRESS_SCALE * safe_progress
                 - REWARD_STEP_PENALTY
                 - REWARD_CROSS_TRACK_SCALE * cross_track
+                + REWARD_CROSS_TRACK_RECOVERY_SCALE * safe_cross_track_recovery
+                - REWARD_DEST_HEADING_SCALE * safe_heading_penalty
                 - REWARD_TRAFFIC_RISK_PENALTY * traffic_risk
                 - REWARD_WEATHER_RISK_PENALTY * weather_risk
                 + finish_bonus
@@ -810,6 +842,12 @@ class MultiAgentSectorCore:
                 "safe_progress": float(safe_progress),
                 "progress_safety_scale": float(progress_safety_scale),
                 "cross_track": float(cross_track),
+                "raw_cross_track_recovery": float(raw_cross_track_recovery),
+                "cross_track_recovery": float(cross_track_recovery),
+                "safe_cross_track_recovery": float(safe_cross_track_recovery),
+                "heading_error_to_destination": float(math.degrees(heading_error)),
+                "heading_error_norm": float(heading_error_norm),
+                "safe_heading_penalty": float(safe_heading_penalty),
                 "traffic_risk": float(traffic_risk),
                 "weather_risk": float(weather_risk),
                 "finish_bonus": float(finish_bonus),
@@ -840,7 +878,12 @@ class MultiAgentSectorCore:
             terminal_rewards = {agent_id: shared_penalty for agent_id in terminal_agent_ids}
             for agent_id, state in self.agent_states.items():
                 if agent_id in terminal_rewards and state.launched and not state.finished:
-                    terminal_rewards[agent_id] = -REWARD_TRUNCATION_PENALTY
+                    route_length = max(float(state.route.linestring.length), self.goal_radius, 1e-6)
+                    remaining_fraction = float(
+                        np.clip(self.distance_to_destination(state) / route_length, 0.0, 1.0)
+                    )
+                    distance_penalty = REWARD_TRUNCATION_DISTANCE_PENALTY_SCALE * remaining_fraction
+                    terminal_rewards[agent_id] = -REWARD_TRUNCATION_PENALTY - distance_penalty
         elif team_success:
             terminal_rewards = {
                 agent_id: REWARD_TEAM_SUCCESS

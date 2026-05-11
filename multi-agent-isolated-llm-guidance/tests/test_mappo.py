@@ -18,11 +18,16 @@ from configs import (  # noqa: E402
     HAZARD_RISK_DECAY_EXPONENT,
     REWARD_COLLISION_PENALTY,
     REWARD_CROSS_TRACK_CLIP,
+    REWARD_CROSS_TRACK_RECOVERY_CLIP,
+    REWARD_CROSS_TRACK_RECOVERY_SCALE,
     REWARD_CROSS_TRACK_SCALE,
+    REWARD_DEST_HEADING_SCALE,
     REWARD_GREEN_WEATHER_PENETRATION_SCALE,
     REWARD_PROGRESS_CLIP,
     REWARD_PROGRESS_SCALE,
     REWARD_STEP_PENALTY,
+    REWARD_TRUNCATION_DISTANCE_PENALTY_SCALE,
+    REWARD_TRUNCATION_PENALTY,
     REWARD_WEATHER_RISK_PENALTY,
     SAFE_R,
 )
@@ -164,6 +169,7 @@ class MAPPOTests(unittest.TestCase):
         core._sync_primary_weather_cell()
 
         previous_distance = core.distance_to_destination(state)
+        previous_cross_track = abs(float(line_signed_cross_track(state.route.linestring, state.position)[0]))
         _, _, terminations, _, info = core.step({}, compute_predictions=False)
 
         self.assertFalse(any(terminations.values()))
@@ -188,10 +194,22 @@ class MAPPOTests(unittest.TestCase):
             ),
         )
         safe_progress = progress * (1.0 - green_risk) if progress > 0.0 else progress
+        cross_track_recovery = max(
+            0.0,
+            min(
+                REWARD_CROSS_TRACK_RECOVERY_CLIP,
+                (previous_cross_track - abs(signed_xtrk)) / SAFE_R,
+            ),
+        )
+        safe_cross_track_recovery = cross_track_recovery * (1.0 - green_risk)
+        heading_error_norm = min(core.heading_error_to_destination(state) / math.pi, 1.0)
+        safe_heading_penalty = heading_error_norm * (1.0 - green_risk)
         expected_without_green = (
             REWARD_PROGRESS_SCALE * safe_progress
             - REWARD_STEP_PENALTY
             - REWARD_CROSS_TRACK_SCALE * cross_track
+            + REWARD_CROSS_TRACK_RECOVERY_SCALE * safe_cross_track_recovery
+            - REWARD_DEST_HEADING_SCALE * safe_heading_penalty
         )
         self.assertAlmostEqual(
             core.reward,
@@ -258,6 +276,38 @@ class MAPPOTests(unittest.TestCase):
             info["terminal_reward"],
             (-2.0 * REWARD_COLLISION_PENALTY + shared_penalty) / 3.0,
         )
+
+    def test_truncation_penalty_scales_with_remaining_distance_for_unfinished_aircraft(self) -> None:
+        core = MultiAgentSectorCore(num_agents=1, max_step=1, num_weather_cells=1)
+        core.reset(seed=42, num_weather_cells=1)
+        core.weather_cells = []
+        core._sync_primary_weather_cell()
+
+        state = core.get_agent("A1")
+        state.position = (20.0, 20.0)
+        state.destination = (90.0, 20.0)
+        state.heading_rad = 0.0
+        state.launched = True
+        state.active = True
+        state.finished = False
+        state.has_entered_sector = True
+        state.inside_sector = True
+
+        _, _, terminations, truncations, info = core.step({}, compute_predictions=False)
+
+        route_length = max(float(state.route.linestring.length), core.goal_radius, 1e-6)
+        remaining_fraction = min(max(core.distance_to_destination(state) / route_length, 0.0), 1.0)
+        expected_penalty = (
+            -REWARD_TRUNCATION_PENALTY
+            - REWARD_TRUNCATION_DISTANCE_PENALTY_SCALE * remaining_fraction
+        )
+
+        self.assertEqual(info["failure_reason"], "truncated")
+        self.assertTrue(info["episode_truncated"])
+        self.assertFalse(any(terminations.values()))
+        self.assertTrue(all(truncations.values()))
+        self.assertAlmostEqual(info["agent_terminal_rewards"]["A1"], expected_penalty)
+        self.assertAlmostEqual(info["terminal_reward"], expected_penalty)
 
     def test_short_rollout_update_clears_buffer(self) -> None:
         env = _make_env()
