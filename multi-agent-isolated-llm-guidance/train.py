@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import math
 import os
 from datetime import datetime
 from pathlib import Path
@@ -126,14 +125,8 @@ def _log_eval(writer: SummaryWriter, stats: Dict[str, float], agent_steps: int) 
         writer.add_scalar(f"eval/{key}", float(value), agent_steps)
 
 
-def _eval_rank(stats: Dict[str, float]) -> tuple[float, float, float, float, float]:
-    return (
-        float(stats.get("success_rate", 0.0)),
-        -float(stats.get("collision_rate", 0.0)),
-        -float(stats.get("weather_rate", 0.0)),
-        -float(stats.get("truncation_rate", 0.0)),
-        float(stats.get("mean_return", -math.inf)),
-    )
+def _eval_score(stats: Dict[str, float]) -> float:
+    return float(stats.get("total_episode_reward", float("-inf")))
 
 
 def _mean_mapping_value(mapping: object) -> Optional[float]:
@@ -410,16 +403,17 @@ def main() -> None:
                     env_steps=env_steps,
                     episode=episode,
                 )
-                if best_eval_stats is None or _eval_rank(stats) > _eval_rank(best_eval_stats):
+                if best_eval_stats is None or _eval_score(stats) > _eval_score(best_eval_stats):
                     best_eval_stats = dict(stats)
                     agent.save_model(best_model_path)
                     print(
                         f"[{agent_steps}] Best MAPPO model saved to {best_model_path} "
+                        f"total_episode_reward={stats['total_episode_reward']:.3f} "
                         f"success={stats['success_rate']:.3f} "
                         f"collision={stats['collision_rate']:.3f} "
                         f"weather={stats['weather_rate']:.3f} "
                         f"truncated={stats['truncation_rate']:.3f} "
-                        f"mean_return={stats['mean_return']:.3f}"
+                        f"mean_episode_total_reward={stats['mean_episode_total_reward']:.3f}"
                     )
                 next_eval = agent_steps + int(args.eval_freq)
 

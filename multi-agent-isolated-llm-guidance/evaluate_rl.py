@@ -262,10 +262,14 @@ def main() -> None:
         results.append(result)
 
     returns = [result.total_reward for result in results]
+    total_episode_reward = float(np.sum(returns)) if returns else 0.0
+    mean_episode_total_reward = float(np.mean(returns)) if returns else 0.0
     summary = {
         "model_path": str(model_path),
         "num_episodes": len(results),
-        "mean_return": float(np.mean(returns)) if returns else 0.0,
+        "total_episode_reward": total_episode_reward,
+        "mean_episode_total_reward": mean_episode_total_reward,
+        "mean_return": mean_episode_total_reward,
         "std_return": float(np.std(returns)) if returns else 0.0,
         "success_rate": float(np.mean([result.success for result in results])) if results else 0.0,
         "collision_rate": float(np.mean([result.failure_reason == "collision" for result in results])) if results else 0.0,
@@ -280,10 +284,12 @@ def main() -> None:
         json.dump(summary, handle, indent=2)
 
     print(
-        "episodes={} mean_return={:.3f} success_rate={:.2f} collision_rate={:.2f} "
+        "episodes={} total_episode_reward={:.3f} mean_episode_total_reward={:.3f} "
+        "success_rate={:.2f} collision_rate={:.2f} "
         "weather_rate={:.2f} truncation_rate={:.2f} metrics={}".format(
             summary["num_episodes"],
-            summary["mean_return"],
+            summary["total_episode_reward"],
+            summary["mean_episode_total_reward"],
             summary["success_rate"],
             summary["collision_rate"],
             summary["weather_rate"],

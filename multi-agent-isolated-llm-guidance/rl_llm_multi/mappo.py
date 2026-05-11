@@ -701,8 +701,12 @@ def evaluate_policy(
         truncations += int(bool(common["episode_truncated"]))
 
     n = max(int(n_episodes), 1)
+    total_episode_reward = float(np.sum(returns)) if returns else 0.0
+    mean_episode_total_reward = float(np.mean(returns)) if returns else 0.0
     return {
-        "mean_return": float(np.mean(returns)) if returns else 0.0,
+        "total_episode_reward": total_episode_reward,
+        "mean_episode_total_reward": mean_episode_total_reward,
+        "mean_return": mean_episode_total_reward,
         "std_return": float(np.std(returns)) if returns else 0.0,
         "mean_steps": float(np.mean(lengths)) if lengths else 0.0,
         "success_rate": successes / n,
