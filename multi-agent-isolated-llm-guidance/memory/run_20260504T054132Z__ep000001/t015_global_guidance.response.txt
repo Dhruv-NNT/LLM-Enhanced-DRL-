@@ -1,7 +1,0 @@
-```json
-{
-  "agent": "A12",
-  "action": "-30",
-  "reason": "The -30 degree turn provides the safest option for A12, avoiding potential conflicts and maintaining a clear path. It also aligns with recent decision memory, suggesting a pattern of strategic maneuvering to ensure safety and efficiency."
-}
-```

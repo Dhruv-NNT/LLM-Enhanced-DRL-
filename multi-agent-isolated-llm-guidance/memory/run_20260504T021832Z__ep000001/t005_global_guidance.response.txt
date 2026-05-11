@@ -1,8 +1,0 @@
-```json
-{
-  "intent": "Maneuver",
-  "agent": "A3",
-  "action": "turn=-20",
-  "explanation": "A3's closest safe maneuver is a turn of -20 degrees. This maintains separation from other aircraft and avoids weather entry. While a turn of -15 degrees is also safe, it results in a lower minimum separation of 5.92, and a turn of -10 results in a pair_loss of 10, which is unacceptable. A turn of -20 maintains a minimum separation of 7.64 and a weather clearance of 16.57."
-}
-```
