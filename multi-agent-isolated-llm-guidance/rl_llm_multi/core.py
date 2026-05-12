@@ -30,6 +30,7 @@ from configs import (
     PAIR_RISK_BUFFER,
     REWARD_COLLISION_PENALTY,
     REWARD_CROSS_TRACK_CLIP,
+    REWARD_CROSS_TRACK_HAZARD_RELIEF,
     REWARD_CROSS_TRACK_RECOVERY_CLIP,
     REWARD_CROSS_TRACK_RECOVERY_SCALE,
     REWARD_CROSS_TRACK_SCALE,
@@ -38,12 +39,15 @@ from configs import (
     REWARD_GREEN_WEATHER_PENETRATION_SCALE,
     REWARD_PROGRESS_CLIP,
     REWARD_PROGRESS_SCALE,
+    REWARD_RISK_REDUCTION_CLIP,
     REWARD_STEP_PENALTY,
     REWARD_TEAM_SUCCESS,
     REWARD_TERMINAL_WEATHER_PENALTY,
+    REWARD_TRAFFIC_RISK_REDUCTION_SCALE,
     REWARD_TRUNCATION_PENALTY,
     REWARD_TRUNCATION_DISTANCE_PENALTY_SCALE,
     REWARD_TRAFFIC_RISK_PENALTY,
+    REWARD_WEATHER_RISK_REDUCTION_SCALE,
     REWARD_WEATHER_RISK_PENALTY,
     ROUTE_RECOVERY_XTRACK_UNITS,
     SAFE_R,
@@ -728,6 +732,19 @@ class MultiAgentSectorCore:
             agent_id: abs(float(line_signed_cross_track(state.route.linestring, state.position)[0]))
             for agent_id, state in self.agent_states.items()
         }
+        previous_reward_agent_ids = [
+            agent_id
+            for agent_id, state in self.agent_states.items()
+            if state.launched and not state.finished
+        ]
+        previous_traffic_risks = {
+            agent_id: self._traffic_risk_score(self.agent_states[agent_id], set())
+            for agent_id in previous_reward_agent_ids
+        }
+        previous_weather_risks = {
+            agent_id: self._weather_risk_score(self.agent_states[agent_id])
+            for agent_id in previous_reward_agent_ids
+        }
         self.n_step += 1
         self._launch_agents()
         self._advance_weather()
@@ -808,7 +825,31 @@ class MultiAgentSectorCore:
             )
             traffic_risk = self._traffic_risk_score(state, collision_agents)
             weather_risk = self._weather_risk_score(state)
+            previous_traffic_risk = float(previous_traffic_risks.get(state.agent_id, 0.0))
+            previous_weather_risk = float(previous_weather_risks.get(state.agent_id, 0.0))
+            traffic_risk_reduction = float(
+                np.clip(
+                    previous_traffic_risk - traffic_risk,
+                    0.0,
+                    REWARD_RISK_REDUCTION_CLIP,
+                )
+            )
+            weather_risk_reduction = float(
+                np.clip(
+                    previous_weather_risk - weather_risk,
+                    0.0,
+                    REWARD_RISK_REDUCTION_CLIP,
+                )
+            )
             progress_risk_gate = float(np.clip(max(traffic_risk, weather_risk), 0.0, 1.0))
+            cross_track_penalty_scale = float(
+                np.clip(
+                    1.0 - REWARD_CROSS_TRACK_HAZARD_RELIEF * progress_risk_gate,
+                    0.0,
+                    1.0,
+                )
+            )
+            relaxed_cross_track = cross_track * cross_track_penalty_scale
             progress_safety_scale = 1.0 - progress_risk_gate if progress > 0.0 else 1.0
             recovery_safety_scale = 1.0 - progress_risk_gate
             safe_progress = progress * progress_safety_scale
@@ -828,11 +869,13 @@ class MultiAgentSectorCore:
             dense_reward = (
                 REWARD_PROGRESS_SCALE * safe_progress
                 - REWARD_STEP_PENALTY
-                - REWARD_CROSS_TRACK_SCALE * cross_track
+                - REWARD_CROSS_TRACK_SCALE * relaxed_cross_track
                 + REWARD_CROSS_TRACK_RECOVERY_SCALE * safe_cross_track_recovery
                 - REWARD_DEST_HEADING_SCALE * safe_heading_penalty
                 - REWARD_TRAFFIC_RISK_PENALTY * traffic_risk
                 - REWARD_WEATHER_RISK_PENALTY * weather_risk
+                + REWARD_TRAFFIC_RISK_REDUCTION_SCALE * traffic_risk_reduction
+                + REWARD_WEATHER_RISK_REDUCTION_SCALE * weather_risk_reduction
                 + finish_bonus
             )
             dense_rewards[state.agent_id] = float(dense_reward)
@@ -842,14 +885,20 @@ class MultiAgentSectorCore:
                 "safe_progress": float(safe_progress),
                 "progress_safety_scale": float(progress_safety_scale),
                 "cross_track": float(cross_track),
+                "cross_track_penalty_scale": float(cross_track_penalty_scale),
+                "relaxed_cross_track": float(relaxed_cross_track),
                 "raw_cross_track_recovery": float(raw_cross_track_recovery),
                 "cross_track_recovery": float(cross_track_recovery),
                 "safe_cross_track_recovery": float(safe_cross_track_recovery),
                 "heading_error_to_destination": float(math.degrees(heading_error)),
                 "heading_error_norm": float(heading_error_norm),
                 "safe_heading_penalty": float(safe_heading_penalty),
+                "previous_traffic_risk": float(previous_traffic_risk),
                 "traffic_risk": float(traffic_risk),
+                "traffic_risk_reduction": float(traffic_risk_reduction),
+                "previous_weather_risk": float(previous_weather_risk),
                 "weather_risk": float(weather_risk),
+                "weather_risk_reduction": float(weather_risk_reduction),
                 "finish_bonus": float(finish_bonus),
                 "dense_reward": float(dense_reward),
             }

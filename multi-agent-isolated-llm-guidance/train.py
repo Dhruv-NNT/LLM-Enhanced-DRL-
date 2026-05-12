@@ -139,11 +139,15 @@ def _mean_mapping_value(mapping: object) -> Optional[float]:
 ESSENTIAL_REWARD_COMPONENT_KEYS = (
     "safe_progress",
     "cross_track",
+    "cross_track_penalty_scale",
+    "relaxed_cross_track",
     "safe_cross_track_recovery",
     "heading_error_to_destination",
     "safe_heading_penalty",
     "traffic_risk",
+    "traffic_risk_reduction",
     "weather_risk",
+    "weather_risk_reduction",
     "finish_bonus",
 )
 
@@ -348,6 +352,7 @@ def main() -> None:
 
             episode += 1
             total_episodes = max(episode, 1)
+            collision_or_weather_failures = failure_counts["collision"] + failure_counts["weather"]
             writer.add_scalar("train/reward/episode_total_return", ep_return, episode)
             writer.add_scalar("train/episode_env_steps", ep_env_steps, episode)
             writer.add_scalar("train/success", int(bool(common["episode_success"])), episode)
@@ -360,13 +365,8 @@ def main() -> None:
                 agent_steps,
             )
             writer.add_scalar(
-                "train/collision_rate_running",
-                failure_counts["collision"] / total_episodes,
-                agent_steps,
-            )
-            writer.add_scalar(
-                "train/weather_rate_running",
-                failure_counts["weather"] / total_episodes,
+                "train/collision_or_weather_rate_running",
+                collision_or_weather_failures / total_episodes,
                 agent_steps,
             )
             writer.add_scalar(
