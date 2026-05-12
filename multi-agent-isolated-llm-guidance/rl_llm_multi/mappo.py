@@ -20,6 +20,7 @@ from configs import ACTION_BINS, MAX_AGENTS
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+MODEL_SCHEMA_VERSION = 4
 torch.manual_seed(0)
 if device.type == "cuda":
     torch.cuda.manual_seed_all(0)
@@ -151,6 +152,7 @@ class ActionRecord:
     episode_id: int
     agent_id: str
     agent_index: int
+    local_obs: torch.Tensor
     global_state: torch.Tensor
     action: torch.Tensor
     logprob: torch.Tensor
@@ -161,6 +163,7 @@ class RolloutBuffer:
     """Rollout storage for all active-agent decisions."""
 
     def __init__(self) -> None:
+        self.local_observations: List[torch.Tensor] = []
         self.global_states: List[torch.Tensor] = []
         self.agent_indices: List[int] = []
         self.actions: List[torch.Tensor] = []
@@ -172,6 +175,7 @@ class RolloutBuffer:
         self.agent_ids: List[str] = []
 
     def add(self, record: ActionRecord, *, reward: float, terminal: bool) -> None:
+        self.local_observations.append(record.local_obs.detach())
         self.global_states.append(record.global_state.detach())
         self.agent_indices.append(int(record.agent_index))
         self.actions.append(record.action.detach())
@@ -217,10 +221,11 @@ class RolloutBuffer:
 
 
 class MAPPOActorCritic(nn.Module):
-    """Shared actor with agent identity and centralized critic."""
+    """Decentralized actor with a centralized critic."""
 
     def __init__(
         self,
+        local_obs_dim: int,
         global_state_dim: int,
         max_agents: int,
         action_dim: int,
@@ -231,6 +236,7 @@ class MAPPOActorCritic(nn.Module):
         orthogonal_init: bool = False,
     ) -> None:
         super().__init__()
+        self.local_obs_dim = int(local_obs_dim)
         self.global_state_dim = int(global_state_dim)
         self.max_agents = int(max_agents)
         self.action_dim = int(action_dim)
@@ -238,7 +244,7 @@ class MAPPOActorCritic(nn.Module):
         self.activation = str(activation)
         self.use_layer_norm = bool(use_layer_norm)
         self.orthogonal_init = bool(orthogonal_init)
-        actor_dim = self.global_state_dim + self.max_agents
+        actor_dim = self.local_obs_dim + self.max_agents
         critic_dim = self.global_state_dim + self.max_agents
         self.actor = _build_mlp(
             actor_dim,
@@ -246,7 +252,6 @@ class MAPPOActorCritic(nn.Module):
             self.hidden_dims,
             activation=self.activation,
             use_layer_norm=self.use_layer_norm,
-            final_activation=nn.Softmax(dim=-1),
         )
         self.critic = _build_mlp(
             critic_dim,
@@ -259,48 +264,60 @@ class MAPPOActorCritic(nn.Module):
             _orthogonal_init(self.actor, activation=self.activation, output_gain=0.01)
             _orthogonal_init(self.critic, activation=self.activation, output_gain=1.0)
 
-    def _actor_input(self, global_states: torch.Tensor, agent_indices: torch.Tensor) -> torch.Tensor:
-        if global_states.dim() == 1:
-            global_states = global_states.unsqueeze(0)
+    def _conditioned_input(self, features: torch.Tensor, agent_indices: torch.Tensor) -> torch.Tensor:
+        if features.dim() == 1:
+            features = features.unsqueeze(0)
         agent_indices = agent_indices.long().view(-1)
+        if features.size(0) == 1 and agent_indices.numel() > 1:
+            features = features.expand(agent_indices.numel(), -1)
         one_hot = F.one_hot(agent_indices, num_classes=self.max_agents).to(
             dtype=torch.float32,
-            device=global_states.device,
+            device=features.device,
         )
-        return torch.cat([global_states, one_hot], dim=-1)
+        return torch.cat([features, one_hot], dim=-1)
+
+    def _actor_input(self, local_observations: torch.Tensor, agent_indices: torch.Tensor) -> torch.Tensor:
+        return self._conditioned_input(local_observations, agent_indices)
+
+    def _critic_input(self, global_states: torch.Tensor, agent_indices: torch.Tensor) -> torch.Tensor:
+        return self._conditioned_input(global_states, agent_indices)
 
     def act(
         self,
+        local_obs: torch.Tensor,
         global_state: torch.Tensor,
         agent_index: int,
         *,
         deterministic: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         idx = torch.tensor([int(agent_index)], dtype=torch.long, device=global_state.device)
-        actor_input = self._actor_input(global_state.unsqueeze(0), idx)
-        probs = self.actor(actor_input).squeeze(0)
-        dist = Categorical(probs)
+        actor_input = self._actor_input(local_obs, idx)
+        critic_input = self._critic_input(global_state, idx)
+        logits = self.actor(actor_input).squeeze(0)
+        dist = Categorical(logits=logits)
         if deterministic:
-            action = torch.argmax(probs, dim=-1)
+            action = torch.argmax(logits, dim=-1)
         else:
             action = dist.sample()
         logprob = dist.log_prob(action)
-        value = self.critic(actor_input).squeeze(-1).squeeze(0)
+        value = self.critic(critic_input).squeeze(-1).squeeze(0)
         entropy = dist.entropy()
         return action.detach(), logprob.detach(), value.detach(), entropy.detach()
 
     def evaluate(
         self,
+        local_observations: torch.Tensor,
         global_states: torch.Tensor,
         agent_indices: torch.Tensor,
         actions: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        actor_input = self._actor_input(global_states, agent_indices)
-        probs = self.actor(actor_input)
-        dist = Categorical(probs)
+        actor_input = self._actor_input(local_observations, agent_indices)
+        critic_input = self._critic_input(global_states, agent_indices)
+        logits = self.actor(actor_input)
+        dist = Categorical(logits=logits)
         logprobs = dist.log_prob(actions)
         entropy = dist.entropy()
-        values = self.critic(actor_input).squeeze(-1)
+        values = self.critic(critic_input).squeeze(-1)
         return logprobs, values, entropy
 
     @torch.no_grad()
@@ -311,9 +328,7 @@ class MAPPOActorCritic(nn.Module):
             indices = torch.tensor([agent_indices], dtype=torch.long, device=global_state.device)
         else:
             indices = torch.as_tensor(agent_indices, dtype=torch.long, device=global_state.device).view(-1)
-        if global_state.size(0) == 1 and indices.numel() > 1:
-            global_state = global_state.expand(indices.numel(), -1)
-        critic_input = self._actor_input(global_state, indices)
+        critic_input = self._critic_input(global_state, indices)
         return self.critic(critic_input).squeeze(-1)
 
 
@@ -323,6 +338,7 @@ class MAPPO:
     def __init__(
         self,
         global_state_dim: int,
+        local_obs_dim: int,
         action_dim: int,
         *,
         max_agents: int = MAX_AGENTS,
@@ -341,6 +357,7 @@ class MAPPO:
         normalize_reward: bool = False,
     ) -> None:
         self.global_state_dim = int(global_state_dim)
+        self.local_obs_dim = int(local_obs_dim)
         self.action_dim = int(action_dim)
         self.max_agents = int(max_agents)
         self.hidden_dims = tuple(int(dim) for dim in (hidden_dims or (hidden_dim, hidden_dim)))
@@ -355,8 +372,11 @@ class MAPPO:
         self.normalize_reward = bool(normalize_reward)
 
         self.buffer = RolloutBuffer()
-        self.obs_rms = RunningMeanStd(shape=self.global_state_dim)
+        self.global_obs_rms = RunningMeanStd(shape=self.global_state_dim)
+        self.local_obs_rms = RunningMeanStd(shape=self.local_obs_dim)
+        self.obs_rms = self.global_obs_rms
         self.policy = MAPPOActorCritic(
+            self.local_obs_dim,
             self.global_state_dim,
             self.max_agents,
             self.action_dim,
@@ -366,6 +386,7 @@ class MAPPO:
             orthogonal_init=self.orthogonal_init,
         ).to(device)
         self.policy_old = MAPPOActorCritic(
+            self.local_obs_dim,
             self.global_state_dim,
             self.max_agents,
             self.action_dim,
@@ -383,34 +404,51 @@ class MAPPO:
         )
         self.loss_fn = nn.MSELoss()
 
-    def _state_tensor(self, global_state) -> torch.Tensor:
-        return torch.tensor(global_state, dtype=torch.float32, device=device)
+    def _float_tensor(self, value) -> torch.Tensor:
+        return torch.tensor(value, dtype=torch.float32, device=device)
 
-    def _normalize_train(self, global_state_tensor: torch.Tensor) -> torch.Tensor:
-        self.obs_rms.update(global_state_tensor)
-        return self.obs_rms.normalize(global_state_tensor)
+    def _normalize_global_train(self, global_state_tensor: torch.Tensor) -> torch.Tensor:
+        self.global_obs_rms.update(global_state_tensor)
+        return self.global_obs_rms.normalize(global_state_tensor)
 
-    def _normalize_eval(self, global_state_tensor: torch.Tensor) -> torch.Tensor:
-        return self.obs_rms.normalize(global_state_tensor)
+    def _normalize_global_eval(self, global_state_tensor: torch.Tensor) -> torch.Tensor:
+        return self.global_obs_rms.normalize(global_state_tensor)
+
+    def _normalize_local_train(self, local_obs_tensor: torch.Tensor) -> torch.Tensor:
+        self.local_obs_rms.update(local_obs_tensor)
+        return self.local_obs_rms.normalize(local_obs_tensor)
+
+    def _normalize_local_eval(self, local_obs_tensor: torch.Tensor) -> torch.Tensor:
+        return self.local_obs_rms.normalize(local_obs_tensor)
 
     def select_actions(
         self,
         global_state,
+        local_observations: Mapping[str, object],
         active_agent_ids: Sequence[str],
         *,
         episode_id: int,
         deterministic: bool = False,
         store: bool = True,
     ) -> Tuple[Dict[str, int], List[ActionRecord], float]:
-        state_tensor = self._state_tensor(global_state)
-        norm_state = self._normalize_train(state_tensor) if store else self._normalize_eval(state_tensor)
+        state_tensor = self._float_tensor(global_state)
+        norm_state = self._normalize_global_train(state_tensor) if store else self._normalize_global_eval(state_tensor)
         actions: Dict[str, int] = {}
         records: List[ActionRecord] = []
         entropies: List[float] = []
         with torch.no_grad():
             for agent_id in active_agent_ids:
+                if agent_id not in local_observations:
+                    raise KeyError(f"Missing local observation for active agent {agent_id}")
+                local_tensor = self._float_tensor(local_observations[agent_id])
+                norm_local = (
+                    self._normalize_local_train(local_tensor)
+                    if store
+                    else self._normalize_local_eval(local_tensor)
+                )
                 agent_index = agent_id_to_index(agent_id, self.max_agents)
                 action, logprob, value, entropy = self.policy_old.act(
+                    norm_local,
                     norm_state,
                     agent_index,
                     deterministic=deterministic,
@@ -423,6 +461,7 @@ class MAPPO:
                             episode_id=int(episode_id),
                             agent_id=str(agent_id),
                             agent_index=agent_index,
+                            local_obs=norm_local,
                             global_state=norm_state,
                             action=action,
                             logprob=logprob,
@@ -464,8 +503,8 @@ class MAPPO:
     ) -> Dict[Tuple[int, str], float]:
         if not active_agent_ids:
             return {}
-        state_tensor = self._state_tensor(global_state)
-        norm_state = self._normalize_eval(state_tensor)
+        state_tensor = self._float_tensor(global_state)
+        norm_state = self._normalize_global_eval(state_tensor)
         values: Dict[Tuple[int, str], float] = {}
         for agent_id in active_agent_ids:
             agent_index = agent_id_to_index(agent_id, self.max_agents)
@@ -511,6 +550,7 @@ class MAPPO:
         if len(self.buffer) == 0:
             return {"loss": 0.0, "policy_loss": 0.0, "value_loss": 0.0, "entropy": 0.0}
 
+        local_observations = torch.stack(self.buffer.local_observations, dim=0).to(device)
         states = torch.stack(self.buffer.global_states, dim=0).to(device)
         agent_indices = torch.tensor(self.buffer.agent_indices, dtype=torch.long, device=device)
         actions = torch.stack(self.buffer.actions, dim=0).long().to(device)
@@ -532,7 +572,7 @@ class MAPPO:
         if advantages.numel() > 1:
             advantages = (advantages - advantages.mean()) / (advantages.std(unbiased=False) + 1e-8)
 
-        batch_size = states.size(0)
+        batch_size = local_observations.size(0)
         mb_size = min(self.mb_size, batch_size)
         metric_sums = defaultdict(float)
         metric_count = 0
@@ -540,6 +580,7 @@ class MAPPO:
             order = torch.randperm(batch_size, device=device)
             for start in range(0, batch_size, mb_size):
                 idx = order[start : start + mb_size]
+                mb_local_observations = local_observations[idx]
                 mb_states = states[idx]
                 mb_agents = agent_indices[idx]
                 mb_actions = actions[idx]
@@ -548,6 +589,7 @@ class MAPPO:
                 mb_returns = returns[idx]
 
                 logprobs, state_values, entropy = self.policy.evaluate(
+                    mb_local_observations,
                     mb_states,
                     mb_agents,
                     mb_actions,
@@ -587,21 +629,45 @@ class MAPPO:
 
     def _model_payload(self) -> Dict[str, object]:
         return {
+            "model_schema_version": MODEL_SCHEMA_VERSION,
             "policy_old": self.policy_old.state_dict(),
-            "obs_rms": self.obs_rms.state_dict(),
+            "global_obs_rms": self.global_obs_rms.state_dict(),
+            "local_obs_rms": self.local_obs_rms.state_dict(),
+            "obs_rms": self.global_obs_rms.state_dict(),
+            "local_obs_dim": self.local_obs_dim,
             "global_state_dim": self.global_state_dim,
             "action_dim": self.action_dim,
             "max_agents": self.max_agents,
         }
+
+    def _validate_model_payload(self, payload: Mapping[str, object]) -> None:
+        schema_version = int(payload.get("model_schema_version", 1))
+        if schema_version != MODEL_SCHEMA_VERSION:
+            raise ValueError(
+                "Incompatible MAPPO checkpoint schema. "
+                f"Expected schema {MODEL_SCHEMA_VERSION} with local-observation K-neighbor actor, "
+                f"got schema {schema_version}. Retrain from scratch or use a matching checkpoint."
+            )
+        payload_local_dim = int(payload.get("local_obs_dim", -1))
+        payload_global_dim = int(payload.get("global_state_dim", -1))
+        if payload_local_dim != self.local_obs_dim or payload_global_dim != self.global_state_dim:
+            raise ValueError(
+                "Incompatible MAPPO checkpoint dimensions. "
+                f"Expected local_obs_dim={self.local_obs_dim}, global_state_dim={self.global_state_dim}; "
+                f"got local_obs_dim={payload_local_dim}, global_state_dim={payload_global_dim}."
+            )
 
     def save_model(self, path: str | os.PathLike[str]) -> None:
         _atomic_torch_save(self._model_payload(), str(path))
 
     def load_model(self, path: str | os.PathLike[str]) -> None:
         payload = _torch_load(str(path), map_location=device)
+        self._validate_model_payload(payload)
         self.policy_old.load_state_dict(payload["policy_old"])
         self.policy.load_state_dict(payload["policy_old"])
-        self.obs_rms.load_state_dict(payload["obs_rms"])
+        self.global_obs_rms.load_state_dict(payload["global_obs_rms"])
+        self.local_obs_rms.load_state_dict(payload["local_obs_rms"])
+        self.obs_rms = self.global_obs_rms
 
     def save_checkpoint(
         self,
@@ -627,10 +693,13 @@ class MAPPO:
 
     def load_checkpoint(self, path: str | os.PathLike[str]) -> Tuple[int, int, int]:
         payload = _torch_load(str(path), map_location=device)
+        self._validate_model_payload(payload)
         self.policy.load_state_dict(payload["policy"])
         self.policy_old.load_state_dict(payload["policy_old"])
         self.optimizer.load_state_dict(payload["optimizer"])
-        self.obs_rms.load_state_dict(payload["obs_rms"])
+        self.global_obs_rms.load_state_dict(payload["global_obs_rms"])
+        self.local_obs_rms.load_state_dict(payload["local_obs_rms"])
+        self.obs_rms = self.global_obs_rms
         torch_rng = payload.get("torch_rng")
         if torch_rng is not None:
             torch_rng_tensor = torch.as_tensor(torch_rng, dtype=torch.uint8, device="cpu")
@@ -665,7 +734,7 @@ def evaluate_policy(
 
     for ep_idx in range(int(n_episodes)):
         env = make_env()
-        _, info = env.reset(seed=int(seed) + ep_idx, options=reset_options)
+        observations, info = env.reset(seed=int(seed) + ep_idx, options=reset_options)
         done = bool(info["__common__"]["episode_done"])
         truncated = bool(info["__common__"]["episode_truncated"])
         episode_return = 0.0
@@ -673,16 +742,17 @@ def evaluate_policy(
         while not done and not truncated:
             active_ids = list(env.agents)
             if not active_ids:
-                _, _, _, _, info = env.step({})
+                observations, _, _, _, info = env.step({})
             else:
                 actions, _, _ = agent.select_actions(
-                    env.state(),
-                    active_ids,
+                    global_state=env.state(),
+                    local_observations=observations,
+                    active_agent_ids=active_ids,
                     episode_id=ep_idx,
                     deterministic=True,
                     store=False,
                 )
-                _, _, _, _, info = env.step(actions)
+                observations, _, _, _, info = env.step(actions)
             common = info["__common__"]
             episode_return += float(common["team_reward"])
             done = bool(common["episode_done"])

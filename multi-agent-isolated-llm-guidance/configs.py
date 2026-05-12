@@ -33,6 +33,7 @@ ROUTE_IDS_DEFAULT = None
 SEED = 42
 SAFE_R = 5.0
 TRAFFIC_CAUTION_R = 6.5
+LOCAL_TRAFFIC_NEIGHBOR_COUNT = 3
 LAUNCH_SEPARATION_R = TRAFFIC_CAUTION_R
 GOAL_RADIUS = 5.0
 AGENT_SPEED = 2.0
@@ -45,14 +46,23 @@ ACTION_BINS = (-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30)
 # curves stay readable across 2-12 aircraft. Terminal outcomes are shared by all
 # aircraft trajectories and are intentionally large enough to dominate normal
 # step progress.
+#
+# Coefficient intent:
+# - risk penalties/reduction bonuses should dominate normal progress while a
+#   conflict exists, so deviation is acceptable;
+# - progress, cross-track recovery, and heading alignment should regain strength
+#   as risk falls, so aircraft merge back toward the route/destination.
 REWARD_PROGRESS_SCALE = 1.0
 REWARD_PROGRESS_CLIP = 1.0
+REWARD_PROGRESS_HAZARD_RELIEF = 0.60
 REWARD_STEP_PENALTY = 0.05
 REWARD_CROSS_TRACK_SCALE = 0.35
 REWARD_CROSS_TRACK_CLIP = 2.0
 REWARD_CROSS_TRACK_HAZARD_RELIEF = 0.75
 REWARD_CROSS_TRACK_RECOVERY_SCALE = 0.55
 REWARD_CROSS_TRACK_RECOVERY_CLIP = 1.0
+REWARD_MERGE_BACK_RISK_THRESHOLD = 0.30
+REWARD_MERGE_BACK_SCALE = 0.40
 REWARD_DEST_HEADING_SCALE = 0.50
 REWARD_TRAFFIC_RISK_PENALTY = 2.5
 REWARD_WEATHER_RISK_PENALTY = 2.5
@@ -96,7 +106,7 @@ WEATHER_INIT_TRIES = 300
 NUM_WEATHER_CELLS_DEFAULT = 1
 
 # Pure-RL MAPPO defaults.
-MAPPO_RUN_NAME = "12th_may_new_reward_mechanism"
+MAPPO_RUN_NAME = "local_obs_k3_neighbor_risk_12th_may"
 MAPPO_LOG_DIR = PROJECT_ROOT / "log" / "MAPPO" / MAPPO_RUN_NAME
 MAPPO_BEST_MODEL_PATH = MAPPO_LOG_DIR / "best_model.pt"
 MAPPO_LAST_CKPT_PATH = MAPPO_LOG_DIR / "last.ckpt"

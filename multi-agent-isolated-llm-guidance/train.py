@@ -100,9 +100,10 @@ def make_env(
     return env
 
 
-def build_agent(global_state_dim: int) -> MAPPO:
+def build_agent(global_state_dim: int, local_obs_dim: int) -> MAPPO:
     return MAPPO(
         global_state_dim=global_state_dim,
+        local_obs_dim=local_obs_dim,
         action_dim=len(ACTION_BINS),
         max_agents=MAX_AGENTS,
         hidden_dims=MAPPO_HIDDEN_DIMS,
@@ -138,13 +139,20 @@ def _mean_mapping_value(mapping: object) -> Optional[float]:
 
 ESSENTIAL_REWARD_COMPONENT_KEYS = (
     "safe_progress",
+    "progress_risk_gate",
+    "progress_safety_scale",
     "cross_track",
     "cross_track_penalty_scale",
     "relaxed_cross_track",
     "safe_cross_track_recovery",
+    "merge_back_scale",
+    "merge_back_bonus",
     "heading_error_to_destination",
     "safe_heading_penalty",
+    "predicted_traffic_risk",
+    "local_traffic_risk",
     "traffic_risk",
+    "local_traffic_risk_reduction",
     "traffic_risk_reduction",
     "weather_risk",
     "weather_risk_reduction",
@@ -221,7 +229,8 @@ def main() -> None:
     )
     probe_env.reset(seed=args.seed, options=reset_options)
     global_state_dim = int(probe_env.state().shape[0])
-    agent = build_agent(global_state_dim)
+    local_obs_dim = int(probe_env.observation_space(probe_env.possible_agents[0]).shape[0])
+    agent = build_agent(global_state_dim, local_obs_dim)
     guidance = NoGuidanceProvider()
 
     agent_steps = 0
@@ -246,10 +255,11 @@ def main() -> None:
 
     failure_counts = {"collision": 0, "weather": 0, "truncated": 0, "success": 0}
     print(
-        "Starting MAPPO training | num_agents={} weather_cells={} global_dim={} max_agent_steps={}".format(
+        "Starting MAPPO training | num_agents={} weather_cells={} global_dim={} local_dim={} max_agent_steps={}".format(
             args.num_agents,
             args.num_weather_cells,
             global_state_dim,
+            local_obs_dim,
             args.max_agent_steps,
         )
     )
@@ -268,7 +278,7 @@ def main() -> None:
                 num_weather_cells=args.num_weather_cells,
                 episode_step_cap=args.episode_step_cap,
             )
-            _, info = env.reset(seed=int(args.seed) + int(episode), options=reset_options)
+            observations, info = env.reset(seed=int(args.seed) + int(episode), options=reset_options)
             guidance.reset()
             done = bool(info["__common__"]["episode_done"])
             truncated = bool(info["__common__"]["episode_truncated"])
@@ -280,7 +290,7 @@ def main() -> None:
             while not done and not truncated:
                 active_ids = list(env.agents)
                 if not active_ids:
-                    _, _, _, _, info = env.step({})
+                    observations, _, _, _, info = env.step({})
                     common = info["__common__"]
                     team_reward = float(common["team_reward"])
                     done = bool(common["episode_done"])
@@ -297,8 +307,9 @@ def main() -> None:
                     continue
 
                 policy_actions, records, _entropy = agent.select_actions(
-                    env.state(),
-                    active_ids,
+                    global_state=env.state(),
+                    local_observations=observations,
+                    active_agent_ids=active_ids,
                     episode_id=episode,
                     deterministic=False,
                     store=True,
@@ -313,12 +324,12 @@ def main() -> None:
                     if agent_id in active_ids:
                         final_actions[agent_id] = int(action_idx)
 
-                _, _, _, _, info = env.step(final_actions)
+                observations, _, _, _, info = env.step(final_actions)
                 common = info["__common__"]
                 team_reward = float(common["team_reward"])
                 done = bool(common["episode_done"])
                 truncated = bool(common["episode_truncated"])
-                post_active = set(common["active_agents"])
+                post_active = set(env.agents)
                 team_terminal = bool(done or truncated)
                 terminals = {
                     agent_id: bool(team_terminal or agent_id not in post_active)

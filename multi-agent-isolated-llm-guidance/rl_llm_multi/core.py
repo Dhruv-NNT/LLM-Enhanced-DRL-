@@ -23,6 +23,7 @@ from configs import (
     HAZARD_LOOKAHEAD_STEPS,
     HAZARD_RISK_DECAY_EXPONENT,
     LAUNCH_SEPARATION_R,
+    LOCAL_TRAFFIC_NEIGHBOR_COUNT,
     MAX_AGENTS,
     MAX_WEATHER_CELLS,
     MAX_STEP,
@@ -37,7 +38,10 @@ from configs import (
     REWARD_DEST_HEADING_SCALE,
     REWARD_FINISHED_AIRCRAFT,
     REWARD_GREEN_WEATHER_PENETRATION_SCALE,
+    REWARD_MERGE_BACK_RISK_THRESHOLD,
+    REWARD_MERGE_BACK_SCALE,
     REWARD_PROGRESS_CLIP,
+    REWARD_PROGRESS_HAZARD_RELIEF,
     REWARD_PROGRESS_SCALE,
     REWARD_RISK_REDUCTION_CLIP,
     REWARD_STEP_PENALTY,
@@ -119,7 +123,8 @@ class AgentState:
 class MultiAgentSectorCore:
     """Stateful multi-agent simulator shared by the isolated LLM runner and evaluator."""
 
-    local_obs_dim = 24
+    local_neighbor_feature_dim = 6
+    local_obs_dim = 22 + LOCAL_TRAFFIC_NEIGHBOR_COUNT * local_neighbor_feature_dim
 
     def __init__(
         self,
@@ -324,18 +329,22 @@ class MultiAgentSectorCore:
         return abs(float(self._wrap_angle(dest_heading - state.heading_rad)))
 
     def nearest_neighbor(self, agent_id: str) -> Tuple[Optional[str], float]:
+        neighbors = self.nearest_neighbors(agent_id, limit=1)
+        if not neighbors:
+            return None, float("inf")
+        return neighbors[0]
+
+    def nearest_neighbors(self, agent_id: str, *, limit: int = LOCAL_TRAFFIC_NEIGHBOR_COUNT) -> List[Tuple[str, float]]:
         state = self.agent_states[agent_id]
-        best_id = None
-        best_dist = float("inf")
+        neighbors: List[Tuple[str, float]] = []
         for other_id in self.active_agent_ids:
             if other_id == agent_id:
                 continue
             other_state = self.agent_states[other_id]
             dist = float(np.linalg.norm(np.array(state.position) - np.array(other_state.position)))
-            if dist < best_dist:
-                best_dist = dist
-                best_id = other_id
-        return best_id, best_dist if best_id is not None else float("inf")
+            neighbors.append((other_id, dist))
+        neighbors.sort(key=lambda item: item[1])
+        return neighbors[: max(int(limit), 0)]
 
     def _bearing_to_neighbor_deg(self, agent_id: str, other_id: Optional[str]) -> float:
         if other_id is None:
@@ -347,6 +356,75 @@ class MultiAgentSectorCore:
         )
         own_deg = math.degrees(state.heading_rad)
         return ((absolute - own_deg + 180.0) % 360.0) - 180.0
+
+    def _relative_heading_to_neighbor_deg(self, agent_id: str, other_id: Optional[str]) -> float:
+        if other_id is None:
+            return 0.0
+        state = self.agent_states[agent_id]
+        other = self.agent_states[other_id]
+        own_deg = math.degrees(state.heading_rad)
+        other_deg = math.degrees(other.heading_rad)
+        return ((other_deg - own_deg + 180.0) % 360.0) - 180.0
+
+    def _neighbor_proximity_risk(self, distance: float) -> float:
+        caution_distance = max(self.safe_r * PAIR_RISK_BUFFER, 1e-6)
+        return float(np.clip((caution_distance - float(distance)) / caution_distance, 0.0, 1.0))
+
+    def _closing_risk_to_neighbor(self, agent_id: str, other_id: Optional[str]) -> float:
+        if other_id is None:
+            return 0.0
+        state = self.agent_states[agent_id]
+        other = self.agent_states[other_id]
+        relative_position = np.array(other.position, dtype=float) - np.array(state.position, dtype=float)
+        distance = float(np.linalg.norm(relative_position))
+        if distance <= 1e-6:
+            return 1.0
+        line_of_sight = relative_position / distance
+        own_velocity = self.speed * np.array(
+            [math.cos(state.heading_rad), math.sin(state.heading_rad)],
+            dtype=float,
+        )
+        other_velocity = self.speed * np.array(
+            [math.cos(other.heading_rad), math.sin(other.heading_rad)],
+            dtype=float,
+        )
+        closing_speed = float(np.dot(own_velocity - other_velocity, line_of_sight))
+        max_closing_speed = max(2.0 * float(self.speed), 1e-6)
+        return float(np.clip(closing_speed / max_closing_speed, 0.0, 1.0))
+
+    def _local_neighbor_risk(self, distance: float, closing_risk: float) -> float:
+        proximity_risk = self._neighbor_proximity_risk(distance)
+        closing_boost = 1.0 + 0.5 * float(np.clip(closing_risk, 0.0, 1.0))
+        return float(np.clip(proximity_risk * closing_boost, 0.0, 1.0))
+
+    def _local_traffic_risk_score(self, agent_id: str) -> float:
+        risks = [
+            self._local_neighbor_risk(distance, self._closing_risk_to_neighbor(agent_id, other_id))
+            for other_id, distance in self.nearest_neighbors(agent_id, limit=LOCAL_TRAFFIC_NEIGHBOR_COUNT)
+        ]
+        return max(risks) if risks else 0.0
+
+    def _local_neighbor_features(self, agent_id: str) -> List[float]:
+        features: List[float] = []
+        caution_distance = max(self.safe_r * PAIR_RISK_BUFFER, 1e-6)
+        padded_distance = 2.0 * caution_distance
+        for other_id, distance in self.nearest_neighbors(agent_id, limit=LOCAL_TRAFFIC_NEIGHBOR_COUNT):
+            proximity_risk = self._neighbor_proximity_risk(distance)
+            closing_risk = self._closing_risk_to_neighbor(agent_id, other_id)
+            features.extend(
+                [
+                    float(distance),
+                    self._bearing_to_neighbor_deg(agent_id, other_id),
+                    self._relative_heading_to_neighbor_deg(agent_id, other_id),
+                    1.0 if float(distance) <= caution_distance else 0.0,
+                    proximity_risk,
+                    closing_risk,
+                ]
+            )
+        missing = LOCAL_TRAFFIC_NEIGHBOR_COUNT - len(features) // self.local_neighbor_feature_dim
+        for _ in range(max(missing, 0)):
+            features.extend([padded_distance, 0.0, 0.0, 0.0, 0.0, 0.0])
+        return features
 
     def boundary_distance(self, state: AgentState) -> Optional[float]:
         if not state.inside_sector:
@@ -673,15 +751,29 @@ class MultiAgentSectorCore:
         exponent = max(float(HAZARD_RISK_DECAY_EXPONENT), 1e-6)
         return float(linear_risk**exponent)
 
-    def _traffic_risk_score(self, state: AgentState, collision_agents: set[str]) -> float:
-        if state.agent_id in collision_agents:
-            return 1.0
+    def _traffic_risk_parts(self, state: AgentState, collision_agents: set[str]) -> Dict[str, float]:
         step_risk = self._lookahead_risk(state.predicted_pair_loss_step)
         sep_risk = 0.0
         if math.isfinite(state.predicted_min_sep):
             caution_distance = max(self.safe_r * PAIR_RISK_BUFFER, 1e-6)
             sep_risk = float(np.clip((caution_distance - state.predicted_min_sep) / caution_distance, 0.0, 1.0))
-        return max(step_risk, sep_risk)
+        predicted_risk = max(step_risk, sep_risk)
+        local_risk = self._local_traffic_risk_score(state.agent_id)
+        traffic_risk = max(predicted_risk, local_risk)
+        if state.agent_id in collision_agents:
+            predicted_risk = 1.0
+            local_risk = 1.0
+            traffic_risk = 1.0
+        return {
+            "traffic_step_risk": float(step_risk),
+            "traffic_separation_risk": float(sep_risk),
+            "predicted_traffic_risk": float(predicted_risk),
+            "local_traffic_risk": float(local_risk),
+            "traffic_risk": float(traffic_risk),
+        }
+
+    def _traffic_risk_score(self, state: AgentState, collision_agents: set[str]) -> float:
+        return self._traffic_risk_parts(state, collision_agents)["traffic_risk"]
 
     def _weather_risk_score(self, state: AgentState) -> float:
         terminal_clearance = self.weather_terminal_signed_clearance(state.position)
@@ -737,9 +829,13 @@ class MultiAgentSectorCore:
             for agent_id, state in self.agent_states.items()
             if state.launched and not state.finished
         ]
-        previous_traffic_risks = {
-            agent_id: self._traffic_risk_score(self.agent_states[agent_id], set())
+        previous_traffic_parts = {
+            agent_id: self._traffic_risk_parts(self.agent_states[agent_id], set())
             for agent_id in previous_reward_agent_ids
+        }
+        previous_traffic_risks = {
+            agent_id: parts["traffic_risk"]
+            for agent_id, parts in previous_traffic_parts.items()
         }
         previous_weather_risks = {
             agent_id: self._weather_risk_score(self.agent_states[agent_id])
@@ -823,17 +919,28 @@ class MultiAgentSectorCore:
                     REWARD_CROSS_TRACK_CLIP,
                 )
             )
-            traffic_risk = self._traffic_risk_score(state, collision_agents)
+            traffic_parts = self._traffic_risk_parts(state, collision_agents)
+            traffic_risk = traffic_parts["traffic_risk"]
             weather_risk = self._weather_risk_score(state)
+            previous_traffic_part = previous_traffic_parts.get(state.agent_id, {})
             previous_traffic_risk = float(previous_traffic_risks.get(state.agent_id, 0.0))
             previous_weather_risk = float(previous_weather_risks.get(state.agent_id, 0.0))
-            traffic_risk_reduction = float(
+            combined_traffic_risk_reduction = float(
                 np.clip(
                     previous_traffic_risk - traffic_risk,
                     0.0,
                     REWARD_RISK_REDUCTION_CLIP,
                 )
             )
+            local_traffic_risk_reduction = float(
+                np.clip(
+                    float(previous_traffic_part.get("local_traffic_risk", 0.0))
+                    - float(traffic_parts["local_traffic_risk"]),
+                    0.0,
+                    REWARD_RISK_REDUCTION_CLIP,
+                )
+            )
+            traffic_risk_reduction = max(combined_traffic_risk_reduction, local_traffic_risk_reduction)
             weather_risk_reduction = float(
                 np.clip(
                     previous_weather_risk - weather_risk,
@@ -850,7 +957,13 @@ class MultiAgentSectorCore:
                 )
             )
             relaxed_cross_track = cross_track * cross_track_penalty_scale
-            progress_safety_scale = 1.0 - progress_risk_gate if progress > 0.0 else 1.0
+            progress_safety_scale = float(
+                np.clip(
+                    1.0 - REWARD_PROGRESS_HAZARD_RELIEF * progress_risk_gate,
+                    0.0,
+                    1.0,
+                )
+            )
             recovery_safety_scale = 1.0 - progress_risk_gate
             safe_progress = progress * progress_safety_scale
             raw_cross_track_recovery = previous_cross_tracks[state.agent_id] - abs(float(signed_xtrk))
@@ -862,6 +975,15 @@ class MultiAgentSectorCore:
                 )
             )
             safe_cross_track_recovery = cross_track_recovery * recovery_safety_scale
+            merge_back_scale = float(
+                np.clip(
+                    (REWARD_MERGE_BACK_RISK_THRESHOLD - progress_risk_gate)
+                    / max(float(REWARD_MERGE_BACK_RISK_THRESHOLD), 1e-6),
+                    0.0,
+                    1.0,
+                )
+            )
+            merge_back_bonus = REWARD_MERGE_BACK_SCALE * merge_back_scale * cross_track_recovery
             heading_error = float(self.heading_error_to_destination(state))
             heading_error_norm = float(np.clip(heading_error / math.pi, 0.0, 1.0))
             safe_heading_penalty = heading_error_norm * recovery_safety_scale
@@ -876,6 +998,7 @@ class MultiAgentSectorCore:
                 - REWARD_WEATHER_RISK_PENALTY * weather_risk
                 + REWARD_TRAFFIC_RISK_REDUCTION_SCALE * traffic_risk_reduction
                 + REWARD_WEATHER_RISK_REDUCTION_SCALE * weather_risk_reduction
+                + merge_back_bonus
                 + finish_bonus
             )
             dense_rewards[state.agent_id] = float(dense_reward)
@@ -883,6 +1006,7 @@ class MultiAgentSectorCore:
                 "raw_progress": float(raw_progress),
                 "progress": float(progress),
                 "safe_progress": float(safe_progress),
+                "progress_risk_gate": float(progress_risk_gate),
                 "progress_safety_scale": float(progress_safety_scale),
                 "cross_track": float(cross_track),
                 "cross_track_penalty_scale": float(cross_track_penalty_scale),
@@ -890,11 +1014,20 @@ class MultiAgentSectorCore:
                 "raw_cross_track_recovery": float(raw_cross_track_recovery),
                 "cross_track_recovery": float(cross_track_recovery),
                 "safe_cross_track_recovery": float(safe_cross_track_recovery),
+                "merge_back_scale": float(merge_back_scale),
+                "merge_back_bonus": float(merge_back_bonus),
                 "heading_error_to_destination": float(math.degrees(heading_error)),
                 "heading_error_norm": float(heading_error_norm),
                 "safe_heading_penalty": float(safe_heading_penalty),
                 "previous_traffic_risk": float(previous_traffic_risk),
+                "previous_local_traffic_risk": float(previous_traffic_part.get("local_traffic_risk", 0.0)),
+                "traffic_step_risk": float(traffic_parts["traffic_step_risk"]),
+                "traffic_separation_risk": float(traffic_parts["traffic_separation_risk"]),
+                "predicted_traffic_risk": float(traffic_parts["predicted_traffic_risk"]),
+                "local_traffic_risk": float(traffic_parts["local_traffic_risk"]),
                 "traffic_risk": float(traffic_risk),
+                "combined_traffic_risk_reduction": float(combined_traffic_risk_reduction),
+                "local_traffic_risk_reduction": float(local_traffic_risk_reduction),
                 "traffic_risk_reduction": float(traffic_risk_reduction),
                 "previous_weather_risk": float(previous_weather_risk),
                 "weather_risk": float(weather_risk),
@@ -993,8 +1126,7 @@ class MultiAgentSectorCore:
         own_heading_deg = math.degrees(state.heading_rad)
         heading_error_to_route = ((route_heading_deg - own_heading_deg + 180.0) % 360.0) - 180.0
         signed_xtrk, _, _ = line_signed_cross_track(state.route.linestring, state.position)
-        nearest_id, nearest_dist = self.nearest_neighbor(agent_id)
-        nearest_bearing = self._bearing_to_neighbor_deg(agent_id, nearest_id)
+        neighbor_features = self._local_neighbor_features(agent_id)
         boundary_distance = self.boundary_distance(state)
         weather_center_distance = self.weather_center_distance(state.position)
         weather_relative_bearing = self.weather_relative_bearing_deg(state)
@@ -1012,8 +1144,7 @@ class MultiAgentSectorCore:
                 1.0 if state.inside_sector else 0.0,
                 1.0 if state.has_entered_sector else 0.0,
                 -1.0 if boundary_distance is None else boundary_distance,
-                0.0 if nearest_id is None else nearest_dist,
-                nearest_bearing,
+                *neighbor_features,
                 1.0 if state.conflict_predicted else 0.0,
                 1.0 if state.weather_predicted else 0.0,
                 1.0 if state.hazard_predicted else 0.0,

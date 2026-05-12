@@ -104,9 +104,10 @@ def make_env(
     return env
 
 
-def build_agent(global_state_dim: int) -> MAPPO:
+def build_agent(global_state_dim: int, local_obs_dim: int) -> MAPPO:
     return MAPPO(
         global_state_dim=global_state_dim,
+        local_obs_dim=local_obs_dim,
         action_dim=len(ACTION_BINS),
         max_agents=MAX_AGENTS,
         hidden_dims=MAPPO_HIDDEN_DIMS,
@@ -146,7 +147,7 @@ def rollout_episode(
         num_weather_cells=num_weather_cells,
         episode_step_cap=episode_step_cap,
     )
-    _, info = env.reset(seed=seed, options=reset_options)
+    observations, info = env.reset(seed=seed, options=reset_options)
     if frame_dir is not None:
         frame_dir.mkdir(parents=True, exist_ok=True)
         env.render(folder=str(frame_dir))
@@ -158,16 +159,17 @@ def rollout_episode(
     while not done and not truncated:
         active_ids = list(env.agents)
         if not active_ids:
-            _, _, _, _, info = env.step({})
+            observations, _, _, _, info = env.step({})
         else:
             actions, _, _ = agent.select_actions(
-                env.state(),
-                active_ids,
+                global_state=env.state(),
+                local_observations=observations,
+                active_agent_ids=active_ids,
                 episode_id=episode_index,
                 deterministic=True,
                 store=False,
             )
-            _, _, _, _, info = env.step(actions)
+            observations, _, _, _, info = env.step(actions)
         common = info["__common__"]
         total_reward += float(common["team_reward"])
         done = bool(common["episode_done"])
@@ -233,7 +235,10 @@ def main() -> None:
             "num_weather_cells": int(args.num_weather_cells),
         },
     )
-    agent = build_agent(int(probe_env.state().shape[0]))
+    agent = build_agent(
+        int(probe_env.state().shape[0]),
+        int(probe_env.observation_space(probe_env.possible_agents[0]).shape[0]),
+    )
     agent.load_model(model_path)
 
     output_root = Path(args.output_dir) if args.output_dir else MAPPO_EVAL_OUTPUT_DIR / f"eval_{_timestamp()}"

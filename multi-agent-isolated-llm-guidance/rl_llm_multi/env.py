@@ -18,6 +18,23 @@ except Exception:  # pragma: no cover
         metadata: Dict[str, Any] = {}
 
 
+def _decision_agent_ids(core: MultiAgentSectorCore) -> list[str]:
+    return [
+        agent_id
+        for agent_id in core.active_agent_ids
+        if core.agent_states[agent_id].has_entered_sector
+    ]
+
+
+def _decision_observations(core: MultiAgentSectorCore, observations: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+    decision_ids = set(_decision_agent_ids(core))
+    return {
+        agent_id: obs
+        for agent_id, obs in observations.items()
+        if agent_id in decision_ids
+    }
+
+
 def _active_info_dict(core: MultiAgentSectorCore) -> Dict[str, Dict[str, Any]]:
     common = core.get_infos()
     action_mask = np.ones(len(ACTION_BINS), dtype=np.int8)
@@ -27,7 +44,7 @@ def _active_info_dict(core: MultiAgentSectorCore) -> Dict[str, Dict[str, Any]]:
             "action_mask": action_mask.copy(),
             "route_assignment": common["route_assignments"][agent_id],
         }
-        for agent_id in core.active_agent_ids
+        for agent_id in _decision_agent_ids(core)
     }
     infos["__common__"] = common
     return infos
@@ -92,8 +109,8 @@ class MultiAgentParallelEnv(PettingZooParallelEnv):
             route_ids=options.get("route_ids"),
             num_weather_cells=options.get("num_weather_cells"),
         )
-        self.agents = list(self.core.active_agent_ids)
-        return observations, _active_info_dict(self.core)
+        self.agents = _decision_agent_ids(self.core)
+        return _decision_observations(self.core, observations), _active_info_dict(self.core)
 
     def step(
         self,
@@ -105,14 +122,31 @@ class MultiAgentParallelEnv(PettingZooParallelEnv):
         Dict[str, bool],
         Dict[str, Dict[str, Any]],
     ]:
+        previous_agents = list(self.agents)
         degree_actions = {
             agent_id: action_idx_to_deg(int(action), ACTION_BINS)
             for agent_id, action in (actions or {}).items()
         }
         observations, rewards, terminations, truncations, _ = self.core.step(degree_actions)
         team_done = self.core.last_team_done or self.core.last_team_truncated
-        self.agents = [] if team_done else list(self.core.active_agent_ids)
-        return observations, rewards, terminations, truncations, _active_info_dict(self.core)
+        self.agents = [] if team_done else _decision_agent_ids(self.core)
+        decision_observations = _decision_observations(self.core, observations)
+        decision_rewards = {
+            agent_id: float(rewards[agent_id])
+            for agent_id in previous_agents
+            if agent_id in rewards
+        }
+        decision_terminations = {
+            agent_id: bool(terminations[agent_id])
+            for agent_id in previous_agents
+            if agent_id in terminations
+        }
+        decision_truncations = {
+            agent_id: bool(truncations[agent_id])
+            for agent_id in previous_agents
+            if agent_id in truncations
+        }
+        return decision_observations, decision_rewards, decision_terminations, decision_truncations, _active_info_dict(self.core)
 
     def render(self, *, show: bool = False, folder: Optional[str] = None):
         return self.core.render(show=show, folder=folder)
@@ -122,7 +156,7 @@ class MultiAgentParallelEnv(PettingZooParallelEnv):
 
     def action_masks(self) -> Dict[str, np.ndarray]:
         mask = np.ones(len(ACTION_BINS), dtype=np.int8)
-        return {agent_id: mask.copy() for agent_id in self.core.active_agent_ids}
+        return {agent_id: mask.copy() for agent_id in _decision_agent_ids(self.core)}
 
 
 class JointGuidanceEnv:
