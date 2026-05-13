@@ -137,6 +137,22 @@ def _mean_mapping_value(mapping: object) -> Optional[float]:
     return sum(values) / float(len(values))
 
 
+def _mean_agent_value(value: object, agent_ids: Sequence[str]) -> Optional[float]:
+    agent_ids = [str(agent_id) for agent_id in agent_ids]
+    if not agent_ids:
+        return None
+    if isinstance(value, dict):
+        values = [
+            float(value[agent_id])
+            for agent_id in agent_ids
+            if agent_id in value
+        ]
+        return sum(values) / float(len(values)) if values else None
+    if value is None:
+        return None
+    return float(value)
+
+
 ESSENTIAL_REWARD_COMPONENT_KEYS = (
     "safe_progress",
     "progress_risk_gate",
@@ -283,9 +299,12 @@ def main() -> None:
             done = bool(info["__common__"]["episode_done"])
             truncated = bool(info["__common__"]["episode_truncated"])
             ep_return = 0.0
+            ep_policy_controlled_return = 0.0
+            ep_pre_sector_return = 0.0
             ep_env_steps = 0
             ep_reward_sums: Dict[str, float] = {}
             ep_reward_counts: Dict[str, int] = {}
+            ep_policy_agent_ids: set[str] = set()
 
             while not done and not truncated:
                 active_ids = list(env.agents)
@@ -300,9 +319,16 @@ def main() -> None:
                             episode,
                             common.get("agent_terminal_rewards", common.get("terminal_reward", 0.0)),
                         )
+                        terminal_policy_reward = _mean_agent_value(
+                            common.get("agent_terminal_rewards", common.get("terminal_reward", 0.0)),
+                            sorted(ep_policy_agent_ids),
+                        )
+                        if terminal_policy_reward is not None:
+                            ep_policy_controlled_return += float(terminal_policy_reward)
                     env_steps += 1
                     ep_env_steps += 1
                     ep_return += team_reward
+                    ep_pre_sector_return += team_reward
                     _accumulate_reward_debug(common, ep_reward_sums, ep_reward_counts)
                     continue
 
@@ -329,15 +355,20 @@ def main() -> None:
                 team_reward = float(common["team_reward"])
                 done = bool(common["episode_done"])
                 truncated = bool(common["episode_truncated"])
+                ep_policy_agent_ids.update(active_ids)
                 post_active = set(env.agents)
                 team_terminal = bool(done or truncated)
                 terminals = {
                     agent_id: bool(team_terminal or agent_id not in post_active)
                     for agent_id in active_ids
                 }
+                controlled_reward_source = common.get("agent_dense_rewards", common.get("agent_rewards", team_reward))
+                step_policy_reward = _mean_agent_value(controlled_reward_source, active_ids)
+                if step_policy_reward is not None:
+                    ep_policy_controlled_return += float(step_policy_reward)
                 agent.store_outcomes(
                     records,
-                    reward=common.get("agent_dense_rewards", common.get("agent_rewards", team_reward)),
+                    reward=controlled_reward_source,
                     terminals=terminals,
                 )
                 if team_terminal:
@@ -345,6 +376,12 @@ def main() -> None:
                         episode,
                         common.get("agent_terminal_rewards", common.get("terminal_reward", 0.0)),
                     )
+                    terminal_policy_reward = _mean_agent_value(
+                        common.get("agent_terminal_rewards", common.get("terminal_reward", 0.0)),
+                        sorted(ep_policy_agent_ids),
+                    )
+                    if terminal_policy_reward is not None:
+                        ep_policy_controlled_return += float(terminal_policy_reward)
 
                 step_agent_count = len(records)
                 agent_steps += step_agent_count
@@ -365,6 +402,8 @@ def main() -> None:
             total_episodes = max(episode, 1)
             collision_or_weather_failures = failure_counts["collision"] + failure_counts["weather"]
             writer.add_scalar("train/reward/episode_total_return", ep_return, episode)
+            writer.add_scalar("train/reward/policy_controlled_return", ep_policy_controlled_return, episode)
+            writer.add_scalar("train/reward/pre_sector_return", ep_pre_sector_return, episode)
             writer.add_scalar("train/episode_env_steps", ep_env_steps, episode)
             writer.add_scalar("train/success", int(bool(common["episode_success"])), episode)
             writer.add_scalar("train/collision", int(failure_reason == "collision"), episode)

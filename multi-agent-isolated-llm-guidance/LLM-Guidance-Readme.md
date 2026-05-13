@@ -1292,38 +1292,56 @@ progress = clip(distance_reduction / speed, -1.0, 1.0)
 cross_track = clip(abs(cross_track_error) / SAFE_R, 0.0, 2.0)
 cross_track_recovery = clip((previous_cross_track - current_cross_track) / SAFE_R, 0.0, 1.0)
 heading_error = clip(abs(heading_error_to_destination) / 180.0, 0.0, 1.0)
-safety_scale = 1.0 - max(traffic_risk, weather_risk)
 traffic_risk = bounded value in [0.0, 1.0]
 weather_risk = bounded value in [0.0, 1.0]
+risk_gate = max(traffic_risk, weather_risk)
+
+progress_safety_scale = 1.0 - 0.60 * risk_gate
+cross_track_penalty_scale = 1.0 - 0.75 * risk_gate
+recovery_safety_scale = 1.0 - risk_gate
+
+safe_progress = progress * progress_safety_scale
+relaxed_cross_track = cross_track * cross_track_penalty_scale
+safe_cross_track_recovery = cross_track_recovery * recovery_safety_scale
+safe_heading_penalty = heading_error * recovery_safety_scale
+merge_back_scale = clip((0.30 - risk_gate) / 0.30, 0.0, 1.0)
+merge_back_bonus = 0.40 * merge_back_scale * cross_track_recovery
+traffic_risk_reduction = bounded risk reduction in [0.0, 1.0]
+weather_risk_reduction = bounded risk reduction in [0.0, 1.0]
 
 agent_dense_reward =
     + 1.00 * safe_progress
-    - 0.03
-    - 0.40 * cross_track
-    + 0.45 * cross_track_recovery * safety_scale
-    - 0.60 * heading_error * safety_scale
-    - 1.00 * traffic_risk
-    - 1.00 * weather_risk
-    + 15.00 if this aircraft just finished
+    - 0.05
+    - 0.35 * relaxed_cross_track
+    + 0.55 * safe_cross_track_recovery
+    - 0.50 * safe_heading_penalty
+    - 2.50 * traffic_risk
+    - 2.50 * weather_risk
+    + 1.80 * traffic_risk_reduction
+    + 1.80 * weather_risk_reduction
+    + merge_back_bonus
+    + 30.00 if this aircraft just finished
 ```
 
 Terminal reward:
 
 ```text
-team success:     +80
-collision:        -80
-weather failure:  -80
-truncation:       -70 plus an unfinished-distance penalty up to -30
+team success:     +120 for each launched aircraft
+collision:        -100 for collision aircraft, otherwise -100 / sqrt(num_agents)
+weather failure:  -100 for weather-violating aircraft, otherwise -100 / sqrt(num_agents)
+truncation:       -80 / sqrt(num_agents) shared; unfinished launched aircraft get
+                  -80 - 60 * remaining_route_fraction
 ```
 
 Important details:
 
 - The simulator stores per-agent total rewards in `agent_rewards`.
 - It stores dense-only rewards in `agent_dense_rewards`.
-- It stores the terminal component in `terminal_reward`.
+- It stores per-agent terminal rewards in `agent_terminal_rewards`.
+- It stores the mean terminal component in `terminal_reward`.
 - `team_reward` is the mean per-agent total reward for the step.
-- MAPPO trains from `agent_dense_rewards`, then adds `terminal_reward` to the
-  last stored transition of every aircraft trajectory in that episode.
+- MAPPO trains from `agent_dense_rewards`, then adds the matching per-agent
+  terminal reward to the stored transitions for that episode.
 - The MAPPO critic is agent-conditioned. It receives `global_state + agent_id`
   so it can learn a separate value baseline for each aircraft in the same
   global situation.
