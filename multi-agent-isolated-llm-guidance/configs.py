@@ -128,8 +128,10 @@ MAPPO_EVAL_FREQ = 10_000
 MAPPO_N_EVAL_EPISODES = 50
 MAPPO_SAVE_MODEL_FREQ = 50_000
 
+# MAPPO_LR_ACTOR = 1e-4 # Original setting, which produced good results in early testing but may have been a bit high for stable convergence in the more complex environment. Left unchanged in the config for reference and easy reversion if desired.
+# MAPPO_LR_CRITIC = 1e-4 # Original setting, which produced good results in early testing but may have been a bit high for stable convergence in the more complex environment. Left unchanged in the config for reference and easy reversion if desired.
 MAPPO_LR_ACTOR = 1e-4
-MAPPO_LR_CRITIC = 1e-4
+MAPPO_LR_CRITIC = 5e-5
 MAPPO_GAMMA = 0.99
 MAPPO_K_EPOCHS = 5
 MAPPO_EPS_CLIP = 0.2
