@@ -1,0 +1,26 @@
+{
+  "model_path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/log/MAPPO/local_obs_k3_neighbor_risk_13th_may/best_model.pt",
+  "num_episodes": 1,
+  "total_episode_reward": 151.61645861912837,
+  "mean_episode_total_reward": 151.61645861912837,
+  "mean_return": 151.61645861912837,
+  "std_return": 0.0,
+  "success_rate": 1.0,
+  "collision_rate": 0.0,
+  "weather_rate": 0.0,
+  "truncation_rate": 0.0,
+  "episodes": [
+    {
+      "episode_index": 0,
+      "seed": 11,
+      "steps": 48,
+      "total_reward": 151.61645861912837,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "gif_path": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/outputs/mappo_eval/eval_20260513T023628Z/ep001.gif"
+    }
+  ]
+}

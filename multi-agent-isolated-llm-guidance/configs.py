@@ -106,7 +106,7 @@ WEATHER_INIT_TRIES = 300
 NUM_WEATHER_CELLS_DEFAULT = 1
 
 # Pure-RL MAPPO defaults.
-MAPPO_RUN_NAME = "local_obs_k3_neighbor_risk_12th_may"
+MAPPO_RUN_NAME = "local_obs_k3_neighbor_risk_13th_may"
 MAPPO_LOG_DIR = PROJECT_ROOT / "log" / "MAPPO" / MAPPO_RUN_NAME
 MAPPO_BEST_MODEL_PATH = MAPPO_LOG_DIR / "best_model.pt"
 MAPPO_LAST_CKPT_PATH = MAPPO_LOG_DIR / "last.ckpt"
