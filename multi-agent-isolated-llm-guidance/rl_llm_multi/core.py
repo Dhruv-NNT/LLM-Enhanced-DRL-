@@ -167,6 +167,10 @@ class MultiAgentSectorCore:
         self.last_pairwise_separations: Dict[Tuple[str, str], float] = {}
         self.risky_pairs: List[Dict[str, Any]] = []
         self.rng = random.Random()
+        self.reset_seed: Optional[int] = None
+        self.reset_route_ids: Optional[Tuple[str, ...]] = None
+        self.reset_num_agents: int = int(num_agents)
+        self.reset_num_weather_cells: int = int(num_weather_cells)
 
     @staticmethod
     def _validate_num_weather_cells(value: int) -> int:
@@ -193,6 +197,10 @@ class MultiAgentSectorCore:
             self.num_agents = int(num_agents)
         if num_weather_cells is not None:
             self.num_weather_cells = self._validate_num_weather_cells(num_weather_cells)
+        self.reset_seed = None if seed is None else int(seed)
+        self.reset_route_ids = None if route_ids is None else tuple(str(route_id) for route_id in route_ids)
+        self.reset_num_agents = int(self.num_agents)
+        self.reset_num_weather_cells = int(self.num_weather_cells)
         self.rng = random.Random(seed)
         self.assignments = assign_routes(self.num_agents, seed=seed, route_ids=route_ids)
         self.agent_states = {}

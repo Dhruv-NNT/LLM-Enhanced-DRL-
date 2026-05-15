@@ -8,6 +8,7 @@ import json
 import math
 import os
 import re
+import shutil
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -20,6 +21,11 @@ from shapely.geometry import Point
 from configs import (
     ACTION_BINS,
     CLEAR_STREAK_REQUIRED,
+    DECISION_MEMORY_VISUAL_AUDIT_DIR,
+    DECISION_MEMORY_VISUAL_AUDIT_ENABLED,
+    DECISION_MEMORY_VISUAL_AUDIT_FRAME_COUNT,
+    DECISION_MEMORY_PROMPT_UNVERIFIED_ACTIONS,
+    DECISION_MEMORY_PATH,
     DESTINATION_ALIGNMENT_DEG,
     EMERGENCY_LOOKAHEAD_STEPS,
     EVAL_MEMORY_PATH,
@@ -40,6 +46,7 @@ from configs import (
     TRAFFIC_CAUTION_R,
     TURN_PREVIEW_STEPS,
 )
+from .memory import DecisionMemoryStore
 from .utils import heading_from_line, line_signed_cross_track, load_waypoint_map
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -1395,8 +1402,14 @@ class MultiAgentThreeCallController:
 class GlobalPromptBuilder:
     """Build one global prompt for all entered aircraft due for guidance."""
 
-    def __init__(self, safe_r: float = SAFE_R) -> None:
+    def __init__(
+        self,
+        safe_r: float = SAFE_R,
+        *,
+        show_unverified_memory_actions: bool = DECISION_MEMORY_PROMPT_UNVERIFIED_ACTIONS,
+    ) -> None:
         self.safe_r = float(safe_r)
+        self.show_unverified_memory_actions = bool(show_unverified_memory_actions)
 
     def build_prompt(
         self,
@@ -1410,6 +1423,7 @@ class GlobalPromptBuilder:
         preview_rows_by_agent: Dict[str, List[Dict[str, Any]]],
         recent_decisions: Sequence[Dict[str, Any]],
         frame_paths: Sequence[str],
+        retrieved_memories: Optional[Sequence[Dict[str, Any]]] = None,
     ) -> str:
         sections = [
             self._instructions_text(actionable),
@@ -1420,7 +1434,7 @@ class GlobalPromptBuilder:
             self._weather_text(core),
             self._threats_text(threat_rows_by_agent),
             self._preview_text(preview_rows_by_agent),
-            self._recent_memory_text(recent_decisions),
+            self._retrieved_memory_text(retrieved_memories or []),
             self._frame_context_text(frame_paths),
         ]
         return "\n\n".join(section for section in sections if section)
@@ -1437,6 +1451,7 @@ class GlobalPromptBuilder:
         preview_rows_by_agent: Optional[Dict[str, List[Dict[str, Any]]]] = None,
         recent_decisions: Sequence[Dict[str, Any]],
         frame_paths: Sequence[str],
+        retrieved_memories: Optional[Sequence[Dict[str, Any]]] = None,
     ) -> str:
         preview_rows_by_agent = {} if preview_rows_by_agent is None else preview_rows_by_agent
         sections = [
@@ -1449,7 +1464,7 @@ class GlobalPromptBuilder:
             self._vision_weather_text(core),
             self._threats_text(threat_rows_by_agent),
             self._vision_preview_text(preview_rows_by_agent),
-            self._vision_recent_memory_text(recent_decisions),
+            self._retrieved_memory_text(retrieved_memories or []),
         ]
         return "\n\n".join(section for section in sections if section)
 
@@ -1876,30 +1891,39 @@ class GlobalPromptBuilder:
                 )
         return "\n".join(lines)
 
-    def _recent_memory_text(self, recent_decisions: Sequence[Dict[str, Any]]) -> str:
-        lines = ["RECENT GLOBAL DECISION MEMORY:"]
-        if not recent_decisions:
-            lines.append("- none")
-            return "\n".join(lines)
-        for item in recent_decisions[-4:]:
-            actions = item.get("actions", {})
-            fragments = []
-            for agent_id, action in sorted(actions.items()):
-                fragments.append(
-                    f"{agent_id}:{action.get('call_name')} "
-                    f"{int(action.get('heading_change_deg', 0)):+d}deg"
+    def _retrieved_memory_text(self, retrieved_memories: Sequence[Dict[str, Any]]) -> str:
+        if not retrieved_memories:
+            return ""
+        lines = ["RETRIEVED DECISION MEMORY:"]
+        for item in list(retrieved_memories)[:2]:
+            agent_id = str(item.get("agent", "A?"))
+            similarity = float(item.get("similarity", 0.0))
+            action = item.get("action")
+            corrected = item.get("corrected")
+            note = str(item.get("note") or "").strip()
+            if corrected is not None:
+                if note:
+                    action_text = f"{int(action):+d} deg" if action is not None else "the past action"
+                    lines.append(
+                        f"- {agent_id} sim={similarity:.2f} evaluator-corrected memory: "
+                        f"past {action_text} was poor because \"{note[:90]}\"; "
+                        f"corrected {int(corrected):+d} deg is preferred only if current preview is safe."
+                    )
+                else:
+                    lines.append(
+                        f"- {agent_id} sim={similarity:.2f} evaluator-corrected memory: "
+                        f"corrected {int(corrected):+d} deg is preferred only if current preview is safe."
+                    )
+            elif action is not None and self.show_unverified_memory_actions:
+                lines.append(
+                    f"- {agent_id} sim={similarity:.2f} unverified memory comparison only: "
+                    f"similar past case used {int(action):+d} deg. "
+                    "Do not copy unless current preview independently supports it."
                 )
-            lines.append(f"- step={item.get('step')}: " + "; ".join(fragments))
-        return "\n".join(lines)
-
-    def _vision_recent_memory_text(self, recent_decisions: Sequence[Dict[str, Any]]) -> str:
-        lines = [self._recent_memory_text(recent_decisions)]
-        lines.extend(
-            [
-                "VISION MEMORY ADVISORY:",
-                "- Compare these recent turns against the four frames; repeat a turn only if the visual trend shows improved separation or recovery.",
-                "- Watch for oscillation, repeated holds near boundary, or repeated MERGE_BACK that still leaves the aircraft off-route.",
-            ]
+        if len(lines) == 1:
+            return ""
+        lines.append(
+            "- Memory is not proof the action is good; current preview, safety rules, and phase priorities decide."
         )
         return "\n".join(lines)
 
@@ -1946,7 +1970,10 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         builder: Optional[GlobalPromptBuilder] = None,
         *,
         save_dir: str = str(JSON_ANSWERS_DIR),
-        memory_path: str = str(EVAL_MEMORY_PATH),
+        memory_path: str = str(DECISION_MEMORY_PATH),
+        memory_visual_audit_enabled: bool = DECISION_MEMORY_VISUAL_AUDIT_ENABLED,
+        memory_visual_audit_dir: str = str(DECISION_MEMORY_VISUAL_AUDIT_DIR),
+        memory_visual_audit_frame_count: int = DECISION_MEMORY_VISUAL_AUDIT_FRAME_COUNT,
         retry_limit: int = 2,
     ) -> None:
         super().__init__(save_dir=save_dir, memory_path=memory_path)
@@ -1954,6 +1981,10 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         self.hltp_builder = HLTPPromptBuilder()
         self.retry_limit = int(retry_limit)
         self.recent_decisions: List[Dict[str, Any]] = []
+        self.decision_memory = DecisionMemoryStore(memory_path)
+        self.memory_visual_audit_enabled = bool(memory_visual_audit_enabled)
+        self.memory_visual_audit_dir = Path(memory_visual_audit_dir)
+        self.memory_visual_audit_frame_count = int(memory_visual_audit_frame_count)
         self.hltp_plans: Dict[str, HLTPPlan] = {}
         self.graph = self._build_graph()
 
@@ -2667,6 +2698,127 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
                 paths.append(str(candidate))
         return paths
 
+    @staticmethod
+    def _memory_audit_slug(value: Any) -> str:
+        text = str(value or "unknown")
+        text = re.sub(r"[^A-Za-z0-9_.-]+", "_", text).strip("._")
+        return (text or "unknown")[:160]
+
+    def _copy_memory_audit_frames(
+        self,
+        frame_paths: Sequence[str],
+        *,
+        target_dir: Path,
+        prefix: str,
+    ) -> List[str]:
+        copied: List[str] = []
+        target_dir.mkdir(parents=True, exist_ok=True)
+        for idx, raw_path in enumerate(list(frame_paths or [])):
+            source = Path(str(raw_path))
+            if not source.exists() or not source.is_file():
+                continue
+            safe_name = self._memory_audit_slug(source.name)
+            target = target_dir / f"{prefix}_{idx:02d}_{safe_name}"
+            shutil.copy2(source, target)
+            copied.append(str(target))
+        return copied
+
+    def _write_memory_audit_manifest(self, target_dir: Path, payload: Dict[str, Any]) -> None:
+        target_dir.mkdir(parents=True, exist_ok=True)
+        with (target_dir / "manifest.json").open("w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2, ensure_ascii=True)
+            handle.write("\n")
+
+    def _record_memory_case_visual_audit(
+        self,
+        *,
+        episode_id: str,
+        cases: Sequence[Dict[str, Any]],
+        frame_paths: Sequence[str],
+    ) -> None:
+        if not self.memory_visual_audit_enabled or not frame_paths:
+            return
+        for case in cases:
+            case_id = str(case.get("case_id", "") or "")
+            if not case_id:
+                continue
+            source_episode = self._memory_audit_slug(episode_id)
+            case_dir = self.memory_visual_audit_dir / "cases" / source_episode / self._memory_audit_slug(case_id)
+            copied = self._copy_memory_audit_frames(frame_paths, target_dir=case_dir, prefix="past")
+            result = case.get("result") if isinstance(case.get("result"), dict) else {}
+            self._write_memory_audit_manifest(
+                case_dir,
+                {
+                    "kind": "memory_case",
+                    "episode_id": str(episode_id),
+                    "case_id": case_id,
+                    "step": case.get("step"),
+                    "agent": case.get("agent"),
+                    "route": case.get("route"),
+                    "call": case.get("call"),
+                    "reason": case.get("reason"),
+                    "type": case.get("type"),
+                    "action": result.get("action"),
+                    "corrected": result.get("corrected"),
+                    "note": result.get("note"),
+                    "frames": copied,
+                },
+            )
+
+    def _record_memory_retrieval_visual_audit(
+        self,
+        *,
+        current_episode_id: str,
+        step: int,
+        retrieved_memories: Sequence[Dict[str, Any]],
+        frame_paths: Sequence[str],
+    ) -> None:
+        if not self.memory_visual_audit_enabled or not frame_paths:
+            return
+        current_episode = self._memory_audit_slug(current_episode_id)
+        for item in list(retrieved_memories or []):
+            ref = item.get("memory_ref") if isinstance(item.get("memory_ref"), dict) else {}
+            case_id = str(ref.get("case_id", "") or "")
+            if not case_id:
+                continue
+            source_episode_id = str(ref.get("episode_id", "unknown_episode") or "unknown_episode")
+            source_episode = self._memory_audit_slug(source_episode_id)
+            agent_id = self._memory_audit_slug(item.get("agent", "A?"))
+            retrieval_id = self._memory_audit_slug(f"t{int(step):03d}__{agent_id}")
+            retrieval_dir = (
+                self.memory_visual_audit_dir
+                / "retrievals"
+                / current_episode
+                / source_episode
+                / self._memory_audit_slug(case_id)
+                / retrieval_id
+            )
+            copied = self._copy_memory_audit_frames(frame_paths, target_dir=retrieval_dir, prefix="current")
+            self._write_memory_audit_manifest(
+                retrieval_dir,
+                {
+                    "kind": "memory_retrieval",
+                    "retrieval_id": retrieval_id,
+                    "current_episode_id": str(current_episode_id),
+                    "source_episode_id": source_episode_id,
+                    "source_case_id": case_id,
+                    "step": int(step),
+                    "agent": item.get("agent"),
+                    "similarity": item.get("similarity"),
+                    "action": item.get("action"),
+                    "corrected": item.get("corrected"),
+                    "note": item.get("note"),
+                    "memory_ref": ref,
+                    "case_visual_dir": str(
+                        self.memory_visual_audit_dir
+                        / "cases"
+                        / source_episode
+                        / self._memory_audit_slug(case_id)
+                    ),
+                    "current_frames": copied,
+                },
+            )
+
     def _graph_collect_state(self, state: Dict[str, Any]) -> Dict[str, Any]:
         core = state["core"]
         step = int(state["step"])
@@ -2682,11 +2834,21 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             state.get("latest_frame_path"),
             use_vision=bool(state.get("use_vision", False)),
         )
+        audit_frame_paths = (
+            self._recent_frame_paths(
+                state.get("latest_frame_path"),
+                use_vision=True,
+                count=max(1, self.memory_visual_audit_frame_count),
+            )
+            if self.memory_visual_audit_enabled
+            else []
+        )
         return {
             **state,
             "annotations": annotations,
             "entered_agent_ids": entered_agent_ids,
             "frame_paths": frame_paths,
+            "audit_frame_paths": audit_frame_paths,
         }
 
     def _graph_assign_stages(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -2715,6 +2877,24 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
                 fixed_actions=None,
             )
         active_hltp_plans = self._active_hltp_plan_dicts(state.get("entered_agent_ids", []))
+        retrieved_memories = self.decision_memory.retrieve(
+            core,
+            step=int(state["step"]),
+            actionable=actionable,
+            threat_rows_by_agent=threat_rows_by_agent,
+            preview_rows_by_agent=preview_rows_by_agent,
+            exclude_episode_id=self._memory_episode_id(core),
+        )
+        memory_visual_audit_error = ""
+        try:
+            self._record_memory_retrieval_visual_audit(
+                current_episode_id=self._memory_episode_id(core),
+                step=int(state["step"]),
+                retrieved_memories=retrieved_memories,
+                frame_paths=list(state.get("audit_frame_paths", [])),
+            )
+        except Exception as exc:
+            memory_visual_audit_error = str(exc)
         if state.get("use_vision"):
             prompt_text = self.global_builder.build_vision_prompt(
                 core,
@@ -2726,6 +2906,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
                 preview_rows_by_agent=preview_rows_by_agent,
                 recent_decisions=self.recent_decisions,
                 frame_paths=list(state.get("frame_paths", [])),
+                retrieved_memories=retrieved_memories,
             )
         else:
             prompt_text = self.global_builder.build_prompt(
@@ -2738,12 +2919,15 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
                 preview_rows_by_agent=preview_rows_by_agent,
                 recent_decisions=self.recent_decisions,
                 frame_paths=list(state.get("frame_paths", [])),
+                retrieved_memories=retrieved_memories,
             )
         return {
             **state,
             "threat_rows_by_agent": threat_rows_by_agent,
             "preview_rows_by_agent": preview_rows_by_agent,
             "hltp_plans": active_hltp_plans,
+            "retrieved_memories": retrieved_memories,
+            "memory_visual_audit_error": memory_visual_audit_error,
             "prompt_text": prompt_text,
         }
 
@@ -3006,6 +3190,12 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             }
             handle.write(json.dumps(row) + "\n")
 
+    def _memory_episode_id(self, core: "MultiAgentSectorCore") -> str:
+        seed = getattr(core, "reset_seed", None)
+        run_name = Path(str(self.save_dir)).name or self.run_id or "run_unknown"
+        seed_text = "none" if seed is None else str(int(seed))
+        return f"{run_name}__seed_{seed_text}"
+
     def _apply_controller_state(self, agent_id: str, call_name: str, call_reason: str, applied_turn: int) -> None:
         ctrl = self._controller_state(agent_id)
         ctrl.last_advice_turn = int(applied_turn)
@@ -3049,6 +3239,31 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             self._apply_controller_state(agent_id, call_name, call_reason, int(action["heading_change_deg"]))
             annotations.append(self._phase_label_text(agent_id, call_name, call_reason))
 
+        memory_error = ""
+        memory_visual_audit_error = str(state.get("memory_visual_audit_error", "") or "")
+        stored_memory_cases: List[Dict[str, Any]] = []
+        try:
+            stored_memory_cases = self.decision_memory.append_cases(
+                core,
+                episode_id=self._memory_episode_id(core),
+                step=step,
+                actionable=actionable,
+                final_actions=state.get("final_actions", {}),
+                threat_rows_by_agent=state.get("threat_rows_by_agent", {}),
+                preview_rows_by_agent=state.get("preview_rows_by_agent", {}),
+            )
+        except Exception as exc:
+            memory_error = str(exc)
+        if stored_memory_cases:
+            try:
+                self._record_memory_case_visual_audit(
+                    episode_id=self._memory_episode_id(core),
+                    cases=stored_memory_cases,
+                    frame_paths=list(state.get("audit_frame_paths", [])),
+                )
+            except Exception as exc:
+                memory_visual_audit_error = str(exc)
+
         normalized = self._normalized_global_payload(state)
         attempts = list(state.get("llm_attempts", []))
         last_attempt = attempts[-1] if attempts else {"llm_status": "skipped", "raw_text": "", "error": ""}
@@ -3068,6 +3283,9 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
                 for item in actionable
             },
             "hltp_plans": state.get("hltp_plans", {}),
+            "retrieved_memories": state.get("retrieved_memories", []),
+            "memory_error": memory_error,
+            "memory_visual_audit_error": memory_visual_audit_error,
             "weather": core.weather_dict(),
             "model": OLLAMA_MODEL,
         }

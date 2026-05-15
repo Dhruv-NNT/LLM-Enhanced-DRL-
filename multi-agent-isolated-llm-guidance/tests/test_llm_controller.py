@@ -36,7 +36,16 @@ from rl_llm_multi import (  # noqa: E402
     WeatherCell,
 )
 from rl_llm_multi.llm import GlobalPromptBuilder, HLTPPromptBuilder  # noqa: E402
+from rl_llm_multi.memory import DecisionMemoryStore  # noqa: E402
 from rl_llm_multi.utils import assign_routes, weather_axis_units  # noqa: E402
+
+
+def _global_controller(save_dir: str, **kwargs) -> GlobalLangGraphGuidanceController:
+    return GlobalLangGraphGuidanceController(
+        save_dir=save_dir,
+        memory_path=str(Path(save_dir) / "decision_memory.json"),
+        **kwargs,
+    )
 
 
 def _answer_json(turn_deg: int) -> str:
@@ -609,7 +618,7 @@ class ControllerTests(unittest.TestCase):
             ]
         )
         with tempfile.TemporaryDirectory() as tmpdir:
-            controller = GlobalLangGraphGuidanceController(save_dir=tmpdir)
+            controller = _global_controller(tmpdir)
             with patch.object(controller, "_ranked_threats", return_value=[]), patch.object(
                 controller,
                 "_preview_rows",
@@ -650,7 +659,7 @@ class ControllerTests(unittest.TestCase):
             ]
         )
         with tempfile.TemporaryDirectory() as tmpdir:
-            controller = GlobalLangGraphGuidanceController(save_dir=tmpdir)
+            controller = _global_controller(tmpdir)
             with patch.object(controller, "_ranked_threats", return_value=[]), patch.object(
                 controller,
                 "_preview_rows",
@@ -678,7 +687,7 @@ class ControllerTests(unittest.TestCase):
             ]
         )
         with tempfile.TemporaryDirectory() as tmpdir:
-            controller = GlobalLangGraphGuidanceController(save_dir=tmpdir)
+            controller = _global_controller(tmpdir)
             with patch.object(controller, "_ranked_threats", return_value=[]), patch.object(
                 controller,
                 "_preview_rows",
@@ -711,7 +720,7 @@ class ControllerTests(unittest.TestCase):
             ]
         )
         with tempfile.TemporaryDirectory() as tmpdir:
-            controller = GlobalLangGraphGuidanceController(save_dir=tmpdir)
+            controller = _global_controller(tmpdir)
             ctrl_state = controller._controller_state("A1")
             ctrl_state.execute_called = True
             ctrl_state.stage = "WAIT_CLEAR"
@@ -745,7 +754,7 @@ class ControllerTests(unittest.TestCase):
             ]
         )
         with tempfile.TemporaryDirectory() as tmpdir:
-            controller = GlobalLangGraphGuidanceController(save_dir=tmpdir)
+            controller = _global_controller(tmpdir)
             ctrl_state = controller._controller_state("A1")
             ctrl_state.execute_called = True
             ctrl_state.stage = "WAIT_CLEAR"
@@ -943,6 +952,147 @@ class ControllerTests(unittest.TestCase):
         self.assertIn("HLTP MUMSO->MABAL", merge_prompt)
         self.assertIn("Turn right around the conflict", merge_prompt)
 
+    def test_global_prompt_uses_retrieved_memory_instead_of_recent_memory(self) -> None:
+        core = FakeCore([_make_state("A1", position=(10.0, 10.0), has_entered_sector=True)])
+        unverified_prompt = GlobalPromptBuilder().build_prompt(
+            core,
+            step=5,
+            actionable=[{"agent_id": "A1", "call_name": "EXECUTE_TURN", "call_reason": "SECTOR_ENTRY"}],
+            entered_agent_ids=["A1"],
+            hltp_plans={},
+            threat_rows_by_agent={},
+            preview_rows_by_agent={},
+            recent_decisions=[{"step": 4, "actions": {"A1": {"call_name": "EXECUTE_TURN", "heading_change_deg": 5}}}],
+            frame_paths=[],
+            retrieved_memories=[
+                {
+                    "agent": "A1",
+                    "similarity": 0.82,
+                    "action": -15,
+                    "corrected": None,
+                    "note": None,
+                }
+            ],
+        )
+
+        self.assertIn("RETRIEVED DECISION MEMORY", unverified_prompt)
+        self.assertIn("A1 sim=0.82 unverified memory comparison only", unverified_prompt)
+        self.assertIn("similar past case used -15 deg", unverified_prompt)
+        self.assertIn("Do not copy unless current preview independently supports it", unverified_prompt)
+        self.assertIn("Memory is not proof the action is good", unverified_prompt)
+        self.assertNotIn("RECENT GLOBAL DECISION MEMORY", unverified_prompt)
+
+        corrected_prompt = GlobalPromptBuilder().build_prompt(
+            core,
+            step=5,
+            actionable=[{"agent_id": "A1", "call_name": "EXECUTE_TURN", "call_reason": "SECTOR_ENTRY"}],
+            entered_agent_ids=["A1"],
+            hltp_plans={},
+            threat_rows_by_agent={},
+            preview_rows_by_agent={},
+            recent_decisions=[],
+            frame_paths=[],
+            retrieved_memories=[
+                {
+                    "agent": "A1",
+                    "similarity": 0.82,
+                    "action": -15,
+                    "corrected": -25,
+                    "note": "traffic buffer kept shrinking",
+                }
+            ],
+        )
+
+        self.assertIn("RETRIEVED DECISION MEMORY", corrected_prompt)
+        self.assertIn("A1 sim=0.82 evaluator-corrected memory", corrected_prompt)
+        self.assertIn("corrected -25 deg is preferred only if current preview is safe", corrected_prompt)
+        self.assertIn("Memory is not proof the action is good", corrected_prompt)
+
+    def test_decision_memory_retrieval_is_route_gated(self) -> None:
+        preview_rows = [
+            {
+                "heading_change_deg": -15,
+                "safe_over_preview": True,
+                "pair_loss_step": None,
+                "weather_entry_step": None,
+                "boundary_exit_step": None,
+                "traffic_buffer_ok": True,
+                "weather_buffer_ok": True,
+                "min_sep_to_any": 8.0,
+                "min_weather_clearance": 7.0,
+                "progress_to_destination": 5.0,
+            },
+            {
+                "heading_change_deg": 0,
+                "safe_over_preview": False,
+                "pair_loss_step": 3,
+                "weather_entry_step": None,
+                "boundary_exit_step": None,
+                "traffic_buffer_ok": False,
+                "weather_buffer_ok": True,
+                "min_sep_to_any": 4.0,
+                "min_weather_clearance": 7.0,
+                "progress_to_destination": 6.0,
+            },
+        ]
+        threat_rows = [
+            {
+                "intruder_id": "A2",
+                "current_distance": 9.0,
+                "bearing_error_deg": 5.0,
+                "predicted_loss_step": 3,
+                "predicted_min_sep": 4.0,
+            }
+        ]
+        core = FakeCore(
+            [
+                _make_state("A1", position=(10.0, 0.0), heading_deg=0.0, predicted_min_sep=4.0),
+                _make_state("A2", position=(19.0, 0.0), heading_deg=180.0),
+            ]
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store = DecisionMemoryStore(Path(tmpdir) / "decision_memory.json", min_similarity=0.75)
+            store.append_cases(
+                core,
+                episode_id="ep1",
+                step=5,
+                actionable=[{"agent_id": "A1", "call_name": "EXECUTE_TURN", "call_reason": "SECTOR_ENTRY"}],
+                final_actions={"A1": {"heading_change_deg": -15}},
+                threat_rows_by_agent={"A1": threat_rows},
+                preview_rows_by_agent={"A1": preview_rows},
+            )
+            same_route = store.retrieve(
+                core,
+                step=5,
+                actionable=[{"agent_id": "A1", "call_name": "EXECUTE_TURN", "call_reason": "SECTOR_ENTRY"}],
+                threat_rows_by_agent={"A1": threat_rows},
+                preview_rows_by_agent={"A1": preview_rows},
+            )
+            memory_payload = json.loads((Path(tmpdir) / "decision_memory.json").read_text())
+            stored_case_id = memory_payload["episodes"][0]["cases"][0]["case_id"]
+
+            changed_route_core = FakeCore(
+                [
+                    _make_state("A1", position=(10.0, 0.0), heading_deg=0.0, predicted_min_sep=4.0),
+                    _make_state("A2", position=(19.0, 0.0), heading_deg=180.0),
+                ]
+            )
+            changed_route_core.get_agent("A1").route.origin = "OTHER"
+            changed_route = store.retrieve(
+                changed_route_core,
+                step=5,
+                actionable=[{"agent_id": "A1", "call_name": "EXECUTE_TURN", "call_reason": "SECTOR_ENTRY"}],
+                threat_rows_by_agent={"A1": threat_rows},
+                preview_rows_by_agent={"A1": preview_rows},
+            )
+
+        self.assertEqual(same_route[0]["action"], -15)
+        self.assertTrue(stored_case_id.startswith("case_"))
+        self.assertEqual(same_route[0]["memory_ref"], {"episode_id": "ep1", "case_id": stored_case_id})
+        self.assertEqual(same_route[0]["case"]["case_id"], stored_case_id)
+        self.assertEqual(changed_route, [])
+
     def test_global_vision_prompt_includes_action_candidates_not_text_table(self) -> None:
         core = FakeCore([_make_state("A1", position=(10.0, 10.0), has_entered_sector=True)])
         prompt = GlobalPromptBuilder().build_vision_prompt(
@@ -1136,7 +1286,7 @@ class ControllerTests(unittest.TestCase):
             frame_dir.mkdir()
             for step in range(4):
                 (frame_dir / f"image_{step:03d}.png").touch()
-            controller = GlobalLangGraphGuidanceController(save_dir=tmpdir)
+            controller = _global_controller(tmpdir)
             with patch.object(controller, "_ranked_threats", return_value=[]), patch.object(
                 controller,
                 "_preview_rows",
@@ -1171,7 +1321,7 @@ class ControllerTests(unittest.TestCase):
         self.assertIn("WEATHER MOTION SUMMARY", prompt_text)
         self.assertIn("moving from near", prompt_text)
         self.assertIn("toward", prompt_text)
-        self.assertIn("VISION MEMORY ADVISORY", prompt_text)
+        self.assertNotIn("RETRIEVED DECISION MEMORY", prompt_text)
         self.assertNotIn("PER-AGENT TURN PREVIEWS", prompt_text)
         self.assertNotIn("each row predicts consequences", prompt_text)
         self.assertEqual(
@@ -1184,7 +1334,7 @@ class ControllerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             frame_path = Path(tmpdir) / "image_003.png"
             frame_path.touch()
-            controller = GlobalLangGraphGuidanceController(save_dir=tmpdir)
+            controller = _global_controller(tmpdir)
             with patch.object(controller, "_ranked_threats", return_value=[]), patch.object(
                 controller,
                 "_preview_rows",
@@ -1217,7 +1367,7 @@ class ControllerTests(unittest.TestCase):
             frame_dir.mkdir()
             for step in range(4):
                 (frame_dir / f"image_{step:03d}.png").touch()
-            controller = GlobalLangGraphGuidanceController(save_dir=tmpdir, retry_limit=0)
+            controller = _global_controller(tmpdir, retry_limit=0)
             with patch.object(controller, "_ranked_threats", return_value=[]), patch.object(
                 controller,
                 "_preview_rows",
@@ -1446,7 +1596,7 @@ class ControllerTests(unittest.TestCase):
                 path = Path(tmpdir) / f"image_{3 - step:03d}.png"
                 path.touch()
                 frame_paths.append(str(path))
-            controller = GlobalLangGraphGuidanceController(save_dir=tmpdir)
+            controller = _global_controller(tmpdir)
             with patch.object(controller, "_newly_entered_hltp_agent_ids", return_value=["A1"]), patch.object(
                 controller,
                 "_hltp_pair_conflicts",
@@ -1511,7 +1661,7 @@ class ControllerTests(unittest.TestCase):
                             route_ids=None,
                             num_weather_cells=num_weather_cells,
                         )
-                        controller = GlobalLangGraphGuidanceController(save_dir=tmpdir)
+                        controller = _global_controller(tmpdir)
                         controller.reset()
                         with patch(
                             "rl_llm_multi.llm.ollama_invoke",

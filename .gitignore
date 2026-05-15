@@ -10,6 +10,17 @@ events.out.tfevents.*
 **/*.ckpt
 **/*.gif
 
+# Python cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+
+# Pure LLM guidance generated artifacts
+multi-agent-isolated-llm-guidance/llm_episode_logs/
+multi-agent-isolated-llm-guidance/memory/
+multi-agent-isolated-llm-guidance/outputs/
+multi-agent-isolated-llm-guidance/evaluation/
+
 # Training artifacts
 multi-agent-isolated-llm-guidance/log/
 **/events.out.tfevents.*

@@ -255,7 +255,8 @@ Startup happens in this order:
 1. `run_llm_episode_gif_multi_agent.py` parses command-line arguments.
 2. It chooses an output directory under `outputs/` unless one is provided.
 3. It calls `evaluate_episode()`.
-4. `evaluate_episode()` creates a memory directory under `memory/`.
+4. `evaluate_episode()` creates an episode log directory under
+   `llm_episode_logs/`.
 5. It creates a `GlobalLangGraphGuidanceController`.
 6. It creates a `JointGuidanceEnv`.
 7. `JointGuidanceEnv` creates a `MultiAgentSectorCore`.
@@ -1513,14 +1514,25 @@ evaluation/
 Prompt and response logs go under:
 
 ```text
-memory/
+llm_episode_logs/
 ```
 
 Each run gets a directory like:
 
 ```text
-memory/run_YYYYMMDDTHHMMSSZ__ep000001/
+llm_episode_logs/run_YYYYMMDDTHHMMSSZ__ep000001/
 ```
+
+These files are debugging/audit logs, not persistent learning memory. Retention
+is controlled in `configs.py`:
+
+```python
+LLM_EPISODE_LOG_RETENTION_ENABLED = True
+LLM_EPISODE_LOG_MAX_EPISODE_DIRS = 3
+```
+
+When enabled, new pure-LLM runs keep only the newest episode log directories
+matching `run_*__ep*`.
 
 Global guidance logs look like:
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,8 +15,11 @@ from PIL import Image, ImageDraw, ImageFont
 from configs import (
     EVAL_DIR,
     FRAME_DURATION_MS,
+    DECISION_MEMORY_VISUAL_AUDIT_ENABLED,
+    LLM_EPISODE_LOG_DIR,
+    LLM_EPISODE_LOG_MAX_EPISODE_DIRS,
+    LLM_EPISODE_LOG_RETENTION_ENABLED,
     MAX_AGENTS,
-    MEMORY_DIR,
     NUM_AGENTS_DEFAULT,
     NUM_WEATHER_CELLS_DEFAULT,
     PLOT_DIR,
@@ -43,6 +47,7 @@ class EpisodeResult:
     failure_reason: Optional[str]
     active_calls_logged: int
     used_vision: bool
+    memory_visual_audit: bool
 
 
 def _timestamp() -> str:
@@ -52,6 +57,19 @@ def _timestamp() -> str:
 def _ensure_dir(path: Path) -> Path:
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def _prune_old_llm_episode_logs(log_root: Path, keep_count: int) -> None:
+    if keep_count < 1 or not log_root.exists():
+        return
+
+    episode_dirs = sorted(
+        path
+        for path in log_root.glob("run_*__ep*")
+        if path.is_dir() and not path.is_symlink()
+    )
+    for old_dir in episode_dirs[:-keep_count]:
+        shutil.rmtree(old_dir)
 
 
 def _normalize_route_ids(route_ids: Optional[Sequence[str]]) -> Optional[List[str]]:
@@ -130,12 +148,18 @@ def evaluate_episode(
     output_dir: Path,
     episode_step_cap: Optional[int] = None,
     use_vision: bool = USE_VISION_DEFAULT,
+    memory_visual_audit: bool = DECISION_MEMORY_VISUAL_AUDIT_ENABLED,
     num_weather_cells: int = NUM_WEATHER_CELLS_DEFAULT,
 ) -> EpisodeResult:
     route_ids = _normalize_route_ids(route_ids)
     num_weather_cells = _validate_num_weather_cells(num_weather_cells)
-    memory_dir = _ensure_dir(MEMORY_DIR / f"run_{_timestamp()}__ep000001")
-    controller = GlobalLangGraphGuidanceController(save_dir=str(memory_dir))
+    llm_log_dir = _ensure_dir(LLM_EPISODE_LOG_DIR / f"run_{_timestamp()}__ep000001")
+    if LLM_EPISODE_LOG_RETENTION_ENABLED:
+        _prune_old_llm_episode_logs(LLM_EPISODE_LOG_DIR, LLM_EPISODE_LOG_MAX_EPISODE_DIRS)
+    controller = GlobalLangGraphGuidanceController(
+        save_dir=str(llm_log_dir),
+        memory_visual_audit_enabled=bool(memory_visual_audit),
+    )
     env = JointGuidanceEnv(
         num_agents=num_agents,
         max_agents=MAX_AGENTS,
@@ -187,6 +211,7 @@ def evaluate_episode(
         failure_reason=env.core.last_failure_reason,
         active_calls_logged=llm_calls,
         used_vision=bool(use_vision),
+        memory_visual_audit=bool(memory_visual_audit),
     )
 
 
@@ -200,6 +225,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--gif-name", type=str, default=None)
     parser.add_argument("--episode-step-cap", type=int, default=None)
     parser.add_argument("--use-vision", action="store_true", default=USE_VISION_DEFAULT)
+    parser.add_argument("--memory-visual-audit", action="store_true", default=DECISION_MEMORY_VISUAL_AUDIT_ENABLED)
     parser.add_argument("--num-weather-cells", type=int, choices=(1, 2), default=NUM_WEATHER_CELLS_DEFAULT)
     return parser.parse_args()
 
@@ -218,6 +244,7 @@ def main() -> None:
         output_dir=output_dir,
         episode_step_cap=args.episode_step_cap,
         use_vision=args.use_vision,
+        memory_visual_audit=args.memory_visual_audit,
         num_weather_cells=args.num_weather_cells,
     )
 
@@ -230,7 +257,7 @@ def main() -> None:
         json.dump(asdict(result), handle, indent=2)
 
     print(
-        "mode={} steps={} reward={:.3f} success={} truncated={} failure_reason={} used_vision={} weather_cells={} gif={}".format(
+        "mode={} steps={} reward={:.3f} success={} truncated={} failure_reason={} used_vision={} memory_visual_audit={} weather_cells={} gif={}".format(
             result.mode,
             result.steps,
             result.total_reward,
@@ -238,6 +265,7 @@ def main() -> None:
             int(result.truncated),
             result.failure_reason,
             int(result.used_vision),
+            int(result.memory_visual_audit),
             result.num_weather_cells,
             gif_path,
         )
