@@ -15,7 +15,7 @@ The main difference is the LLM input:
 The shared code path is:
 
 ```text
-run_llm_episode_gif_multi_agent.py
+evaluate_llm.py
   -> evaluate_episode()
   -> JointGuidanceEnv
   -> MultiAgentSectorCore
@@ -82,13 +82,13 @@ to the simulator.
 Contains constants for routes, agents, weather, action bins, lookahead windows,
 output paths, and Ollama settings.
 
-`evaluate.py`
+`evaluate_llm.py`
 
 Runs a complete episode. It creates the environment, creates the global
 controller, saves frames, passes frame paths to the controller, runs the step
 loop, and returns an episode result.
 
-`run_llm_episode_gif_multi_agent.py`
+`evaluate_llm.py`
 
 Command-line wrapper around `evaluate_episode()`. It runs one episode and writes
 a GIF from the saved frames.
@@ -239,20 +239,20 @@ This helps avoid immediate collisions at shared or nearby origins.
 The normal text command is:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py
 ```
 
 The normal vision command is:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py --use-vision
 ```
 
 The only mode flag is `--use-vision`. Without it, the runner uses text mode.
 
 Startup happens in this order:
 
-1. `run_llm_episode_gif_multi_agent.py` parses command-line arguments.
+1. `evaluate_llm.py` parses command-line arguments.
 2. It chooses an output directory under `outputs/` unless one is provided.
 3. It calls `evaluate_episode()`.
 4. `evaluate_episode()` creates an episode log directory under
@@ -1690,13 +1690,13 @@ The phrase "three-call" refers to the three main low-level guidance phases:
 Text mode is the default:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py
 ```
 
 Vision mode is enabled with:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py --use-vision
 ```
 
 Vision mode does not replace text mode. It adds images on top of the same
@@ -1719,61 +1719,61 @@ The main differences are:
 Basic text run:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py
 ```
 
 Basic vision run:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py --use-vision
 ```
 
 Text run with more aircraft:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --num-agents 8
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py --num-agents 8
 ```
 
 Vision run with more aircraft:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision --num-agents 8
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py --use-vision --num-agents 8
 ```
 
 Text run with two weather cells:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --num-weather-cells 2
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py --num-weather-cells 2
 ```
 
 Vision run with two weather cells:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision --num-weather-cells 2
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py --use-vision --num-weather-cells 2
 ```
 
 Text run with specific routes:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --num-agents 2 --route-ids PATH5_REV PATH6
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py --num-agents 2 --route-ids PATH5_REV PATH6
 ```
 
 Vision run with specific routes:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision --num-agents 2 --route-ids PATH5_REV PATH6
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py --use-vision --num-agents 2 --route-ids PATH5_REV PATH6
 ```
 
 Text run with shorter time limit:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --episode-step-cap 10
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py --episode-step-cap 10
 ```
 
 Vision run with shorter time limit:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/run_llm_episode_gif_multi_agent.py --use-vision --episode-step-cap 10
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py --use-vision --episode-step-cap 10
 ```
 
 The printed result includes:
@@ -1837,7 +1837,7 @@ rl_llm_multi/llm.py
   _graph_fallback_missing()
   _graph_commit_and_log()
 
-evaluate.py
+evaluate_llm.py
   evaluate_episode()
 ```
 

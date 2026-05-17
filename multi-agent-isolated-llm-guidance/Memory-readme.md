@@ -34,7 +34,7 @@ memory is ignored.
 You ran:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/evaluate.py --memory-visual-audit
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py --memory-visual-audit
 ```
 
 This did two things:
@@ -1297,7 +1297,7 @@ DECISION_MEMORY_VISUAL_AUDIT_ENABLED = False
 You can enable it from the evaluation script:
 
 ```bash
-python3 multi-agent-isolated-llm-guidance/evaluate.py --memory-visual-audit
+python3 multi-agent-isolated-llm-guidance/evaluate_llm.py --memory-visual-audit
 ```
 
 When enabled, the controller copies recent rendered frames into:

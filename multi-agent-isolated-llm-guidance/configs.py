@@ -145,7 +145,8 @@ MAPPO_SAVE_MODEL_FREQ = 50_000
 # MAPPO_LR_ACTOR = 1e-4 # Original setting, which produced good results in early testing but may have been a bit high for stable convergence in the more complex environment. Left unchanged in the config for reference and easy reversion if desired.
 # MAPPO_LR_CRITIC = 1e-4 # Original setting, which produced good results in early testing but may have been a bit high for stable convergence in the more complex environment. Left unchanged in the config for reference and easy reversion if desired.
 MAPPO_LR_ACTOR = 1e-4
-MAPPO_LR_CRITIC = 5e-5 # Although lowering both is the safest conservative move but the actor is still improving returns and critic is struggling with changing return targets so slow down critic updates first (1e-4 means 0.0001, 5e-5 means 0.00005 improvement).
+# MAPPO_LR_CRITIC = 5e-5 # Planned LR based on the training curves observed in the 12th may local observation run but to compare the LLM+RL on equal grounds need to switch back to 1e-4
+MAPPO_LR_CRITIC = 1e-4
 
 MAPPO_GAMMA = 0.99
 MAPPO_K_EPOCHS = 5
