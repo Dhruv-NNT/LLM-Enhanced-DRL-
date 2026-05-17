@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import math
 import sys
@@ -1092,6 +1093,50 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(same_route[0]["memory_ref"], {"episode_id": "ep1", "case_id": stored_case_id})
         self.assertEqual(same_route[0]["case"]["case_id"], stored_case_id)
         self.assertEqual(changed_route, [])
+
+    def test_decision_memory_update_case_result_only_updates_correction_fields(self) -> None:
+        preview_rows = [
+            {
+                "heading_change_deg": -15,
+                "safe_over_preview": True,
+                "pair_loss_step": None,
+                "weather_entry_step": None,
+                "boundary_exit_step": None,
+                "traffic_buffer_ok": True,
+                "weather_buffer_ok": True,
+                "min_sep_to_any": 8.0,
+                "min_weather_clearance": 7.0,
+                "progress_to_destination": 5.0,
+            }
+        ]
+        core = FakeCore([_make_state("A1", position=(10.0, 0.0), heading_deg=0.0)])
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store = DecisionMemoryStore(Path(tmpdir) / "decision_memory.json", min_similarity=0.75)
+            store.append_cases(
+                core,
+                episode_id="ep1",
+                step=5,
+                actionable=[{"agent_id": "A1", "call_name": "EXECUTE_TURN", "call_reason": "SECTOR_ENTRY"}],
+                final_actions={"A1": {"heading_change_deg": -15}},
+                threat_rows_by_agent={"A1": []},
+                preview_rows_by_agent={"A1": preview_rows},
+            )
+            before = store.load()
+            case_id = before["episodes"][0]["cases"][0]["case_id"]
+            expected = copy.deepcopy(before)
+            expected["episodes"][0]["cases"][0]["result"]["corrected"] = -25
+            expected["episodes"][0]["cases"][0]["result"]["note"] = "short-horizon LLM return improved memory"
+
+            updated = store.update_case_result(
+                {"episode_id": "ep1", "case_id": case_id},
+                corrected=-25,
+                note="short-horizon LLM return improved memory",
+            )
+            after = store.load()
+
+        self.assertTrue(updated)
+        self.assertEqual(after, expected)
 
     def test_global_vision_prompt_includes_action_candidates_not_text_table(self) -> None:
         core = FakeCore([_make_state("A1", position=(10.0, 10.0), has_entered_sector=True)])

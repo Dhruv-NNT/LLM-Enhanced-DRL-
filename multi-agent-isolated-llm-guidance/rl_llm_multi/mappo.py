@@ -16,7 +16,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
 
-from configs import ACTION_BINS, MAX_AGENTS
+from configs import (
+    ACTION_BINS,
+    LLM_LOSS_ENABLED,
+    LLM_LOSS_TYPE,
+    LLM_LOSS_WEIGHT,
+    LLM_PHASE_WEIGHTS,
+    LLM_SOFT_KL_SIGMA_DEG,
+    MAX_AGENTS,
+)
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -173,8 +181,28 @@ class RolloutBuffer:
         self.terminals: List[bool] = []
         self.episode_ids: List[int] = []
         self.agent_ids: List[str] = []
+        self.llm_label_available: List[bool] = []
+        self.llm_action_indices: List[int] = []
+        self.llm_action_degs: List[int] = []
+        self.llm_phases: List[str] = []
+        self.llm_return_weights: List[float] = []
+        self.shadow_mappo_returns: List[float] = []
+        self.shadow_llm_returns: List[float] = []
+        self.shadow_memory_returns: List[float] = []
+        self.memory_action_indices: List[int] = []
+        self.memory_action_degs: List[int] = []
+        self.memory_refs: List[Optional[Dict[str, object]]] = []
+        self.memory_update_applied: List[bool] = []
 
-    def add(self, record: ActionRecord, *, reward: float, terminal: bool) -> None:
+    def add(
+        self,
+        record: ActionRecord,
+        *,
+        reward: float,
+        terminal: bool,
+        llm_metadata: Optional[Mapping[str, object]] = None,
+    ) -> None:
+        metadata = dict(llm_metadata or {})
         self.local_observations.append(record.local_obs.detach())
         self.global_states.append(record.global_state.detach())
         self.agent_indices.append(int(record.agent_index))
@@ -185,6 +213,19 @@ class RolloutBuffer:
         self.terminals.append(bool(terminal))
         self.episode_ids.append(int(record.episode_id))
         self.agent_ids.append(str(record.agent_id))
+        self.llm_label_available.append(bool(metadata.get("llm_label_available", False)))
+        self.llm_action_indices.append(int(metadata.get("llm_action_idx", 0) or 0))
+        self.llm_action_degs.append(int(metadata.get("llm_action_deg", 0) or 0))
+        self.llm_phases.append(str(metadata.get("llm_phase", "") or ""))
+        self.llm_return_weights.append(float(metadata.get("llm_return_weight", 0.0) or 0.0))
+        self.shadow_mappo_returns.append(float(metadata.get("G_MAPPO_shadow", 0.0) or 0.0))
+        self.shadow_llm_returns.append(float(metadata.get("G_LLM_shadow", 0.0) or 0.0))
+        self.shadow_memory_returns.append(float(metadata.get("G_MEMORY_shadow", 0.0) or 0.0))
+        self.memory_action_indices.append(int(metadata.get("memory_action_idx", 0) or 0))
+        self.memory_action_degs.append(int(metadata.get("memory_action_deg", 0) or 0))
+        memory_ref = metadata.get("memory_ref")
+        self.memory_refs.append(dict(memory_ref) if isinstance(memory_ref, MappingABC) else None)
+        self.memory_update_applied.append(bool(metadata.get("memory_update_applied", False)))
 
     def clear(self) -> None:
         self.__init__()
@@ -319,6 +360,14 @@ class MAPPOActorCritic(nn.Module):
         entropy = dist.entropy()
         values = self.critic(critic_input).squeeze(-1)
         return logprobs, values, entropy
+
+    def action_logits(
+        self,
+        local_observations: torch.Tensor,
+        agent_indices: torch.Tensor,
+    ) -> torch.Tensor:
+        actor_input = self._actor_input(local_observations, agent_indices)
+        return self.actor(actor_input)
 
     @torch.no_grad()
     def value(self, global_state: torch.Tensor, agent_indices: torch.Tensor | int) -> torch.Tensor:
@@ -477,6 +526,7 @@ class MAPPO:
         *,
         reward: float | Mapping[str, float],
         terminals: Mapping[str, bool],
+        llm_metadata_by_agent: Optional[Mapping[str, Mapping[str, object]]] = None,
     ) -> None:
         for record in records:
             record_reward = (
@@ -484,10 +534,12 @@ class MAPPO:
                 if isinstance(reward, MappingABC)
                 else float(reward)
             )
+            metadata = (llm_metadata_by_agent or {}).get(record.agent_id, {})
             self.buffer.add(
                 record,
                 reward=record_reward,
                 terminal=bool(terminals.get(record.agent_id, False)),
+                llm_metadata=metadata,
             )
 
     def add_terminal_bonus(self, episode_id: int, reward: float | Mapping[str, float]) -> None:
@@ -543,6 +595,17 @@ class MAPPO:
                 next_value = float(values[idx].item())
         return advantages, returns
 
+    def _llm_phase_weight_tensor(self, phases: Sequence[str]) -> torch.Tensor:
+        weights = [float(LLM_PHASE_WEIGHTS.get(str(phase), 1.0)) for phase in phases]
+        return torch.tensor(weights, dtype=torch.float32, device=device)
+
+    def _soft_teacher_distribution(self, action_indices: torch.Tensor) -> torch.Tensor:
+        bins = torch.tensor(ACTION_BINS, dtype=torch.float32, device=device)
+        target_degs = bins[action_indices.long()].unsqueeze(-1)
+        sigma = max(float(LLM_SOFT_KL_SIGMA_DEG), 1e-6)
+        logits = -0.5 * ((bins.unsqueeze(0) - target_degs) / sigma) ** 2
+        return torch.softmax(logits, dim=-1)
+
     def update(
         self,
         bootstrap_values: Optional[Mapping[Tuple[int, str], float]] = None,
@@ -558,6 +621,22 @@ class MAPPO:
         values = torch.stack(self.buffer.values, dim=0).float().to(device)
         rewards_raw = torch.tensor(self.buffer.rewards, dtype=torch.float32, device=device)
         dones = torch.tensor(self.buffer.terminals, dtype=torch.float32, device=device)
+        llm_available = torch.tensor(self.buffer.llm_label_available, dtype=torch.bool, device=device)
+        llm_action_indices = torch.tensor(self.buffer.llm_action_indices, dtype=torch.long, device=device)
+        llm_return_weights = torch.tensor(self.buffer.llm_return_weights, dtype=torch.float32, device=device)
+        llm_phase_weights = self._llm_phase_weight_tensor(self.buffer.llm_phases)
+        llm_label_count = int(llm_available.to(dtype=torch.int64).sum().item())
+        llm_action_match_count = 0.0
+        llm_abs_turn_difference_sum = 0.0
+        if llm_label_count > 0:
+            label_indices = llm_available.nonzero(as_tuple=False).view(-1)
+            stored_actions = actions[label_indices]
+            label_actions = llm_action_indices[label_indices]
+            llm_action_match_count = float((stored_actions == label_actions).to(dtype=torch.float32).sum().item())
+            bins = torch.tensor(ACTION_BINS, dtype=torch.float32, device=device)
+            llm_abs_turn_difference_sum = float(
+                torch.abs(bins[stored_actions] - bins[label_actions]).sum().item()
+            )
 
         rewards = rewards_raw
         if self.normalize_reward and rewards_raw.numel() > 1:
@@ -587,6 +666,10 @@ class MAPPO:
                 mb_old_logprobs = old_logprobs[idx]
                 mb_advantages = advantages[idx]
                 mb_returns = returns[idx]
+                mb_llm_available = llm_available[idx]
+                mb_llm_actions = llm_action_indices[idx]
+                mb_llm_return_weights = llm_return_weights[idx]
+                mb_llm_phase_weights = llm_phase_weights[idx]
 
                 logprobs, state_values, entropy = self.policy.evaluate(
                     mb_local_observations,
@@ -605,7 +688,33 @@ class MAPPO:
                 policy_loss = -torch.min(surr1, surr2).mean()
                 value_loss = self.loss_fn(state_values, mb_returns)
                 entropy_mean = entropy.mean()
-                loss = policy_loss + 0.5 * value_loss - 0.01 * entropy_mean
+                llm_loss = torch.zeros((), dtype=torch.float32, device=device)
+                llm_effective_weight_mean = torch.zeros((), dtype=torch.float32, device=device)
+                if bool(LLM_LOSS_ENABLED) and float(LLM_LOSS_WEIGHT) > 0.0:
+                    label_mask = mb_llm_available & (mb_llm_return_weights > 0.0)
+                else:
+                    label_mask = torch.zeros_like(mb_llm_available, dtype=torch.bool)
+                if bool(label_mask.any().item()):
+                    llm_logits = self.policy.action_logits(mb_local_observations, mb_agents)
+                    llm_log_probs = F.log_softmax(llm_logits, dim=-1)
+                    if str(LLM_LOSS_TYPE).lower() == "soft_kl":
+                        target_probs = self._soft_teacher_distribution(mb_llm_actions)
+                        per_sample_llm_loss = F.kl_div(
+                            llm_log_probs,
+                            target_probs,
+                            reduction="none",
+                        ).sum(dim=-1)
+                    else:
+                        per_sample_llm_loss = -llm_log_probs.gather(
+                            1,
+                            mb_llm_actions.long().view(-1, 1),
+                        ).squeeze(1)
+                    effective_weights = mb_llm_return_weights * mb_llm_phase_weights
+                    selected_weights = effective_weights[label_mask]
+                    selected_losses = per_sample_llm_loss[label_mask]
+                    llm_loss = (selected_losses * selected_weights).sum() / selected_weights.sum().clamp_min(1e-8)
+                    llm_effective_weight_mean = selected_weights.mean()
+                loss = policy_loss + 0.5 * value_loss - 0.01 * entropy_mean + float(LLM_LOSS_WEIGHT) * llm_loss
 
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -618,7 +727,18 @@ class MAPPO:
                 metric_sums["entropy"] += float(entropy_mean.item())
                 metric_sums["approx_kl"] += float(approx_kl.item())
                 metric_sums["clip_fraction"] += float(clip_fraction.item())
+                metric_sums["llm_loss"] += float(llm_loss.item())
+                metric_sums["llm_effective_weight"] += float(llm_effective_weight_mean.item())
                 metric_count += 1
+
+        if metric_count > 0:
+            metric_sums["llm_label_count"] += float(llm_label_count) * float(metric_count)
+            metric_sums["llm_action_match_rate"] += (
+                llm_action_match_count / max(float(llm_label_count), 1.0)
+            ) * float(metric_count)
+            metric_sums["llm_mean_abs_turn_difference"] += (
+                llm_abs_turn_difference_sum / max(float(llm_label_count), 1.0)
+            ) * float(metric_count)
 
         self.policy_old.load_state_dict(self.policy.state_dict())
         self.buffer.clear()

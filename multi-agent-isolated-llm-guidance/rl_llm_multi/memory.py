@@ -622,6 +622,55 @@ class DecisionMemoryStore:
             handle.write("\n")
         os.replace(tmp_path, self.path)
 
+    def update_case_result(
+        self,
+        memory_ref: Mapping[str, Any],
+        *,
+        corrected: int,
+        note: str,
+    ) -> bool:
+        """Update only result.corrected and result.note for one memory case."""
+
+        if not isinstance(memory_ref, Mapping):
+            return False
+        episode_id = str(memory_ref.get("episode_id", ""))
+        case_id = str(memory_ref.get("case_id", ""))
+        if not episode_id or not case_id:
+            return False
+
+        payload = self.load()
+        episodes = payload.get("episodes", [])
+        if not isinstance(episodes, list):
+            return False
+
+        updated = False
+        for episode in episodes:
+            if not isinstance(episode, dict):
+                continue
+            current_episode_id = str(episode.get("episode_id", ""))
+            if current_episode_id != episode_id:
+                continue
+            cases = episode.get("cases", [])
+            if not isinstance(cases, list):
+                continue
+            for case in cases:
+                if not isinstance(case, dict):
+                    continue
+                if _stable_case_id(current_episode_id, case) != case_id:
+                    continue
+                result = case.get("result") if isinstance(case.get("result"), dict) else {}
+                result["corrected"] = int(corrected)
+                result["note"] = str(note or "")
+                case["result"] = result
+                updated = True
+                break
+            if updated:
+                break
+
+        if updated:
+            self.save(payload)
+        return updated
+
     def retrieve(
         self,
         core: Any,

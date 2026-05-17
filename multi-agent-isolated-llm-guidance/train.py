@@ -6,7 +6,7 @@ import argparse
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from configs import (
     ACTION_BINS,
@@ -31,6 +31,24 @@ from configs import (
     MAPPO_SAVE_MODEL_FREQ,
     MAPPO_UPDATE_AGENT_STEPS,
     MAPPO_USE_LAYER_NORM,
+    LLM_GUIDANCE_END_STEP,
+    LLM_GUIDANCE_MEMORY_ISOLATED_PER_RUN,
+    LLM_GUIDANCE_MEMORY_PATH,
+    DECISION_MEMORY_PATH,
+    LLM_GUIDANCE_START_STEP,
+    LLM_GUIDANCE_USE_VISION,
+    LLM_MEMORY_EVALUATOR_ENABLED,
+    LLM_MEMORY_UPDATE_MARGIN,
+    LLM_SHADOW_EVAL_ENABLED,
+    LLM_SHADOW_GAMMA,
+    LLM_SHADOW_HORIZON,
+    LLM_SHADOW_RETURN_MARGIN,
+    LLM_SHADOW_RETURN_SCALE,
+    LLM_SHADOW_RETURN_WEIGHT_CLIP,
+    USE_LLM_GUIDED_TRAINING,
+    DECISION_MEMORY_VISUAL_AUDIT_DIR,
+    DECISION_MEMORY_VISUAL_AUDIT_ENABLED,
+    DECISION_MEMORY_VISUAL_AUDIT_FRAME_COUNT,
     MAX_AGENTS,
     NUM_AGENTS_DEFAULT,
     NUM_WEATHER_CELLS_DEFAULT,
@@ -41,8 +59,10 @@ from configs import (
 if MAPPO_CUDA_VISIBLE_DEVICES is not None:
     os.environ["CUDA_VISIBLE_DEVICES"] = str(MAPPO_CUDA_VISIBLE_DEVICES)
 
-from rl_llm_multi import MAPPO, MultiAgentParallelEnv, NoGuidanceProvider
+from rl_llm_multi import LLMGuidanceProvider, MAPPO, MultiAgentParallelEnv, NoGuidanceProvider, shadow_evaluate_actions
 from rl_llm_multi.mappo import evaluate_policy
+from rl_llm_multi.memory import DecisionMemoryStore
+from rl_llm_multi.utils import action_idx_to_deg
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -119,6 +139,106 @@ def build_agent(global_state_dim: int, local_obs_dim: int) -> MAPPO:
         gae_lambda=MAPPO_GAE_LAMBDA,
         normalize_reward=MAPPO_NORMALIZE_REWARD,
     )
+
+
+def _llm_guidance_active(agent_steps: int) -> bool:
+    return bool(
+        USE_LLM_GUIDED_TRAINING
+        and int(agent_steps) >= int(LLM_GUIDANCE_START_STEP)
+        and int(agent_steps) < int(LLM_GUIDANCE_END_STEP)
+    )
+
+
+def _resolve_llm_memory_path(log_dir: Path) -> Path:
+    if LLM_GUIDANCE_MEMORY_PATH:
+        return Path(str(LLM_GUIDANCE_MEMORY_PATH))
+    if bool(LLM_GUIDANCE_MEMORY_ISOLATED_PER_RUN):
+        return Path(log_dir) / "decision_memory.json"
+    return Path(DECISION_MEMORY_PATH)
+
+
+def _llm_return_weight(g_llm: float, g_mappo: float) -> float:
+    advantage = float(g_llm) - float(g_mappo) - float(LLM_SHADOW_RETURN_MARGIN)
+    if advantage <= 0.0:
+        return 0.0
+    scale = max(float(LLM_SHADOW_RETURN_SCALE), 1e-6)
+    return max(0.0, min(float(LLM_SHADOW_RETURN_WEIGHT_CLIP), advantage / scale))
+
+
+def _build_llm_metadata_by_agent(
+    advice_by_agent: Mapping[str, object],
+    shadow_result: Optional[object],
+    memory_updates: Mapping[str, bool],
+) -> Dict[str, Dict[str, object]]:
+    metadata: Dict[str, Dict[str, object]] = {}
+    for agent_id, advice in advice_by_agent.items():
+        agent_id = str(agent_id)
+        g_mappo = 0.0
+        g_llm = 0.0
+        g_memory = 0.0
+        if shadow_result is not None:
+            g_mappo = float(getattr(shadow_result, "mappo_returns", {}).get(agent_id, 0.0))
+            g_llm = float(getattr(shadow_result, "llm_returns", {}).get(agent_id, 0.0))
+            g_memory = float(getattr(shadow_result, "memory_returns", {}).get(agent_id, 0.0))
+        metadata[agent_id] = {
+            "llm_label_available": True,
+            "llm_action_idx": int(getattr(advice, "llm_action_idx")),
+            "llm_action_deg": int(getattr(advice, "llm_action_deg")),
+            "llm_phase": str(getattr(advice, "phase", "")),
+            "G_MAPPO_shadow": g_mappo,
+            "G_LLM_shadow": g_llm,
+            "G_MEMORY_shadow": g_memory,
+            "llm_return_weight": _llm_return_weight(g_llm, g_mappo),
+            "memory_action_idx": getattr(advice, "memory_action_idx", None) or 0,
+            "memory_action_deg": getattr(advice, "memory_action_deg", None) or 0,
+            "memory_ref": getattr(advice, "memory_ref", None),
+            "memory_update_applied": bool(memory_updates.get(agent_id, False)),
+        }
+    return metadata
+
+
+def _apply_memory_corrections(
+    memory_store: Optional[DecisionMemoryStore],
+    *,
+    advice_by_agent: Mapping[str, object],
+    shadow_result: Optional[object],
+    policy_actions: Mapping[str, int],
+) -> tuple[Dict[str, bool], Dict[str, str]]:
+    updates: Dict[str, bool] = {}
+    sources: Dict[str, str] = {}
+    if not bool(LLM_MEMORY_EVALUATOR_ENABLED) or memory_store is None or shadow_result is None:
+        return updates, sources
+    memory_returns = getattr(shadow_result, "memory_returns", {})
+    if not memory_returns:
+        return updates, sources
+
+    for agent_id, advice in advice_by_agent.items():
+        agent_id = str(agent_id)
+        memory_ref = getattr(advice, "memory_ref", None)
+        if not isinstance(memory_ref, dict) or getattr(advice, "memory_action_deg", None) is None:
+            continue
+        if agent_id not in memory_returns:
+            continue
+        g_memory = float(memory_returns.get(agent_id, 0.0))
+        g_mappo = float(getattr(shadow_result, "mappo_returns", {}).get(agent_id, 0.0))
+        g_llm = float(getattr(shadow_result, "llm_returns", {}).get(agent_id, 0.0))
+        if g_llm >= g_mappo:
+            best_return = g_llm
+            corrected = int(getattr(advice, "llm_action_deg"))
+            source = "llm"
+            note = "short-horizon LLM return improved memory"
+        else:
+            best_return = g_mappo
+            corrected = action_idx_to_deg(int(policy_actions[agent_id]), ACTION_BINS)
+            source = "mappo"
+            note = "short-horizon MAPPO return improved memory"
+        if best_return <= g_memory + float(LLM_MEMORY_UPDATE_MARGIN):
+            continue
+        applied = memory_store.update_case_result(memory_ref, corrected=corrected, note=note)
+        updates[agent_id] = bool(applied)
+        if applied:
+            sources[agent_id] = source
+    return updates, sources
 
 
 def _log_eval(writer: SummaryWriter, stats: Dict[str, float], agent_steps: int) -> None:
@@ -247,7 +367,20 @@ def main() -> None:
     global_state_dim = int(probe_env.state().shape[0])
     local_obs_dim = int(probe_env.observation_space(probe_env.possible_agents[0]).shape[0])
     agent = build_agent(global_state_dim, local_obs_dim)
-    guidance = NoGuidanceProvider()
+    llm_memory_path = _resolve_llm_memory_path(log_dir)
+    if USE_LLM_GUIDED_TRAINING:
+        guidance = LLMGuidanceProvider(
+            save_dir=log_dir / "llm_guidance_json",
+            memory_path=llm_memory_path,
+            use_vision=bool(LLM_GUIDANCE_USE_VISION),
+            memory_visual_audit_enabled=bool(DECISION_MEMORY_VISUAL_AUDIT_ENABLED),
+            memory_visual_audit_dir=DECISION_MEMORY_VISUAL_AUDIT_DIR,
+            memory_visual_audit_frame_count=int(DECISION_MEMORY_VISUAL_AUDIT_FRAME_COUNT),
+        )
+        memory_store: Optional[DecisionMemoryStore] = DecisionMemoryStore(llm_memory_path)
+    else:
+        guidance = NoGuidanceProvider()
+        memory_store = None
 
     agent_steps = 0
     env_steps = 0
@@ -305,6 +438,22 @@ def main() -> None:
             ep_reward_sums: Dict[str, float] = {}
             ep_reward_counts: Dict[str, int] = {}
             ep_policy_agent_ids: set[str] = set()
+            ep_llm_guided_decisions = 0
+            ep_llm_positive_labels = 0
+            ep_llm_action_matches = 0
+            ep_llm_abs_turn_difference_sum = 0.0
+            ep_shadow_mappo_returns: List[float] = []
+            ep_shadow_llm_returns: List[float] = []
+            ep_shadow_memory_returns: List[float] = []
+            ep_memory_retrieval_count = 0
+            ep_memory_update_count = 0
+            ep_memory_update_to_mappo = 0
+            ep_memory_update_to_llm = 0
+            ep_phase_counts = {
+                "EXECUTE_TURN": 0,
+                "EMERGENCY_MANEUVER": 0,
+                "MERGE_BACK": 0,
+            }
 
             while not done and not truncated:
                 active_ids = list(env.agents)
@@ -340,16 +489,73 @@ def main() -> None:
                     deterministic=False,
                     store=True,
                 )
-                overrides = guidance.actions_for_step(
-                    env.core,
-                    step=env.core.n_step,
-                    proposed_actions=policy_actions,
-                )
-                final_actions = dict(policy_actions)
-                for agent_id, action_idx in overrides.items():
-                    if agent_id in active_ids:
-                        final_actions[agent_id] = int(action_idx)
+                advice_by_agent: Dict[str, object] = {}
+                shadow_result = None
+                memory_updates: Dict[str, bool] = {}
+                memory_update_sources: Dict[str, str] = {}
+                llm_metadata_by_agent: Dict[str, Dict[str, object]] = {}
+                if _llm_guidance_active(agent_steps):
+                    advice_by_agent = guidance.advice_for_step(
+                        env.core,
+                        step=env.core.n_step,
+                        proposed_actions=policy_actions,
+                        latest_frame_path=None,
+                    )
+                    if advice_by_agent and bool(LLM_SHADOW_EVAL_ENABLED):
+                        shadow_result = shadow_evaluate_actions(
+                            env.core,
+                            agent,
+                            proposed_actions=policy_actions,
+                            guidance_by_agent=advice_by_agent,
+                            horizon=int(LLM_SHADOW_HORIZON),
+                            gamma=float(LLM_SHADOW_GAMMA),
+                            episode_id=episode,
+                        )
+                        memory_updates, memory_update_sources = _apply_memory_corrections(
+                            memory_store,
+                            advice_by_agent=advice_by_agent,
+                            shadow_result=shadow_result,
+                            policy_actions=policy_actions,
+                        )
+                    llm_metadata_by_agent = _build_llm_metadata_by_agent(
+                        advice_by_agent,
+                        shadow_result,
+                        memory_updates,
+                    )
 
+                    for agent_id, advice in advice_by_agent.items():
+                        agent_id = str(agent_id)
+                        metadata = llm_metadata_by_agent.get(agent_id, {})
+                        ep_llm_guided_decisions += 1
+                        if float(metadata.get("llm_return_weight", 0.0) or 0.0) > 0.0:
+                            ep_llm_positive_labels += 1
+                        if int(policy_actions.get(agent_id, -1)) == int(getattr(advice, "llm_action_idx")):
+                            ep_llm_action_matches += 1
+                        ep_llm_abs_turn_difference_sum += abs(
+                            action_idx_to_deg(int(policy_actions[agent_id]), ACTION_BINS)
+                            - int(getattr(advice, "llm_action_deg"))
+                        )
+                        phase = str(getattr(advice, "phase", ""))
+                        if phase in ep_phase_counts:
+                            ep_phase_counts[phase] += 1
+                        if getattr(advice, "memory_ref", None):
+                            ep_memory_retrieval_count += 1
+                        if shadow_result is not None:
+                            ep_shadow_mappo_returns.append(
+                                float(getattr(shadow_result, "mappo_returns", {}).get(agent_id, 0.0))
+                            )
+                            ep_shadow_llm_returns.append(
+                                float(getattr(shadow_result, "llm_returns", {}).get(agent_id, 0.0))
+                            )
+                            if agent_id in getattr(shadow_result, "memory_returns", {}):
+                                ep_shadow_memory_returns.append(
+                                    float(getattr(shadow_result, "memory_returns", {}).get(agent_id, 0.0))
+                                )
+                    ep_memory_update_count += len(memory_update_sources)
+                    ep_memory_update_to_mappo += sum(1 for value in memory_update_sources.values() if value == "mappo")
+                    ep_memory_update_to_llm += sum(1 for value in memory_update_sources.values() if value == "llm")
+
+                final_actions = dict(policy_actions)
                 observations, _, _, _, info = env.step(final_actions)
                 common = info["__common__"]
                 team_reward = float(common["team_reward"])
@@ -370,6 +576,7 @@ def main() -> None:
                     records,
                     reward=controlled_reward_source,
                     terminals=terminals,
+                    llm_metadata_by_agent=llm_metadata_by_agent,
                 )
                 if team_terminal:
                     agent.add_terminal_bonus(
@@ -425,6 +632,51 @@ def main() -> None:
                 agent_steps,
             )
             _log_episode_reward_debug(writer, ep_reward_sums, ep_reward_counts, common, episode)
+            writer.add_scalar("train/llm/enabled", int(bool(USE_LLM_GUIDED_TRAINING)), agent_steps)
+            writer.add_scalar("train/llm/num_guided_decisions", ep_llm_guided_decisions, agent_steps)
+            writer.add_scalar("train/llm/positive_label_count", ep_llm_positive_labels, agent_steps)
+            writer.add_scalar(
+                "train/llm/action_match_rate",
+                ep_llm_action_matches / max(float(ep_llm_guided_decisions), 1.0),
+                agent_steps,
+            )
+            writer.add_scalar(
+                "train/llm/mean_abs_turn_difference",
+                ep_llm_abs_turn_difference_sum / max(float(ep_llm_guided_decisions), 1.0),
+                agent_steps,
+            )
+            writer.add_scalar(
+                "train/shadow/G_MAPPO_mean",
+                sum(ep_shadow_mappo_returns) / max(float(len(ep_shadow_mappo_returns)), 1.0),
+                agent_steps,
+            )
+            writer.add_scalar(
+                "train/shadow/G_LLM_mean",
+                sum(ep_shadow_llm_returns) / max(float(len(ep_shadow_llm_returns)), 1.0),
+                agent_steps,
+            )
+            writer.add_scalar(
+                "train/shadow/G_MEMORY_mean",
+                sum(ep_shadow_memory_returns) / max(float(len(ep_shadow_memory_returns)), 1.0),
+                agent_steps,
+            )
+            writer.add_scalar(
+                "train/shadow/llm_beats_mappo_rate",
+                sum(
+                    1
+                    for g_llm, g_mappo in zip(ep_shadow_llm_returns, ep_shadow_mappo_returns)
+                    if g_llm > g_mappo
+                )
+                / max(float(len(ep_shadow_llm_returns)), 1.0),
+                agent_steps,
+            )
+            writer.add_scalar("train/memory/retrieval_count", ep_memory_retrieval_count, agent_steps)
+            writer.add_scalar("train/memory/update_count", ep_memory_update_count, agent_steps)
+            writer.add_scalar("train/memory/corrected_to_mappo_count", ep_memory_update_to_mappo, agent_steps)
+            writer.add_scalar("train/memory/corrected_to_llm_count", ep_memory_update_to_llm, agent_steps)
+            writer.add_scalar("train/llm/execute_turn_count", ep_phase_counts["EXECUTE_TURN"], agent_steps)
+            writer.add_scalar("train/llm/emergency_maneuver_count", ep_phase_counts["EMERGENCY_MANEUVER"], agent_steps)
+            writer.add_scalar("train/llm/merge_back_count", ep_phase_counts["MERGE_BACK"], agent_steps)
 
             if agent_steps >= next_update and len(agent.buffer) > 0:
                 metrics = agent.update()

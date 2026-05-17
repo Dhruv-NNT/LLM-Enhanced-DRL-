@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import math
 import sys
 import tempfile
@@ -13,6 +14,7 @@ if str(PACKAGE_ROOT) not in sys.path:
 
 from configs import (  # noqa: E402
     ACTION_BINS,
+    USE_LLM_GUIDED_TRAINING,
     MAX_AGENTS,
     MAX_WEATHER_CELLS,
     HAZARD_RISK_DECAY_EXPONENT,
@@ -40,9 +42,9 @@ from configs import (  # noqa: E402
     PAIR_RISK_BUFFER,
     SAFE_R,
 )
-from rl_llm_multi import MAPPO, MultiAgentParallelEnv, MultiAgentSectorCore, WeatherCell  # noqa: E402
+from rl_llm_multi import GuidanceAdvice, LLMGuidanceProvider, MAPPO, MultiAgentParallelEnv, MultiAgentSectorCore, WeatherCell, shadow_evaluate_actions  # noqa: E402
 from rl_llm_multi.mappo import evaluate_policy  # noqa: E402
-from rl_llm_multi.utils import line_signed_cross_track, weather_axis_units  # noqa: E402
+from rl_llm_multi.utils import action_idx_to_deg, deg_to_action_idx, line_signed_cross_track, weather_axis_units  # noqa: E402
 
 
 def _make_env(max_step: int = 5) -> MultiAgentParallelEnv:
@@ -79,7 +81,137 @@ def _advance_to_decision_agent(
     return observations, info
 
 
+class _FakeShadowState:
+    has_entered_sector = True
+
+
+class _FakeShadowCore:
+    def __init__(self) -> None:
+        self.active_agent_ids = ["A1", "A2"]
+        self.agent_states = {agent_id: _FakeShadowState() for agent_id in self.active_agent_ids}
+        self.step_calls: list[dict[str, int]] = []
+        self.last_team_done = False
+        self.last_team_truncated = False
+        self.n_step = 0
+
+    def clone(self):
+        return copy.deepcopy(self)
+
+    def get_agent(self, agent_id: str):
+        return self.agent_states[agent_id]
+
+    def step(self, action_dict, *, compute_predictions: bool = True):
+        self.step_calls.append(dict(action_dict))
+        self.n_step += 1
+        self.last_team_done = True
+        rewards = {agent_id: float(action_dict.get(agent_id, 0)) for agent_id in self.active_agent_ids}
+        return {}, rewards, {agent_id: True for agent_id in self.active_agent_ids}, {}, {"agent_rewards": rewards}
+
+
+class _UnusedShadowAgent:
+    def select_actions(self, *args, **kwargs):
+        raise AssertionError("deterministic continuation should not run for horizon=1")
+
+
+class _FakeGuidanceController:
+    def __init__(self) -> None:
+        self.last_normalized = {}
+        self.reset_called = False
+
+    def reset(self) -> None:
+        self.reset_called = True
+
+    def update(self, core, *, step: int, latest_frame_path=None, use_vision: bool = False):
+        self.last_normalized = {
+            "answer": {
+                "actions": {
+                    "A1": {
+                        "call_name": "EXECUTE_TURN",
+                        "source": "llm",
+                        "requested_heading_change_deg": 9,
+                    }
+                }
+            },
+            "debug": {
+                "stage_by_agent": {"A1": "EXECUTE_TURN"},
+                "fallback_agents": [],
+                "retrieved_memories": [
+                    {
+                        "agent": "A1",
+                        "action": -15,
+                        "corrected": -25,
+                        "memory_ref": {"episode_id": "ep1", "case_id": "case1"},
+                    }
+                ],
+            },
+        }
+        return {"A1": 10}
+
+
 class MAPPOTests(unittest.TestCase):
+    def test_llm_guided_training_is_disabled_by_default(self) -> None:
+        self.assertFalse(USE_LLM_GUIDED_TRAINING)
+
+    def test_llm_degree_label_maps_to_action_index(self) -> None:
+        for degrees in ACTION_BINS:
+            index = deg_to_action_idx(degrees, ACTION_BINS)
+            self.assertEqual(action_idx_to_deg(index, ACTION_BINS), degrees)
+
+    def test_structured_guidance_provider_returns_metadata_without_overrides(self) -> None:
+        controller = _FakeGuidanceController()
+        provider = LLMGuidanceProvider(controller=controller)
+
+        self.assertEqual(
+            provider.actions_for_step(_FakeShadowCore(), step=0, proposed_actions={"A1": 0}),
+            {},
+        )
+        advice = provider.advice_for_step(
+            _FakeShadowCore(),
+            step=0,
+            proposed_actions={"A1": deg_to_action_idx(0, ACTION_BINS)},
+        )
+
+        self.assertEqual(advice["A1"].llm_action_deg, 10)
+        self.assertEqual(advice["A1"].llm_action_idx, deg_to_action_idx(10, ACTION_BINS))
+        self.assertEqual(advice["A1"].phase, "EXECUTE_TURN")
+        self.assertEqual(advice["A1"].memory_action_deg, -25)
+        self.assertEqual(advice["A1"].memory_ref, {"episode_id": "ep1", "case_id": "case1"})
+
+    def test_shadow_evaluation_uses_joint_llm_swap_and_preserves_core(self) -> None:
+        core = _FakeShadowCore()
+        proposed = {"A1": deg_to_action_idx(0, ACTION_BINS), "A2": deg_to_action_idx(0, ACTION_BINS)}
+        advice = {
+            "A1": GuidanceAdvice(
+                agent_id="A1",
+                llm_action_deg=10,
+                llm_action_idx=deg_to_action_idx(10, ACTION_BINS),
+                phase="EXECUTE_TURN",
+                memory_action_deg=20,
+                memory_action_idx=deg_to_action_idx(20, ACTION_BINS),
+                memory_ref={"episode_id": "ep1", "case_id": "case1"},
+            ),
+            "A2": GuidanceAdvice(
+                agent_id="A2",
+                llm_action_deg=-10,
+                llm_action_idx=deg_to_action_idx(-10, ACTION_BINS),
+                phase="EXECUTE_TURN",
+            ),
+        }
+
+        result = shadow_evaluate_actions(
+            core,
+            _UnusedShadowAgent(),
+            proposed_actions=proposed,
+            guidance_by_agent=advice,
+            horizon=1,
+            gamma=0.99,
+        )
+
+        self.assertEqual(core.step_calls, [])
+        self.assertEqual(result.mappo_returns, {"A1": 0.0, "A2": 0.0})
+        self.assertEqual(result.llm_returns, {"A1": 10.0, "A2": -10.0})
+        self.assertEqual(result.memory_returns, {"A1": 20.0, "A2": 0.0})
+
     def test_global_state_has_fixed_weather_slots(self) -> None:
         one_weather = MultiAgentSectorCore(num_agents=2, num_weather_cells=1)
         one_weather.reset(seed=42, num_weather_cells=1)
@@ -548,6 +680,50 @@ class MAPPOTests(unittest.TestCase):
         self.assertGreater(len(agent.buffer), 0)
         metrics = agent.update()
         self.assertIn("loss", metrics)
+        self.assertEqual(len(agent.buffer), 0)
+
+    def test_labeled_rollout_adds_llm_loss_metrics(self) -> None:
+        env = _make_env(max_step=30)
+        observations, info = _advance_to_decision_agent(env, seed=42)
+        self.assertTrue(env.agents)
+        agent = _make_agent(env)
+        active_ids = list(env.agents)
+        actions, records, _ = agent.select_actions(
+            global_state=env.state(),
+            local_observations=observations,
+            active_agent_ids=active_ids,
+            episode_id=0,
+        )
+        observations, _, _, _, info = env.step(actions)
+        common = info["__common__"]
+        team_terminal = bool(common["episode_done"] or common["episode_truncated"])
+        post_active = set(env.agents)
+        terminals = {
+            agent_id: bool(team_terminal or agent_id not in post_active)
+            for agent_id in active_ids
+        }
+        labeled_agent = active_ids[0]
+        action_idx = int(actions[labeled_agent])
+        metadata = {
+            labeled_agent: {
+                "llm_label_available": True,
+                "llm_action_idx": action_idx,
+                "llm_action_deg": action_idx_to_deg(action_idx, ACTION_BINS),
+                "llm_phase": "EXECUTE_TURN",
+                "llm_return_weight": 1.0,
+            }
+        }
+        agent.store_outcomes(
+            records,
+            reward=common.get("agent_dense_rewards", common["agent_rewards"]),
+            terminals=terminals,
+            llm_metadata_by_agent=metadata,
+        )
+
+        metrics = agent.update()
+
+        self.assertGreater(metrics["llm_label_count"], 0.0)
+        self.assertGreaterEqual(metrics["llm_loss"], 0.0)
         self.assertEqual(len(agent.buffer), 0)
 
     def test_checkpoint_roundtrip_restores_counters(self) -> None:
