@@ -1,0 +1,788 @@
+# Research question
+
+**Does LLM-guided MAPPO training make the policy converge faster or reach higher rewards than pure MAPPO, under the same number of training steps, same reward function, same observation space, and same environment settings?**
+
+The purpose is not to prove that the LLM can control the aircraft. The purpose is to test whether LLM guidance can help MAPPO learn a better policy.
+
+---
+
+# Final Plan: LLM-Guided MAPPO Training with Shadow Rollout Evaluation
+
+## 1. Keep the MAPPO architecture unchanged
+
+We will **not change the actor observation space** and **not change the critic observation space**.
+
+The actor will still use:
+
+```text
+local observation + one-hot agent ID
+```
+
+The critic will still use:
+
+```text
+global state + one-hot agent ID
+```
+
+We will also **not add attention** in this version.
+
+The reason is simple: the goal is to test whether LLM-guided training improves MAPPO, not whether a new observation space or new network architecture improves MAPPO. Since the LLM already gives legal low-level heading-change actions from the same action bins used by MAPPO, we can use those actions directly as teacher signals instead of adding an attention module.
+
+The LLM controller already chooses validated heading changes for aircraft that need guidance, and those actions come from the legal `ACTION_BINS` such as `-30, -25, ..., 0, ..., +30`. The controller also validates, snaps, and guardrails the LLM output before use.
+
+---
+
+## 2. Keep pure MAPPO as the baseline
+
+If LLM-guided training is disabled, the training loop should behave exactly like normal MAPPO.
+
+```text
+MAPPO actor chooses action
+↓
+simulator executes MAPPO action
+↓
+reward is stored
+↓
+MAPPO updates using PPO actor loss + critic loss + entropy bonus
+```
+
+No LLM controller should be created. No memory retrieval should happen. No LLM loss should be computed.
+
+This is the clean baseline.
+
+---
+
+## 3. Add config variables in `configs.py`
+
+Instead of using many runtime `--` flags, add the controls in `configs.py`.
+
+Example structure:
+
+```python
+# ============================================================
+# LLM-Guided MAPPO Training
+# ============================================================
+
+USE_LLM_GUIDED_TRAINING = False
+
+LLM_GUIDANCE_START_STEP = 0
+LLM_GUIDANCE_END_STEP = 100_000
+
+LLM_GUIDANCE_USE_VISION = False
+LLM_GUIDANCE_USE_MEMORY = True
+
+# Main training style:
+# MAPPO always executes the real training action.
+# LLM and memory actions are evaluated using shadow simulator rollouts.
+LLM_GUIDANCE_MODE = "label_only_shadow_eval"
+
+# Shadow rollout settings
+LLM_SHADOW_EVAL_ENABLED = True
+LLM_SHADOW_HORIZON = 5
+LLM_SHADOW_GAMMA = 0.99
+LLM_SHADOW_RETURN_MARGIN = 0.05
+
+# LLM imitation loss
+LLM_LOSS_ENABLED = True
+LLM_LOSS_TYPE = "ce"  # "ce" or "soft_kl"
+LLM_LOSS_WEIGHT = 0.25
+LLM_LOSS_DECAY_ENABLED = True
+LLM_LOSS_MIN_WEIGHT = 0.05
+
+LLM_PHASE_WEIGHTS = {
+    "EXECUTE_TURN": 0.5,
+    "EMERGENCY_MANEUVER": 1.0,
+    "MERGE_BACK": 0.6,
+}
+
+# Memory evaluator
+LLM_MEMORY_EVALUATOR_ENABLED = True
+LLM_MEMORY_UPDATE_MARGIN = 0.10
+LLM_MEMORY_UPDATE_WITH_BEST_OF = "mappo_or_llm"
+```
+
+The most important switch is:
+
+```python
+USE_LLM_GUIDED_TRAINING = False
+```
+
+When this is `False`, the code must behave exactly like pure MAPPO.
+
+---
+
+## 4. Main LLM-guided training behavior
+
+When LLM-guided training is enabled, the **real training episode is still MAPPO-driven**.
+
+This is the main rule:
+
+```text
+MAPPO action is executed in the real simulator.
+LLM action is not directly executed in the real simulator.
+Memory action is not directly executed in the real simulator.
+```
+
+So the real branch is:
+
+```text
+current state
+↓
+MAPPO actor chooses action
+↓
+real simulator executes MAPPO action
+↓
+normal MAPPO rollout is stored
+```
+
+This keeps PPO/MAPPO mathematically clean because the actual executed action came from the MAPPO policy.
+
+The LLM action and memory action are evaluated separately using **shadow simulator rollouts**.
+
+---
+
+## 5. What happens at an LLM-guided decision step
+
+At a step where LLM guidance is active and an aircraft is actionable:
+
+### Step 1: MAPPO chooses the real action
+
+The actor outputs a probability distribution over the 13 turn actions.
+
+Then MAPPO samples or selects an action:
+
+```text
+a_MAPPO
+```
+
+This is the action used in the real training episode.
+
+---
+
+### Step 2: LLM gives a teacher action
+
+The existing LLM controller is called.
+
+It uses the current state, turn previews, guidance stage, and possibly memory. The controller already has stages such as `EXECUTE_TURN`, `EMERGENCY_MANEUVER`, and `MERGE_BACK`, and it only guides entered/actionable aircraft. 
+
+The LLM returns:
+
+```text
+a_LLM
+```
+
+This is a validated heading-change action.
+
+---
+
+### Step 3: Memory may provide a retrieved action
+
+If memory retrieves a similar past case, it may provide a remembered or corrected action.
+
+Call this:
+
+```text
+a_MEMORY
+```
+
+Memory must remain advisory. The memory README clearly says memory is not the MAPPO policy, not a planner, and not a replacement for simulator preview safety. 
+
+---
+
+### Step 4: Run shadow simulator rollouts
+
+Now we clone the simulator state and test candidate actions.
+
+We do **not** create shadow neural networks.
+
+We create **shadow simulator rollouts**.
+
+At the same state, we evaluate:
+
+```text
+Shadow 1: force a_MAPPO
+Shadow 2: force a_LLM
+Shadow 3: force a_MEMORY, if memory exists
+```
+
+Each shadow rollout runs for a short horizon, for example 5 steps.
+
+For each candidate action, compute:
+
+```text
+G_candidate =
+r_t + γ r_t+1 + γ² r_t+2 + ... + γ^(H-1) r_t+H-1
+```
+
+Where `H` is the shadow horizon.
+
+So we get:
+
+```text
+G_MAPPO
+G_LLM
+G_MEMORY
+```
+
+The memory README already describes this kind of intended evaluator flow: retrieve a memory case, simulate the LLM-guided action, simulate a shadow MAPPO action, compare returns over a short horizon, and update `result.corrected` and `result.note` if the memory-backed action performs poorly. 
+
+---
+
+## 6. Use shadow returns to weight the LLM imitation loss
+
+The LLM action should not be copied blindly.
+
+Instead, we use the shadow rollout return to decide how strongly MAPPO should learn from the LLM action.
+
+The LLM imitation loss is:
+
+```text
+L_LLM = - w_LLM log π_MAPPO(a_LLM | obs)
+```
+
+In simple language:
+
+> If the LLM action performs well in the short shadow rollout, MAPPO should learn from it more strongly. If the LLM action performs poorly, MAPPO should learn from it weakly or not at all.
+
+A good weighting rule is:
+
+```text
+w_LLM = max(0, G_LLM - G_MAPPO)
+```
+
+Then clip or normalize it so it does not become too large.
+
+This means:
+
+```text
+If G_LLM > G_MAPPO:
+    imitate the LLM action more strongly
+
+If G_LLM <= G_MAPPO:
+    imitate the LLM action weakly or not at all
+```
+
+This is better than simple behavior cloning because it does not assume the LLM is always correct.
+
+---
+
+## 7. Main MAPPO loss
+
+The normal MAPPO loss remains the foundation.
+
+```text
+L_MAPPO =
+L_PPO_actor
++ c_v L_value
+- c_e Entropy
+```
+
+Where:
+
+```text
+L_PPO_actor
+```
+
+updates the actor using PPO.
+
+```text
+L_value
+```
+
+trains the centralized critic.
+
+```text
+Entropy
+```
+
+keeps exploration alive.
+
+The new total loss becomes:
+
+```text
+L_total =
+L_PPO_actor
++ c_v L_value
+- c_e Entropy
++ λ_LLM L_LLM
+```
+
+Where:
+
+```text
+L_LLM = - w_LLM log π_MAPPO(a_LLM | obs)
+```
+
+This is the key integration.
+
+MAPPO still learns from its own executed action, but the LLM action becomes a weighted teacher signal.
+
+---
+
+## 8. Optional soft-KL version
+
+Instead of forcing MAPPO to copy the exact LLM action, we can create a soft teacher distribution.
+
+Example:
+
+```text
+LLM action = +10°
+
++10° gets the highest target weight
++5° and +15° get medium target weight
+0° and +20° get small target weight
+opposite turns get very low target weight
+```
+
+Then the loss becomes:
+
+```text
+L_LLM_KL = w_LLM × KL(q_LLM(a | s) || π_MAPPO(a | s))
+```
+
+In simple language:
+
+> Follow the LLM’s direction, but do not force exactly one turn bin.
+
+This may be safer because nearby heading changes can also be valid in aircraft conflict resolution.
+
+---
+
+## 9. Phase-weighted LLM loss
+
+The LLM loss should also depend on the guidance phase.
+
+For example:
+
+```text
+EXECUTE_TURN:
+    medium weight
+
+EMERGENCY_MANEUVER:
+    high weight
+
+MERGE_BACK:
+    medium weight
+```
+
+So the final LLM loss becomes:
+
+```text
+L_LLM =
+phase_weight × return_weight × imitation_loss
+```
+
+For cross-entropy:
+
+```text
+L_LLM =
+phase_weight × w_LLM × [-log π_MAPPO(a_LLM | obs)]
+```
+
+This means emergency guidance influences MAPPO more strongly because emergency actions are safety-critical.
+
+---
+
+## 10. Memory correction logic
+
+Memory should not just be used as a hint. It should also be evaluated.
+
+If a memory action is retrieved, we compare:
+
+```text
+G_MEMORY
+G_MAPPO
+G_LLM
+```
+
+Then choose the best alternative:
+
+```text
+G_BEST = max(G_MAPPO, G_LLM)
+```
+
+If:
+
+```text
+G_BEST > G_MEMORY + margin
+```
+
+then the retrieved memory case should be corrected.
+
+The correction should update only:
+
+```json
+"result.corrected"
+"result.note"
+```
+
+The memory README explicitly defines these as future evaluator fields. `result.corrected` stores a better turn degree, and `result.note` stores a short reason explaining why the original memory action was poor. 
+
+Example:
+
+```json
+"result": {
+  "action": -15,
+  "corrected": -25,
+  "note": "MAPPO shadow rollout improved traffic buffer"
+}
+```
+
+Or if the LLM action was best:
+
+```json
+"result": {
+  "action": -15,
+  "corrected": 10,
+  "note": "LLM shadow rollout kept larger weather clearance"
+}
+```
+
+The evaluator should not rewrite the full memory case. It should only update `result.corrected` and `result.note`, as described in the memory README. 
+
+---
+
+## 11. Whether to use an evaluator LLM for memory updates
+
+There are two possible ways to update memory.
+
+### Simple automatic update
+
+If the best candidate clearly beats memory by a margin, directly update:
+
+```text
+result.corrected = best_action
+result.note = short auto-generated reason
+```
+
+Example note:
+
+```text
+"short-horizon return was higher"
+```
+
+This is simpler and faster.
+
+---
+
+### Evaluator LLM update
+
+If we want more interpretable notes, call a small evaluator LLM.
+
+The evaluator LLM should receive:
+
+```text
+memory action
+MAPPO action
+LLM action
+G_MEMORY
+G_MAPPO
+G_LLM
+basic safety metrics
+```
+
+It should output only:
+
+```json
+{
+  "corrected": <turn_degree>,
+  "note": "<short reason>"
+}
+```
+
+The note must be short, such as:
+
+```text
+"traffic buffer kept shrinking"
+```
+
+The memory README says evaluator notes should stay short and should not rewrite the full case. 
+
+---
+
+## 12. Memory safety rule
+
+Even after correction, memory should never override current simulator safety.
+
+A corrected memory action should still be checked against the current preview before being shown in future prompts. The memory README already says corrected actions must still respect current preview safety. 
+
+So memory remains:
+
+```text
+advisory only
+```
+
+not a controller.
+
+---
+
+## 13. Rollout buffer changes
+
+The MAPPO rollout buffer should keep all normal fields:
+
+```text
+local_obs
+global_state
+agent_id
+MAPPO action
+MAPPO logprob
+value estimate
+reward
+done
+advantage
+return
+```
+
+Add optional LLM/shadow fields:
+
+```text
+llm_label_available
+llm_action
+memory_action_available
+memory_action
+llm_call_type
+G_MAPPO_shadow
+G_LLM_shadow
+G_MEMORY_shadow
+llm_return_weight
+memory_ref
+memory_update_applied
+```
+
+Only samples with:
+
+```text
+llm_label_available = 1
+```
+
+contribute to the LLM imitation loss.
+
+Only samples with:
+
+```text
+memory_ref exists
+```
+
+can trigger memory correction.
+
+---
+
+## 14. Training loop behavior
+
+### Pure MAPPO
+
+```text
+1. Get observations.
+2. MAPPO chooses actions.
+3. Real simulator executes MAPPO actions.
+4. Store transition.
+5. At episode end, update MAPPO normally.
+```
+
+No LLM. No memory. No shadow evaluator.
+
+---
+
+### LLM-guided MAPPO with shadow evaluation
+
+```text
+1. Get observations.
+2. MAPPO chooses actions.
+3. If LLM guidance is active:
+      call LLM controller for actionable aircraft.
+      retrieve memory if available.
+      get validated LLM action.
+4. Real simulator executes MAPPO action.
+5. For each guided decision:
+      clone simulator state.
+      shadow-test MAPPO action.
+      shadow-test LLM action.
+      shadow-test memory action if available.
+      compute short-horizon discounted returns.
+6. Store normal MAPPO transition plus LLM/shadow metadata.
+7. If memory action is clearly worse than MAPPO or LLM:
+      update result.corrected and result.note.
+8. At episode end:
+      update MAPPO using normal MAPPO loss plus return-weighted LLM imitation loss.
+```
+
+This gives us the best of both sides:
+
+```text
+PPO remains valid because MAPPO acts in the real episode.
+LLM still teaches MAPPO through return-weighted imitation.
+Memory improves over time through shadow rollout evaluation.
+```
+
+---
+
+## 15. Shadow rollout horizon
+
+Use a configurable horizon.
+
+Recommended default:
+
+```python
+LLM_SHADOW_HORIZON = 5
+```
+
+Why not only 3?
+
+Because aircraft conflict avoidance may need a few steps before the benefit appears. A 3-step rollout may be too short. The memory README also mentions short-horizon comparison, for example 5 steps, as the intended evaluator direction. 
+
+Later, test:
+
+```text
+H = 3
+H = 5
+H = 8
+```
+
+as an ablation.
+
+---
+
+## 16. Important implementation detail: shadow simulator, not shadow network
+
+We do **not** need multiple neural networks.
+
+We need:
+
+```text
+one MAPPO policy network
+multiple cloned simulator states
+```
+
+The word “shadow” should refer to cloned simulator rollouts, not cloned neural networks.
+
+So the implementation should be called something like:
+
+```text
+shadow_evaluate_actions()
+```
+
+not:
+
+```text
+shadow_network()
+```
+
+---
+
+## 17. Logging requirements
+
+Log the normal MAPPO metrics plus LLM-specific metrics.
+
+Important logs:
+
+```text
+train/llm/enabled
+train/llm/num_guided_decisions
+train/llm/loss
+train/llm/loss_weight
+train/llm/mean_return_weight
+train/llm/action_match_rate
+train/llm/mean_abs_turn_difference
+```
+
+Shadow rollout logs:
+
+```text
+train/shadow/G_MAPPO_mean
+train/shadow/G_LLM_mean
+train/shadow/G_MEMORY_mean
+train/shadow/llm_beats_mappo_rate
+train/shadow/mappo_beats_memory_rate
+train/shadow/llm_beats_memory_rate
+```
+
+Memory logs:
+
+```text
+train/memory/retrieval_count
+train/memory/update_count
+train/memory/corrected_to_mappo_count
+train/memory/corrected_to_llm_count
+```
+
+Phase logs:
+
+```text
+train/llm/execute_turn_count
+train/llm/emergency_maneuver_count
+train/llm/merge_back_count
+```
+
+These logs are important because the final claim is not just “LLM helped.” We need to show **how** it helped.
+
+---
+
+## 18. Experiments to run
+
+Run controlled comparisons.
+
+```text
+Experiment 1:
+Pure MAPPO
+
+Experiment 2:
+LLM-guided MAPPO with early guidance window
+
+Experiment 3:
+LLM-guided MAPPO with middle guidance window
+
+Experiment 4:
+LLM-guided MAPPO with full guidance window
+
+Experiment 5:
+LLM-guided MAPPO without memory correction
+
+Experiment 6:
+LLM-guided MAPPO with memory correction
+```
+
+Keep everything else the same:
+
+```text
+same seeds
+same number of agents
+same number of weather cells
+same reward function
+same actor/critic architecture
+same observation space
+same training steps
+same evaluation method
+```
+
+Compare:
+
+```text
+average reward
+success rate
+collision rate
+weather violation rate
+timeout rate
+steps needed to reach reward threshold
+area under training reward curve
+merge-back quality
+route deviation
+risk reduction
+```
+
+The most important comparison is:
+
+```text
+Does LLM-guided MAPPO reach the same reward faster?
+```
+
+and:
+
+```text
+Does LLM-guided MAPPO reach a higher reward after the same training budget?
+```
+
+---
+
+# Final summary
+
+The final framework should keep MAPPO’s actor, critic, observation space, and reward function unchanged. In pure MAPPO mode, training runs exactly as usual. In LLM-guided mode, MAPPO still executes the real action in the simulator, so PPO remains valid. The LLM provides a validated teacher action, and memory may provide a retrieved action. These candidate actions are evaluated using short cloned simulator rollouts. If the LLM action gets a better short-horizon discounted return than the MAPPO action, MAPPO is trained more strongly to imitate the LLM action. If the memory action performs worse than either the MAPPO action or the LLM action by a clear margin, the memory case is corrected by updating only `result.corrected` and `result.note`. This lets the LLM guide learning, lets MAPPO remain the real training policy, and lets memory improve over time without directly controlling the agent.
