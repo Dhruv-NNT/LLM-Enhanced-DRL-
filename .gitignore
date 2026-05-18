@@ -22,6 +22,7 @@ multi-agent-isolated-llm-guidance/outputs/
 multi-agent-isolated-llm-guidance/evaluation/
 
 # Training artifacts
+multi-agent-isolated-llm-guidance/llm_mappo_logs/
 multi-agent-isolated-llm-guidance/log/
 **/events.out.tfevents.*
 **/*.pt
