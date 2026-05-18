@@ -1094,6 +1094,78 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(same_route[0]["case"]["case_id"], stored_case_id)
         self.assertEqual(changed_route, [])
 
+    def test_advisory_global_commit_does_not_append_normal_memory(self) -> None:
+        class FailingMemory:
+            def append_cases(self, *args, **kwargs):
+                raise AssertionError("advisory labels must not append normal memory cases")
+
+        controller = GlobalLangGraphGuidanceController.__new__(GlobalLangGraphGuidanceController)
+        controller.decision_memory = FailingMemory()
+        controller.recent_decisions = []
+        controller.last_annotations = []
+        controller.last_joint_actions = {}
+        controller._memory_episode_id = lambda core: "ep1"
+        controller._phase_label_text = lambda agent_id, call_name, call_reason: f"{agent_id}:{call_name}"
+        applied = []
+
+        def apply_state(agent_id, call_name, call_reason, applied_turn):
+            applied.append((agent_id, call_name, applied_turn))
+
+        controller._apply_controller_state = apply_state
+        controller._normalized_global_payload = GlobalLangGraphGuidanceController._normalized_global_payload.__get__(
+            controller,
+            GlobalLangGraphGuidanceController,
+        )
+        logged = {}
+
+        def log_call(**kwargs):
+            logged.update(kwargs)
+            controller.last_normalized = {
+                **kwargs["normalized"],
+                "debug": kwargs["debug"],
+            }
+
+        controller._log_global_call = log_call
+        core = FakeCore([_make_state("A1", position=(10.0, 0.0), heading_deg=0.0)])
+
+        result = GlobalLangGraphGuidanceController._graph_commit_and_log(
+            controller,
+            {
+                "core": core,
+                "step": 5,
+                "advisory_only": True,
+                "actionable": [
+                    {"agent_id": "A1", "call_name": "EXECUTE_TURN", "call_reason": "SECTOR_ENTRY"}
+                ],
+                "annotations": [],
+                "final_actions": {
+                    "A1": {
+                        "call_name": "EXECUTE_TURN",
+                        "heading_change_deg": 10,
+                        "requested_heading_change_deg": 10,
+                        "source": "llm",
+                        "rationale": "",
+                    }
+                },
+                "llm_attempts": [{"llm_status": "ok", "raw_text": "{}", "error": ""}],
+                "parse_status": "ok",
+                "fallback_reason": "",
+                "fallback_agents": [],
+                "entered_agent_ids": ["A1"],
+                "stage_by_agent": {"A1": "EXECUTE_TURN"},
+                "hltp_plans": {},
+                "retrieved_memories": [],
+                "threat_rows_by_agent": {},
+                "preview_rows_by_agent": {},
+            },
+        )
+
+        self.assertEqual(result["actions"], {"A1": 10})
+        self.assertEqual(applied, [("A1", "EXECUTE_TURN", 10)])
+        self.assertTrue(controller.last_normalized["answer"]["advisory_only"])
+        self.assertTrue(controller.last_normalized["debug"]["advisory_only"])
+        self.assertEqual(controller.last_normalized["debug"]["memory_error"], "advisory_only_no_normal_memory_write")
+
     def test_decision_memory_update_case_result_only_updates_correction_fields(self) -> None:
         preview_rows = [
             {

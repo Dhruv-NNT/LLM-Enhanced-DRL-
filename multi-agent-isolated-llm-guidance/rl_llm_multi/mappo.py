@@ -609,6 +609,8 @@ class MAPPO:
     def update(
         self,
         bootstrap_values: Optional[Mapping[Tuple[int, str], float]] = None,
+        *,
+        llm_loss_weight: Optional[float] = None,
     ) -> Dict[str, float]:
         if len(self.buffer) == 0:
             return {"loss": 0.0, "policy_loss": 0.0, "value_loss": 0.0, "entropy": 0.0}
@@ -688,9 +690,14 @@ class MAPPO:
                 policy_loss = -torch.min(surr1, surr2).mean()
                 value_loss = self.loss_fn(state_values, mb_returns)
                 entropy_mean = entropy.mean()
+                current_llm_loss_weight = (
+                    float(LLM_LOSS_WEIGHT)
+                    if llm_loss_weight is None
+                    else float(llm_loss_weight)
+                )
                 llm_loss = torch.zeros((), dtype=torch.float32, device=device)
                 llm_effective_weight_mean = torch.zeros((), dtype=torch.float32, device=device)
-                if bool(LLM_LOSS_ENABLED) and float(LLM_LOSS_WEIGHT) > 0.0:
+                if bool(LLM_LOSS_ENABLED) and current_llm_loss_weight > 0.0:
                     label_mask = mb_llm_available & (mb_llm_return_weights > 0.0)
                 else:
                     label_mask = torch.zeros_like(mb_llm_available, dtype=torch.bool)
@@ -712,9 +719,9 @@ class MAPPO:
                     effective_weights = mb_llm_return_weights * mb_llm_phase_weights
                     selected_weights = effective_weights[label_mask]
                     selected_losses = per_sample_llm_loss[label_mask]
-                    llm_loss = (selected_losses * selected_weights).sum() / selected_weights.sum().clamp_min(1e-8)
+                    llm_loss = (selected_losses * selected_weights).mean()
                     llm_effective_weight_mean = selected_weights.mean()
-                loss = policy_loss + 0.5 * value_loss - 0.01 * entropy_mean + float(LLM_LOSS_WEIGHT) * llm_loss
+                loss = policy_loss + 0.5 * value_loss - 0.01 * entropy_mean + current_llm_loss_weight * llm_loss
 
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -729,6 +736,7 @@ class MAPPO:
                 metric_sums["clip_fraction"] += float(clip_fraction.item())
                 metric_sums["llm_loss"] += float(llm_loss.item())
                 metric_sums["llm_effective_weight"] += float(llm_effective_weight_mean.item())
+                metric_sums["llm_global_weight"] += float(current_llm_loss_weight)
                 metric_count += 1
 
         if metric_count > 0:

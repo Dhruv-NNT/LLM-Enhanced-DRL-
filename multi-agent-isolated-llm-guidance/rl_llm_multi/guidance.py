@@ -38,11 +38,17 @@ class GuidanceAdvice:
 
 @dataclass(frozen=True)
 class ShadowEvaluationResult:
-    """Per-agent discounted returns from cloned simulator branches."""
+    """Discounted returns from cloned simulator branches."""
 
     mappo_returns: Dict[str, float]
     llm_returns: Dict[str, float]
     memory_returns: Dict[str, float]
+    mappo_joint_return: float
+    llm_joint_return: float
+    memory_joint_return: float
+    memory_agent_ids: list[str]
+    memory_attribution_returns: Dict[str, Dict[str, float]]
+    memory_attribution_joint_returns: Dict[str, float]
 
 
 class NoGuidanceProvider:
@@ -72,6 +78,9 @@ class NoGuidanceProvider:
 
     def get_advice_for_rl(self, agent_id: Optional[str] = None):
         return None
+
+    def memory_episode_id(self, core) -> str:
+        return ""
 
 
 class LLMGuidanceProvider:
@@ -129,7 +138,10 @@ class LLMGuidanceProvider:
             self.last_advice = {}
             return {}
 
-        actions = self.controller.update(
+        choose_labels = getattr(self.controller, "advisory_update", None)
+        if not callable(choose_labels):
+            choose_labels = getattr(self.controller, "update")
+        actions = choose_labels(
             core,
             step=int(step),
             latest_frame_path=latest_frame_path,
@@ -184,6 +196,12 @@ class LLMGuidanceProvider:
             return dict(self.last_advice)
         return self.last_advice.get(str(agent_id))
 
+    def memory_episode_id(self, core) -> str:
+        memory_episode_id = getattr(self.controller, "_memory_episode_id", None)
+        if callable(memory_episode_id):
+            return str(memory_episode_id(core))
+        return ""
+
 
 def shadow_evaluate_actions(
     core: Any,
@@ -195,25 +213,26 @@ def shadow_evaluate_actions(
     gamma: float = LLM_SHADOW_GAMMA,
     episode_id: int = 0,
 ) -> ShadowEvaluationResult:
-    """Compare MAPPO, joint LLM, and joint memory actions on cloned cores.
+    """Compare MAPPO, joint LLM, and memory actions on cloned cores.
 
     proposed_actions are MAPPO action indexes. LLM and memory actions are stored
     as heading-change degrees in GuidanceAdvice. Only the first shadow step is
     forced; later steps use deterministic MAPPO actions from the current policy.
     """
 
-    tracked_ids = sorted(set(str(agent_id) for agent_id in proposed_actions) | set(guidance_by_agent))
+    guidance_by_id = {str(agent_id): advice for agent_id, advice in guidance_by_agent.items()}
+    tracked_ids = sorted(set(str(agent_id) for agent_id in proposed_actions) | set(guidance_by_id))
     mappo_first = _degree_actions_from_indices(proposed_actions)
     llm_first = dict(mappo_first)
     memory_first = dict(mappo_first)
-    has_memory_branch = False
+    memory_agent_ids: list[str] = []
 
-    for agent_id, advice in guidance_by_agent.items():
-        agent_id = str(agent_id)
+    for agent_id, advice in guidance_by_id.items():
         llm_first[agent_id] = int(advice.llm_action_deg)
         if advice.memory_action_deg is not None:
             memory_first[agent_id] = int(advice.memory_action_deg)
-            has_memory_branch = True
+            memory_agent_ids.append(agent_id)
+    memory_agent_ids = sorted(memory_agent_ids)
 
     mappo_returns = _rollout_branch(
         core,
@@ -243,15 +262,44 @@ def shadow_evaluate_actions(
             gamma=float(gamma),
             episode_id=int(episode_id),
         )
-        if has_memory_branch
+        if memory_agent_ids
         else {}
     )
+    memory_attribution_returns: Dict[str, Dict[str, float]] = {}
+    memory_attribution_joint_returns: Dict[str, float] = {}
+    if len(memory_agent_ids) > 1:
+        for agent_id in memory_agent_ids:
+            advice = guidance_by_id[agent_id]
+            first_actions = dict(mappo_first)
+            first_actions[agent_id] = int(advice.memory_action_deg)
+            branch_returns = _rollout_branch(
+                core,
+                agent,
+                first_actions_deg=first_actions,
+                tracked_agent_ids=tracked_ids,
+                horizon=int(horizon),
+                gamma=float(gamma),
+                episode_id=int(episode_id),
+            )
+            memory_attribution_returns[agent_id] = branch_returns
+            memory_attribution_joint_returns[agent_id] = _mean_return_for_ids(branch_returns, tracked_ids)
+
     return ShadowEvaluationResult(
         mappo_returns=mappo_returns,
         llm_returns=llm_returns,
         memory_returns=memory_returns,
+        mappo_joint_return=_mean_return_for_ids(mappo_returns, tracked_ids),
+        llm_joint_return=_mean_return_for_ids(llm_returns, tracked_ids),
+        memory_joint_return=_mean_return_for_ids(memory_returns, tracked_ids) if memory_agent_ids else 0.0,
+        memory_agent_ids=memory_agent_ids,
+        memory_attribution_returns=memory_attribution_returns,
+        memory_attribution_joint_returns=memory_attribution_joint_returns,
     )
 
+
+def _mean_return_for_ids(returns: Mapping[str, float], agent_ids: Sequence[str]) -> float:
+    values = [float(returns[str(agent_id)]) for agent_id in agent_ids if str(agent_id) in returns]
+    return sum(values) / float(len(values)) if values else 0.0
 
 def _rollout_branch(
     core: Any,

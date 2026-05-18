@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import copy
+import json
 import math
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
@@ -43,8 +46,11 @@ from configs import (  # noqa: E402
     SAFE_R,
 )
 from rl_llm_multi import GuidanceAdvice, LLMGuidanceProvider, MAPPO, MultiAgentParallelEnv, MultiAgentSectorCore, WeatherCell, shadow_evaluate_actions  # noqa: E402
+from rl_llm_multi.llm import _write_guidance_artifact_record  # noqa: E402
 from rl_llm_multi.mappo import evaluate_policy  # noqa: E402
+from rl_llm_multi.memory import DecisionMemoryStore  # noqa: E402
 from rl_llm_multi.utils import action_idx_to_deg, deg_to_action_idx, line_signed_cross_track, weather_axis_units  # noqa: E402
+from train import _accumulate_reward_debug, _append_advisory_memory_cases, _apply_memory_corrections, _build_llm_metadata_by_agent, _current_llm_loss_weight, _hybrid_llm_return_weight, _llm_guidance_active_for_episode, _llm_return_weight, _log_episode_reward_debug, _resolve_llm_memory_path, _resolve_run_paths, _write_jsonl_rows_with_cap, _write_run_hyperparameters_file  # noqa: E402
 
 
 def _make_env(max_step: int = 5) -> MultiAgentParallelEnv:
@@ -117,11 +123,14 @@ class _FakeGuidanceController:
     def __init__(self) -> None:
         self.last_normalized = {}
         self.reset_called = False
+        self.advisory_update_called = False
+        self.update_called = False
 
     def reset(self) -> None:
         self.reset_called = True
 
-    def update(self, core, *, step: int, latest_frame_path=None, use_vision: bool = False):
+    def advisory_update(self, core, *, step: int, latest_frame_path=None, use_vision: bool = False):
+        self.advisory_update_called = True
         self.last_normalized = {
             "answer": {
                 "actions": {
@@ -147,15 +156,167 @@ class _FakeGuidanceController:
         }
         return {"A1": 10}
 
+    def update(self, core, *, step: int, latest_frame_path=None, use_vision: bool = False):
+        self.update_called = True
+        return self.advisory_update(
+            core,
+            step=step,
+            latest_frame_path=latest_frame_path,
+            use_vision=use_vision,
+        )
+
+
+class _CapturingMemoryStore:
+    def __init__(self) -> None:
+        self.calls = []
+
+    def append_cases(self, *args, **kwargs):
+        self.calls.append(kwargs)
+        return [
+            {"agent": str(item["agent_id"]), "case_id": f"case_{item['agent_id']}"}
+            for item in kwargs.get("actionable", [])
+        ]
+
+
+class _UpdatingMemoryStore:
+    def __init__(self) -> None:
+        self.updates = []
+
+    def update_case_result(self, memory_ref, *, corrected: int, note: str) -> bool:
+        self.updates.append({"memory_ref": memory_ref, "corrected": corrected, "note": note})
+        return True
+
 
 class MAPPOTests(unittest.TestCase):
     def test_llm_guided_training_is_disabled_by_default(self) -> None:
         self.assertFalse(USE_LLM_GUIDED_TRAINING)
 
+    def test_llm_guidance_episode_latch_uses_episode_start_step(self) -> None:
+        with patch("train.USE_LLM_GUIDED_TRAINING", True), patch("train.LLM_GUIDANCE_START_STEP", 100), patch("train.LLM_GUIDANCE_END_STEP", 200):
+            self.assertFalse(_llm_guidance_active_for_episode(99))
+            self.assertTrue(_llm_guidance_active_for_episode(100))
+            self.assertTrue(_llm_guidance_active_for_episode(199))
+            self.assertFalse(_llm_guidance_active_for_episode(200))
+
     def test_llm_degree_label_maps_to_action_index(self) -> None:
         for degrees in ACTION_BINS:
             index = deg_to_action_idx(degrees, ACTION_BINS)
             self.assertEqual(action_idx_to_deg(index, ACTION_BINS), degrees)
+
+    def test_run_paths_are_derived_from_log_dir(self) -> None:
+        args = SimpleNamespace(log_dir="runs/E0_mappo_seed0", best_model_path=None, last_ckpt_path=None)
+
+        paths = _resolve_run_paths(args)
+
+        self.assertEqual(paths.run_dir, Path("runs/E0_mappo_seed0"))
+        self.assertEqual(paths.tensorboard_dir, Path("runs/E0_mappo_seed0/tensorboard"))
+        self.assertEqual(paths.weights_dir, Path("runs/E0_mappo_seed0/weights"))
+        self.assertEqual(paths.best_model_path, Path("runs/E0_mappo_seed0/weights/best_model.pt"))
+        self.assertEqual(paths.last_ckpt_path, Path("runs/E0_mappo_seed0/weights/last_checkpoint.pt"))
+
+    def test_llm_memory_path_is_derived_from_log_dir(self) -> None:
+        with patch("train.LLM_MEMORY_PATH", None), patch("train.LLM_GUIDANCE_MEMORY_PATH", None), patch("train.LLM_GUIDANCE_MEMORY_ISOLATED_PER_RUN", True), patch("train.LLM_MEMORY_RUN_ID", None):
+            path = _resolve_llm_memory_path(Path("runs/E2_full_llm_seed0"), seed=0, num_agents=3, num_weather_cells=1)
+        self.assertEqual(path, Path("runs/E2_full_llm_seed0/memory/decision_memory.json"))
+
+    def test_jsonl_row_writer_keeps_latest_rows(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "audit.jsonl"
+            _write_jsonl_rows_with_cap(path, [{"idx": 1}, {"idx": 2}], max_rows=2)
+            _write_jsonl_rows_with_cap(path, [{"idx": 3}], max_rows=2)
+            lines = [json.loads(line) for line in path.read_text().splitlines()]
+
+        self.assertEqual(lines, [{"idx": 2}, {"idx": 3}])
+
+    def test_guidance_artifacts_can_be_capped_to_latest_calls(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch("rl_llm_multi.llm.LLM_GUIDANCE_ARTIFACTS_ENABLED", True), patch("rl_llm_multi.llm.LLM_GUIDANCE_ARTIFACT_MAX_CALLS", 2):
+                for idx in range(3):
+                    tag = f"t{idx:03d}_global_guidance"
+                    _write_guidance_artifact_record(
+                        tmpdir,
+                        tag=tag,
+                        prompt_text=f"prompt {idx}",
+                        raw_text=f"response {idx}",
+                        payload={"idx": idx},
+                        index_row={"tag": tag, "idx": idx},
+                    )
+            names = sorted(path.name for path in Path(tmpdir).iterdir())
+            index_lines = [json.loads(line) for line in (Path(tmpdir) / "_index.jsonl").read_text().splitlines()]
+
+        self.assertEqual([row["idx"] for row in index_lines], [1, 2])
+        self.assertFalse(any(name.startswith("t000_global_guidance") for name in names))
+        self.assertTrue(any(name.startswith("t001_global_guidance") for name in names))
+        self.assertTrue(any(name.startswith("t002_global_guidance") for name in names))
+
+    def test_run_hyperparameters_file_is_written_once_with_rewards(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            args = SimpleNamespace(
+                log_dir=str(Path(tmpdir) / "run"),
+                best_model_path=None,
+                last_ckpt_path=None,
+                seed=7,
+                num_agents=2,
+                num_weather_cells=1,
+            )
+            paths = _resolve_run_paths(args)
+            hparams_path = paths.run_dir / "run_hyperparameters.txt"
+            _write_run_hyperparameters_file(
+                hparams_path,
+                args=args,
+                run_paths=paths,
+                llm_memory_path=paths.run_dir / "memory" / "decision_memory.json",
+                reset_options={"num_agents": 2, "route_ids": None, "num_weather_cells": 1},
+            )
+            first_text = hparams_path.read_text()
+            _write_run_hyperparameters_file(
+                hparams_path,
+                args=args,
+                run_paths=paths,
+                llm_memory_path=paths.run_dir / "memory" / "decision_memory.json",
+                reset_options={"num_agents": 3},
+            )
+            second_text = hparams_path.read_text()
+
+        self.assertEqual(first_text, second_text)
+        self.assertIn("Run Hyperparameters", first_text)
+        self.assertIn("Command Line Arguments", first_text)
+        self.assertIn("Reward Hyperparameters", first_text)
+        self.assertIn("REWARD_COLLISION_PENALTY", first_text)
+        self.assertIn("tensorboard_dir", first_text)
+        self.assertIn("llm_memory_path", first_text)
+
+    def test_reward_debug_logs_requested_tensorboard_tags(self) -> None:
+        class _FakeWriter:
+            def __init__(self) -> None:
+                self.scalars = {}
+
+            def add_scalar(self, tag, value, step):
+                self.scalars[str(tag)] = (float(value), int(step))
+
+        sums = {}
+        counts = {}
+        common = {
+            "agent_dense_rewards": {"A1": 1.0, "A2": 3.0},
+            "terminal_reward": 0.0,
+            "reward_components": {
+                "A1": {"cross_track": 2.0, "finish_bonus": 0.0, "dense_reward": 1.0},
+                "A2": {"cross_track": 4.0, "finish_bonus": 10.0, "dense_reward": 3.0},
+            },
+        }
+        _accumulate_reward_debug(common, sums, counts)
+        writer = _FakeWriter()
+
+        _log_episode_reward_debug(writer, sums, counts, common, episode=7)
+
+        self.assertIn("train/reward/terminal_episode", writer.scalars)
+        self.assertIn("train/reward/mean_step_behavior_reward", writer.scalars)
+        self.assertIn("train/reward_component/cross_track_mean", writer.scalars)
+        self.assertIn("train/reward_component/finish_bonus_mean", writer.scalars)
+        self.assertEqual(writer.scalars["train/reward/terminal_episode"], (0.0, 7))
+        self.assertEqual(writer.scalars["train/reward/mean_step_behavior_reward"], (2.0, 7))
+        self.assertEqual(writer.scalars["train/reward_component/cross_track_mean"], (3.0, 7))
+        self.assertEqual(writer.scalars["train/reward_component/finish_bonus_mean"], (5.0, 7))
 
     def test_structured_guidance_provider_returns_metadata_without_overrides(self) -> None:
         controller = _FakeGuidanceController()
@@ -176,6 +337,18 @@ class MAPPOTests(unittest.TestCase):
         self.assertEqual(advice["A1"].phase, "EXECUTE_TURN")
         self.assertEqual(advice["A1"].memory_action_deg, -25)
         self.assertEqual(advice["A1"].memory_ref, {"episode_id": "ep1", "case_id": "case1"})
+        self.assertTrue(controller.advisory_update_called)
+        self.assertFalse(controller.update_called)
+
+    def test_llm_return_weight_preserves_improvement_magnitude(self) -> None:
+        self.assertEqual(_llm_return_weight(1.0, 1.0), 0.0)
+        small = _llm_return_weight(1.10, 1.0)
+        large = _llm_return_weight(1.90, 1.0)
+        self.assertGreater(small, 0.0)
+        self.assertGreater(large, small)
+
+    def test_llm_loss_weight_decay_respects_minimum(self) -> None:
+        self.assertGreaterEqual(_current_llm_loss_weight(10**9), 0.0)
 
     def test_shadow_evaluation_uses_joint_llm_swap_and_preserves_core(self) -> None:
         core = _FakeShadowCore()
@@ -210,7 +383,211 @@ class MAPPOTests(unittest.TestCase):
         self.assertEqual(core.step_calls, [])
         self.assertEqual(result.mappo_returns, {"A1": 0.0, "A2": 0.0})
         self.assertEqual(result.llm_returns, {"A1": 10.0, "A2": -10.0})
-        self.assertEqual(result.memory_returns, {"A1": 20.0, "A2": 0.0})
+        self.assertEqual(result.mappo_joint_return, 0.0)
+        self.assertEqual(result.llm_joint_return, 0.0)
+        self.assertEqual(result.memory_joint_return, 10.0)
+        self.assertEqual(result.memory_agent_ids, ["A1"])
+
+    def test_hybrid_llm_return_weight_combines_agent_and_joint_weights(self) -> None:
+        agent_weight, joint_weight, hybrid_weight = _hybrid_llm_return_weight(1.2, 1.0, 2.0, 1.0)
+
+        self.assertEqual(agent_weight, _llm_return_weight(1.2, 1.0))
+        self.assertEqual(joint_weight, _llm_return_weight(2.0, 1.0))
+        self.assertAlmostEqual(hybrid_weight, 0.65 * agent_weight + 0.35 * joint_weight)
+
+    def test_llm_metadata_uses_hybrid_weight(self) -> None:
+        advice = {
+            "A1": GuidanceAdvice(
+                agent_id="A1",
+                llm_action_deg=10,
+                llm_action_idx=deg_to_action_idx(10, ACTION_BINS),
+                phase="EXECUTE_TURN",
+            )
+        }
+        shadow = SimpleNamespace(
+            mappo_returns={"A1": 0.0},
+            llm_returns={"A1": 0.2},
+            memory_returns={},
+            mappo_joint_return=0.0,
+            llm_joint_return=1.0,
+            memory_joint_return=0.0,
+        )
+        corrections = SimpleNamespace(updates={}, note_sources={}, attribution_modes={})
+
+        metadata = _build_llm_metadata_by_agent(advice, shadow, corrections)
+
+        self.assertGreater(metadata["A1"]["llm_return_weight_agent"], 0.0)
+        self.assertGreater(metadata["A1"]["llm_return_weight_joint"], 0.0)
+        self.assertEqual(metadata["A1"]["llm_return_weight"], metadata["A1"]["llm_return_weight_hybrid"])
+
+    def test_advisory_memory_write_only_when_llm_beats_mappo(self) -> None:
+        store = _CapturingMemoryStore()
+        guidance = SimpleNamespace(
+            controller=SimpleNamespace(
+                last_normalized={
+                    "answer": {
+                        "actions": {
+                            "A1": {"call_name": "EXECUTE_TURN", "source": "llm", "rationale": "clearer turn"},
+                            "A2": {"call_name": "EXECUTE_TURN", "source": "llm", "rationale": "worse turn"},
+                        }
+                    },
+                    "debug": {
+                        "stage_by_agent": {"A1": "EXECUTE_TURN", "A2": "EXECUTE_TURN"},
+                        "call_reason_by_agent": {"A1": "SECTOR_ENTRY", "A2": "SECTOR_ENTRY"},
+                    },
+                    "threat_rows_by_agent": {},
+                    "preview_rows_by_agent": {},
+                }
+            )
+        )
+        advice = {
+            "A1": GuidanceAdvice("A1", 10, deg_to_action_idx(10, ACTION_BINS), "EXECUTE_TURN"),
+            "A2": GuidanceAdvice("A2", -10, deg_to_action_idx(-10, ACTION_BINS), "EXECUTE_TURN"),
+        }
+        shadow = SimpleNamespace(
+            mappo_returns={"A1": 0.0, "A2": 1.0},
+            llm_returns={"A1": 0.2, "A2": 0.9},
+        )
+
+        writes = _append_advisory_memory_cases(
+            store,
+            guidance=guidance,
+            core=_FakeShadowCore(),
+            step=5,
+            advice_by_agent=advice,
+            shadow_result=shadow,
+        )
+
+        self.assertEqual(writes, {"A1": True})
+        self.assertEqual([item["agent_id"] for item in store.calls[0]["actionable"]], ["A1"])
+        self.assertEqual(store.calls[0]["final_actions"]["A1"]["heading_change_deg"], 10)
+
+    def test_advisory_memory_write_respects_eligible_agent_ids(self) -> None:
+        store = _CapturingMemoryStore()
+        guidance = SimpleNamespace(
+            controller=SimpleNamespace(
+                last_normalized={
+                    "answer": {
+                        "actions": {
+                            "A1": {"call_name": "EXECUTE_TURN", "source": "llm"},
+                            "A2": {"call_name": "EXECUTE_TURN", "source": "llm"},
+                        }
+                    },
+                    "debug": {
+                        "eligible_agent_ids": ["A1"],
+                        "stage_by_agent": {"A1": "EXECUTE_TURN", "A2": "EXECUTE_TURN"},
+                        "call_reason_by_agent": {"A1": "SECTOR_ENTRY", "A2": "SECTOR_ENTRY"},
+                    },
+                    "threat_rows_by_agent": {},
+                    "preview_rows_by_agent": {},
+                }
+            )
+        )
+        advice = {
+            "A1": GuidanceAdvice("A1", 10, deg_to_action_idx(10, ACTION_BINS), "EXECUTE_TURN"),
+            "A2": GuidanceAdvice("A2", 20, deg_to_action_idx(20, ACTION_BINS), "EXECUTE_TURN"),
+        }
+        shadow = SimpleNamespace(
+            mappo_returns={"A1": 0.0, "A2": 0.0},
+            llm_returns={"A1": 0.2, "A2": 0.2},
+        )
+
+        writes = _append_advisory_memory_cases(
+            store,
+            guidance=guidance,
+            core=_FakeShadowCore(),
+            step=5,
+            advice_by_agent=advice,
+            shadow_result=shadow,
+        )
+
+        self.assertEqual(writes, {"A1": True})
+        self.assertEqual([item["agent_id"] for item in store.calls[0]["actionable"]], ["A1"])
+        self.assertNotIn("A2", store.calls[0]["final_actions"])
+
+    def test_guided_memory_store_caps_latest_episodes(self) -> None:
+        core = MultiAgentSectorCore(num_agents=2, num_weather_cells=1)
+        core.reset(seed=42, num_weather_cells=1)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store = DecisionMemoryStore(Path(tmpdir) / "decision_memory.json", max_episodes=300)
+            for idx in range(305):
+                store.append_cases(
+                    core,
+                    episode_id=f"ep{idx:03d}",
+                    step=idx,
+                    actionable=[{"agent_id": "A1", "call_name": "EXECUTE_TURN", "call_reason": "SECTOR_ENTRY"}],
+                    final_actions={"A1": {"heading_change_deg": 0}},
+                    threat_rows_by_agent={"A1": []},
+                    preview_rows_by_agent={"A1": []},
+                )
+            payload = store.load()
+
+        self.assertEqual(len(payload["episodes"]), 300)
+        self.assertEqual(payload["episodes"][0]["episode_id"], "ep005")
+        self.assertEqual(payload["episodes"][-1]["episode_id"], "ep304")
+
+    def test_single_memory_correction_updates_corrected_and_note(self) -> None:
+        store = _UpdatingMemoryStore()
+        advice = {
+            "A1": GuidanceAdvice(
+                agent_id="A1",
+                llm_action_deg=10,
+                llm_action_idx=deg_to_action_idx(10, ACTION_BINS),
+                phase="EXECUTE_TURN",
+                memory_action_deg=-15,
+                memory_action_idx=deg_to_action_idx(-15, ACTION_BINS),
+                memory_ref={"episode_id": "ep1", "case_id": "case1"},
+            )
+        }
+        shadow = SimpleNamespace(
+            memory_agent_ids=["A1"],
+            mappo_joint_return=0.0,
+            llm_joint_return=2.0,
+            memory_joint_return=0.0,
+            memory_attribution_joint_returns={},
+        )
+
+        with patch("train._generate_memory_correction_note", return_value=("traffic buffer improved", "llm")):
+            result = _apply_memory_corrections(
+                store,
+                advice_by_agent=advice,
+                shadow_result=shadow,
+                policy_actions={"A1": deg_to_action_idx(0, ACTION_BINS)},
+                llm_call_payload={"debug": {"call_reason_by_agent": {"A1": "SECTOR_ENTRY"}}},
+            )
+
+        self.assertEqual(result.sources, {"A1": "llm"})
+        self.assertEqual(result.note_sources, {"A1": "llm"})
+        self.assertEqual(store.updates[0]["corrected"], 10)
+        self.assertEqual(store.updates[0]["note"], "traffic buffer improved")
+
+    def test_multi_memory_correction_uses_one_at_a_time_attribution(self) -> None:
+        store = _UpdatingMemoryStore()
+        advice = {
+            "A1": GuidanceAdvice("A1", 10, deg_to_action_idx(10, ACTION_BINS), "EXECUTE_TURN", memory_action_deg=-15, memory_action_idx=deg_to_action_idx(-15, ACTION_BINS), memory_ref={"episode_id": "ep1", "case_id": "case1"}),
+            "A2": GuidanceAdvice("A2", 20, deg_to_action_idx(20, ACTION_BINS), "EXECUTE_TURN", memory_action_deg=-20, memory_action_idx=deg_to_action_idx(-20, ACTION_BINS), memory_ref={"episode_id": "ep1", "case_id": "case2"}),
+        }
+        shadow = SimpleNamespace(
+            memory_agent_ids=["A1", "A2"],
+            mappo_joint_return=0.0,
+            llm_joint_return=2.0,
+            memory_joint_return=-1.0,
+            memory_attribution_joint_returns={"A1": 0.0, "A2": 1.95},
+        )
+
+        with patch("train._generate_memory_correction_note", return_value=("LLM keeps more separation", "fallback")):
+            result = _apply_memory_corrections(
+                store,
+                advice_by_agent=advice,
+                shadow_result=shadow,
+                policy_actions={"A1": deg_to_action_idx(0, ACTION_BINS), "A2": deg_to_action_idx(0, ACTION_BINS)},
+                llm_call_payload={},
+            )
+
+        self.assertEqual(result.sources, {"A1": "llm"})
+        self.assertEqual(result.attribution_modes["A1"], "one_at_a_time")
+        self.assertEqual(len(store.updates), 1)
+        self.assertEqual(store.updates[0]["memory_ref"], {"episode_id": "ep1", "case_id": "case1"})
 
     def test_global_state_has_fixed_weather_slots(self) -> None:
         one_weather = MultiAgentSectorCore(num_agents=2, num_weather_cells=1)

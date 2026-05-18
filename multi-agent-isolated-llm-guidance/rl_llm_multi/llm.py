@@ -31,6 +31,8 @@ from configs import (
     EVAL_MEMORY_PATH,
     HAZARD_LOOKAHEAD_STEPS,
     JSON_ANSWERS_DIR,
+    LLM_GUIDANCE_ARTIFACTS_ENABLED,
+    LLM_GUIDANCE_ARTIFACT_MAX_CALLS,
     MERGE_BACK_RECHECK_STEPS,
     MERGE_BACK_REPEAT_ERROR_DEG,
     OLLAMA_HOST,
@@ -552,6 +554,59 @@ def _save_text(path: str, content: str) -> None:
 def _save_json(path: str, payload: Dict[str, Any]) -> None:
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(payload, handle, indent=2, ensure_ascii=False)
+
+
+def _guidance_artifact_limit() -> int:
+    try:
+        return int(LLM_GUIDANCE_ARTIFACT_MAX_CALLS)
+    except Exception:
+        return 0
+
+
+def _write_guidance_artifact_record(
+    save_dir: str,
+    *,
+    tag: str,
+    prompt_text: str,
+    raw_text: str,
+    payload: Dict[str, Any],
+    index_row: Dict[str, Any],
+) -> None:
+    if not bool(LLM_GUIDANCE_ARTIFACTS_ENABLED):
+        return
+    limit = _guidance_artifact_limit()
+    if limit <= 0:
+        return
+    _ensure_dir(save_dir)
+    _save_text(os.path.join(save_dir, f"{tag}.prompt.txt"), prompt_text)
+    _save_text(os.path.join(save_dir, f"{tag}.response.txt"), raw_text)
+    _save_json(os.path.join(save_dir, f"{tag}.normalized.json"), payload)
+    index_path = os.path.join(save_dir, "_index.jsonl")
+    lines: List[str] = []
+    if os.path.exists(index_path):
+        with open(index_path, "r", encoding="utf-8") as handle:
+            lines = [line.strip() for line in handle if line.strip()]
+    lines.append(json.dumps(index_row, sort_keys=True))
+    lines = lines[-limit:]
+    with open(index_path, "w", encoding="utf-8") as handle:
+        for line in lines:
+            handle.write(line + "\n")
+    keep_tags = set()
+    for line in lines:
+        try:
+            row = json.loads(line)
+        except Exception:
+            continue
+        if isinstance(row, dict) and row.get("tag") is not None:
+            keep_tags.add(str(row["tag"]))
+    for artifact_path in Path(save_dir).glob("t*_*"):
+        if not artifact_path.is_file():
+            continue
+        if not any(artifact_path.name.startswith(f"{kept}.") for kept in keep_tags):
+            try:
+                artifact_path.unlink()
+            except OSError:
+                pass
 
 
 def _extract_json(text: str) -> Dict[str, Any]:
@@ -1223,24 +1278,22 @@ class MultiAgentThreeCallController:
         preview_rows: List[Dict[str, Any]],
         debug: Dict[str, Any],
     ) -> None:
-        _ensure_dir(self.save_dir)
         tag = f"t{step:03d}_{agent_id.lower()}_{call_name.lower()}"
         self.last_tag = tag
         self.last_prompt_text = prompt_text
         self.last_raw_text = raw_text
-        self.last_normalized = normalized
-        prompt_path = os.path.join(self.save_dir, f"{tag}.prompt.txt")
-        response_path = os.path.join(self.save_dir, f"{tag}.response.txt")
-        normalized_path = os.path.join(self.save_dir, f"{tag}.normalized.json")
-        _save_text(prompt_path, prompt_text)
-        _save_text(response_path, raw_text)
         payload = copy.deepcopy(normalized)
         payload["threat_rows"] = threat_rows
         payload["preview_rows"] = preview_rows
         payload["debug"] = debug
-        _save_json(normalized_path, payload)
-        with open(os.path.join(self.save_dir, "_index.jsonl"), "a", encoding="utf-8") as handle:
-            row = {
+        self.last_normalized = payload
+        _write_guidance_artifact_record(
+            self.save_dir,
+            tag=tag,
+            prompt_text=prompt_text,
+            raw_text=raw_text,
+            payload=payload,
+            index_row={
                 "tag": tag,
                 "step": step,
                 "run_id": self.run_id,
@@ -1250,8 +1303,8 @@ class MultiAgentThreeCallController:
                 "llm_status": debug.get("llm_status"),
                 "parse_status": debug.get("parse_status"),
                 "used_vision": debug.get("used_vision"),
-            }
-            handle.write(json.dumps(row) + "\n")
+            },
+        )
 
     def update(
         self,
@@ -1981,6 +2034,9 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         self.hltp_builder = HLTPPromptBuilder()
         self.retry_limit = int(retry_limit)
         self.recent_decisions: List[Dict[str, Any]] = []
+        self.advisory_agent_states: Dict[str, AgentControllerState] = {}
+        self.advisory_hltp_plans: Dict[str, HLTPPlan] = {}
+        self.advisory_recent_decisions: List[Dict[str, Any]] = []
         self.decision_memory = DecisionMemoryStore(memory_path)
         self.memory_visual_audit_enabled = bool(memory_visual_audit_enabled)
         self.memory_visual_audit_dir = Path(memory_visual_audit_dir)
@@ -2022,6 +2078,9 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
     def reset(self) -> None:
         super().reset()
         self.recent_decisions = []
+        self.advisory_agent_states = {}
+        self.advisory_hltp_plans = {}
+        self.advisory_recent_decisions = []
         self.hltp_plans = {}
 
     def _hltp_plan_to_dict(self, plan: HLTPPlan) -> Dict[str, Any]:
@@ -2434,19 +2493,17 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         contexts_by_agent: Dict[str, Dict[str, Any]],
         debug: Dict[str, Any],
     ) -> None:
-        _ensure_dir(self.save_dir)
         tag = f"t{step:03d}_hltp"
-        prompt_path = os.path.join(self.save_dir, f"{tag}.prompt.txt")
-        response_path = os.path.join(self.save_dir, f"{tag}.response.txt")
-        normalized_path = os.path.join(self.save_dir, f"{tag}.normalized.json")
-        _save_text(prompt_path, prompt_text)
-        _save_text(response_path, raw_text)
         payload = copy.deepcopy(normalized)
         payload["contexts_by_agent"] = contexts_by_agent
         payload["debug"] = debug
-        _save_json(normalized_path, payload)
-        with open(os.path.join(self.save_dir, "_index.jsonl"), "a", encoding="utf-8") as handle:
-            row = {
+        _write_guidance_artifact_record(
+            self.save_dir,
+            tag=tag,
+            prompt_text=prompt_text,
+            raw_text=raw_text,
+            payload=payload,
+            index_row={
                 "tag": tag,
                 "step": step,
                 "run_id": self.run_id,
@@ -2456,8 +2513,8 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
                 "llm_status": debug.get("llm_status"),
                 "parse_status": debug.get("parse_status"),
                 "used_vision": debug.get("used_vision"),
-            }
-            handle.write(json.dumps(row) + "\n")
+            },
+        )
 
     def _graph_hltp_on_sector_entry(self, state: Dict[str, Any]) -> Dict[str, Any]:
         core = state["core"]
@@ -3159,36 +3216,34 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         preview_rows_by_agent: Dict[str, List[Dict[str, Any]]],
         hltp_plans: Dict[str, Dict[str, Any]],
     ) -> None:
-        _ensure_dir(self.save_dir)
         tag = f"t{step:03d}_global_guidance"
         self.last_tag = tag
         self.last_prompt_text = prompt_text
         self.last_raw_text = raw_text
-        prompt_path = os.path.join(self.save_dir, f"{tag}.prompt.txt")
-        response_path = os.path.join(self.save_dir, f"{tag}.response.txt")
-        normalized_path = os.path.join(self.save_dir, f"{tag}.normalized.json")
-        _save_text(prompt_path, prompt_text)
-        _save_text(response_path, raw_text)
         payload = copy.deepcopy(normalized)
         payload["threat_rows_by_agent"] = threat_rows_by_agent
         payload["preview_rows_by_agent"] = preview_rows_by_agent
         payload["hltp_plans"] = hltp_plans
         payload["debug"] = debug
         self.last_normalized = payload
-        _save_json(normalized_path, payload)
-        with open(os.path.join(self.save_dir, "_index.jsonl"), "a", encoding="utf-8") as handle:
-            row = {
+        _write_guidance_artifact_record(
+            self.save_dir,
+            tag=tag,
+            prompt_text=prompt_text,
+            raw_text=raw_text,
+            payload=payload,
+            index_row={
                 "tag": tag,
                 "step": step,
                 "run_id": self.run_id,
                 "episode_id": self.episode_id,
                 "agent_id": "GLOBAL",
-                "call_name": "GLOBAL_GUIDANCE",
+                "call_name": "GLOBAL_ADVISORY_LABELS" if debug.get("advisory_only") else "GLOBAL_GUIDANCE",
                 "llm_status": debug.get("llm_status"),
                 "parse_status": debug.get("parse_status"),
                 "used_vision": debug.get("used_vision"),
-            }
-            handle.write(json.dumps(row) + "\n")
+            },
+        )
 
     def _memory_episode_id(self, core: "MultiAgentSectorCore") -> str:
         seed = getattr(core, "reset_seed", None)
@@ -3239,21 +3294,23 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             self._apply_controller_state(agent_id, call_name, call_reason, int(action["heading_change_deg"]))
             annotations.append(self._phase_label_text(agent_id, call_name, call_reason))
 
-        memory_error = ""
+        advisory_only = bool(state.get("advisory_only", False))
+        memory_error = "advisory_only_no_normal_memory_write" if advisory_only else ""
         memory_visual_audit_error = str(state.get("memory_visual_audit_error", "") or "")
         stored_memory_cases: List[Dict[str, Any]] = []
-        try:
-            stored_memory_cases = self.decision_memory.append_cases(
-                core,
-                episode_id=self._memory_episode_id(core),
-                step=step,
-                actionable=actionable,
-                final_actions=state.get("final_actions", {}),
-                threat_rows_by_agent=state.get("threat_rows_by_agent", {}),
-                preview_rows_by_agent=state.get("preview_rows_by_agent", {}),
-            )
-        except Exception as exc:
-            memory_error = str(exc)
+        if not advisory_only:
+            try:
+                stored_memory_cases = self.decision_memory.append_cases(
+                    core,
+                    episode_id=self._memory_episode_id(core),
+                    step=step,
+                    actionable=actionable,
+                    final_actions=state.get("final_actions", {}),
+                    threat_rows_by_agent=state.get("threat_rows_by_agent", {}),
+                    preview_rows_by_agent=state.get("preview_rows_by_agent", {}),
+                )
+            except Exception as exc:
+                memory_error = str(exc)
         if stored_memory_cases:
             try:
                 self._record_memory_case_visual_audit(
@@ -3265,6 +3322,10 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
                 memory_visual_audit_error = str(exc)
 
         normalized = self._normalized_global_payload(state)
+        if advisory_only:
+            answer = normalized.get("answer") if isinstance(normalized.get("answer"), dict) else {}
+            answer["advisory_only"] = True
+            normalized["answer"] = answer
         attempts = list(state.get("llm_attempts", []))
         last_attempt = attempts[-1] if attempts else {"llm_status": "skipped", "raw_text": "", "error": ""}
         debug = {
@@ -3282,10 +3343,12 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
                 str(item["agent_id"]): str(item["call_name"])
                 for item in actionable
             },
+            "call_reason_by_agent": call_reason_by_agent,
             "hltp_plans": state.get("hltp_plans", {}),
             "retrieved_memories": state.get("retrieved_memories", []),
             "memory_error": memory_error,
             "memory_visual_audit_error": memory_visual_audit_error,
+            "advisory_only": advisory_only,
             "weather": core.weather_dict(),
             "model": OLLAMA_MODEL,
         }
@@ -3317,6 +3380,46 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         self.last_annotations = annotations
         self.last_joint_actions = actions
         return {**state, "actions": actions}
+
+    def advisory_update(
+        self,
+        core: "MultiAgentSectorCore",
+        *,
+        step: int,
+        latest_frame_path: Optional[str] = None,
+        use_vision: bool = False,
+    ) -> Dict[str, int]:
+        """Return validated LLM labels without mutating committed controller state.
+
+        The normal graph is reused, but controller state, HLTP plans, and recent
+        decisions are temporarily swapped to advisory-only stores. Normal memory
+        case writes are disabled by the advisory_only graph flag.
+        """
+
+        committed_agent_states = self.agent_states
+        committed_hltp_plans = self.hltp_plans
+        committed_recent_decisions = self.recent_decisions
+        self.agent_states = self.advisory_agent_states
+        self.hltp_plans = self.advisory_hltp_plans
+        self.recent_decisions = self.advisory_recent_decisions
+        try:
+            result = self.graph.invoke(
+                {
+                    "core": core,
+                    "step": int(step),
+                    "latest_frame_path": latest_frame_path,
+                    "use_vision": bool(use_vision),
+                    "advisory_only": True,
+                }
+            )
+            self.advisory_agent_states = self.agent_states
+            self.advisory_hltp_plans = self.hltp_plans
+            self.advisory_recent_decisions = self.recent_decisions
+        finally:
+            self.agent_states = committed_agent_states
+            self.hltp_plans = committed_hltp_plans
+            self.recent_decisions = committed_recent_decisions
+        return dict(result.get("actions", {}))
 
     def update(
         self,
