@@ -175,6 +175,7 @@ def _llm_guidance_active_for_episode(agent_steps_at_episode_start: int) -> bool:
 class RunPaths:
     run_dir: Path
     tensorboard_dir: Path
+    tensorboard_run_dir: Path
     weights_dir: Path
     best_model_path: Path
     last_ckpt_path: Path
@@ -184,11 +185,14 @@ def _resolve_run_paths(args: argparse.Namespace) -> RunPaths:
     run_dir = Path(args.log_dir)
     weights_dir = run_dir / "weights"
     tensorboard_dir = run_dir / "tensorboard"
+    run_name = run_dir.name or "run"
+    tensorboard_run_dir = tensorboard_dir / run_name
     best_model_path = Path(args.best_model_path) if args.best_model_path else weights_dir / "best_model.pt"
     last_ckpt_path = Path(args.last_ckpt_path) if args.last_ckpt_path else weights_dir / "last_checkpoint.pt"
     return RunPaths(
         run_dir=run_dir,
         tensorboard_dir=tensorboard_dir,
+        tensorboard_run_dir=tensorboard_run_dir,
         weights_dir=weights_dir,
         best_model_path=best_model_path,
         last_ckpt_path=last_ckpt_path,
@@ -301,6 +305,7 @@ def _write_run_hyperparameters_file(
     run_path_values = {
         "run_dir": run_paths.run_dir,
         "tensorboard_dir": run_paths.tensorboard_dir,
+        "tensorboard_run_dir": run_paths.tensorboard_run_dir,
         "weights_dir": run_paths.weights_dir,
         "best_model_path": run_paths.best_model_path,
         "last_ckpt_path": run_paths.last_ckpt_path,
@@ -923,11 +928,13 @@ def main() -> None:
     run_paths = _resolve_run_paths(args)
     log_dir = run_paths.run_dir
     tensorboard_dir = run_paths.tensorboard_dir
+    tensorboard_run_dir = run_paths.tensorboard_run_dir
     weights_dir = run_paths.weights_dir
     best_model_path = run_paths.best_model_path
     last_ckpt_path = run_paths.last_ckpt_path
     log_dir.mkdir(parents=True, exist_ok=True)
     tensorboard_dir.mkdir(parents=True, exist_ok=True)
+    tensorboard_run_dir.mkdir(parents=True, exist_ok=True)
     weights_dir.mkdir(parents=True, exist_ok=True)
     best_model_path.parent.mkdir(parents=True, exist_ok=True)
     last_ckpt_path.parent.mkdir(parents=True, exist_ok=True)
@@ -982,9 +989,10 @@ def main() -> None:
         except Exception as exc:
             print(f"Failed to load checkpoint {last_ckpt_path}: {exc}. Starting fresh.")
 
-    writer = SummaryWriter(str(tensorboard_dir), purge_step=agent_steps)
+    writer = SummaryWriter(str(tensorboard_run_dir), purge_step=agent_steps)
     print(f"Run directory: {log_dir}")
     print(f"TensorBoard directory: {tensorboard_dir}")
+    print(f"TensorBoard run directory: {tensorboard_run_dir}")
     print(f"Weights directory: {weights_dir}")
     print(f"Guided memory path: {llm_memory_path}")
     best_eval_stats: Optional[Dict[str, float]] = None

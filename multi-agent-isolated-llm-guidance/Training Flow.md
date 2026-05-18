@@ -405,6 +405,7 @@ The trainer derives the main artifact paths from that run root:
 runs/E2_full_llm_seed0/
   run_hyperparameters.txt
   tensorboard/
+    E2_full_llm_seed0/
   weights/
     best_model.pt
     last_checkpoint.pt
@@ -416,6 +417,8 @@ runs/E2_full_llm_seed0/
 ```
 
 `run_hyperparameters.txt` is created once at the beginning of training. It records the command-line arguments, resolved run paths, reset options, and config hyperparameters, including all reward coefficients.
+
+TensorBoard event files are written under `tensorboard/<run-name>/`, where `<run-name>` is derived from the final folder name in `--log-dir`. For example, `--log-dir runs/E2_full_llm_seed0` writes events under `runs/E2_full_llm_seed0/tensorboard/E2_full_llm_seed0/`.
 
 `llm_guidance_json/` contains detailed LLM call artifacts. It is for debugging individual LLM guidance decisions: prompts, raw responses, normalized JSON payloads, candidate previews, threat rows, and debug metadata. This folder can become large, so it is controlled by:
 

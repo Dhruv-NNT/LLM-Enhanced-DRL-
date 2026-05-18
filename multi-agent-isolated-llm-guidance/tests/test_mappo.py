@@ -210,6 +210,7 @@ class MAPPOTests(unittest.TestCase):
 
         self.assertEqual(paths.run_dir, Path("runs/E0_mappo_seed0"))
         self.assertEqual(paths.tensorboard_dir, Path("runs/E0_mappo_seed0/tensorboard"))
+        self.assertEqual(paths.tensorboard_run_dir, Path("runs/E0_mappo_seed0/tensorboard/E0_mappo_seed0"))
         self.assertEqual(paths.weights_dir, Path("runs/E0_mappo_seed0/weights"))
         self.assertEqual(paths.best_model_path, Path("runs/E0_mappo_seed0/weights/best_model.pt"))
         self.assertEqual(paths.last_ckpt_path, Path("runs/E0_mappo_seed0/weights/last_checkpoint.pt"))
@@ -284,6 +285,7 @@ class MAPPOTests(unittest.TestCase):
         self.assertIn("Reward Hyperparameters", first_text)
         self.assertIn("REWARD_COLLISION_PENALTY", first_text)
         self.assertIn("tensorboard_dir", first_text)
+        self.assertIn("tensorboard_run_dir", first_text)
         self.assertIn("llm_memory_path", first_text)
 
     def test_reward_debug_logs_requested_tensorboard_tags(self) -> None:
