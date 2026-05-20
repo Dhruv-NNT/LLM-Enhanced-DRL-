@@ -136,7 +136,7 @@ MAPPO_METRICS_DIR = PROJECT_ROOT / "evaluation" / "mappo"
 #   "1"    -> use only physical GPU 1
 #   "0,1"  -> expose GPUs 0 and 1; current MAPPO still uses one visible GPU
 #   ""     -> hide GPUs and run on CPU
-MAPPO_CUDA_VISIBLE_DEVICES = "0,1"
+MAPPO_CUDA_VISIBLE_DEVICES = "0"
 
 MAPPO_MAX_AGENT_STEPS = 5_000_000
 MAPPO_UPDATE_AGENT_STEPS = 2_048
@@ -167,7 +167,7 @@ MAPPO_NORMALIZE_REWARD = False
 # existing train.py path remains pure MAPPO unless explicitly enabled here.
 USE_LLM_GUIDED_TRAINING = True
 LLM_GUIDANCE_START_STEP = 0
-LLM_GUIDANCE_END_STEP = 500_000
+LLM_GUIDANCE_END_STEP = 50000
 LLM_GUIDANCE_USE_VISION = False
 LLM_GUIDANCE_MODE = "label_only_shadow_eval"
 LLM_GUIDANCE_MEMORY_ISOLATED_PER_RUN = True
