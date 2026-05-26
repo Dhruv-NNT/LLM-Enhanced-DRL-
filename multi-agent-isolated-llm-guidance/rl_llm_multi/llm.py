@@ -7,6 +7,7 @@ import copy
 import json
 import math
 import os
+import random as _random_module
 import re
 import shutil
 import urllib.error
@@ -29,6 +30,8 @@ from configs import (
     DESTINATION_ALIGNMENT_DEG,
     EMERGENCY_LOOKAHEAD_STEPS,
     EVAL_MEMORY_PATH,
+    GUIDANCE_RANDOM_SEED,
+    GUIDANCE_SOURCE,
     HAZARD_LOOKAHEAD_STEPS,
     JSON_ANSWERS_DIR,
     LLM_GUIDANCE_ARTIFACTS_ENABLED,
@@ -48,6 +51,18 @@ from configs import (
     TRAFFIC_CAUTION_R,
     TURN_PREVIEW_STEPS,
 )
+
+
+_VALID_GUIDANCE_SOURCES = ("real", "uniform")
+
+
+def _normalize_guidance_source(value: object) -> str:
+    text = str(value or "real").strip().lower()
+    if text not in _VALID_GUIDANCE_SOURCES:
+        raise ValueError(
+            f"Invalid GUIDANCE_SOURCE={value!r}. Expected one of {_VALID_GUIDANCE_SOURCES}."
+        )
+    return text
 from .memory import DecisionMemoryStore
 from .utils import heading_from_line, line_signed_cross_track, load_waypoint_map
 
@@ -2028,6 +2043,8 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         memory_visual_audit_dir: str = str(DECISION_MEMORY_VISUAL_AUDIT_DIR),
         memory_visual_audit_frame_count: int = DECISION_MEMORY_VISUAL_AUDIT_FRAME_COUNT,
         retry_limit: int = 2,
+        guidance_source: str = GUIDANCE_SOURCE,
+        guidance_random_seed: Optional[int] = GUIDANCE_RANDOM_SEED,
     ) -> None:
         super().__init__(save_dir=save_dir, memory_path=memory_path)
         self.global_builder = GlobalPromptBuilder() if builder is None else builder
@@ -2042,6 +2059,8 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         self.memory_visual_audit_dir = Path(memory_visual_audit_dir)
         self.memory_visual_audit_frame_count = int(memory_visual_audit_frame_count)
         self.hltp_plans: Dict[str, HLTPPlan] = {}
+        self.guidance_source = _normalize_guidance_source(guidance_source)
+        self._guidance_rng = _random_module.Random(guidance_random_seed)
         self.graph = self._build_graph()
 
     def _build_graph(self):
@@ -2557,7 +2576,18 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             frame_paths=list(state.get("frame_paths", [])),
         )
         hltp_image_paths = list(state.get("frame_paths", [])) if state.get("use_vision") else None
-        llm_result = ollama_invoke(prompt_text, image_paths=hltp_image_paths)
+        if self.guidance_source != "real":
+            # Skip the HLTP Ollama call; deterministic fallback plans will be
+            # populated below for every expected agent. Keeps the random
+            # baseline LLM-free.
+            llm_result = {
+                "llm_status": "skipped_random_baseline",
+                "raw_text": "",
+                "error": "guidance_source != real",
+                "used_vision": False,
+            }
+        else:
+            llm_result = ollama_invoke(prompt_text, image_paths=hltp_image_paths)
         expected_agent_ids = sorted(contexts_by_agent)
         parsed_payload: Dict[str, Any] = {}
         candidate_plans: Dict[str, Dict[str, Any]] = {}
@@ -2992,9 +3022,54 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         actionable = list(state.get("actionable", []))
         if not actionable:
             return {**state, "llm_attempts": [], "parsed_payload": {}, "candidate_actions": {}}
+        if self.guidance_source != "real":
+            llm_result = self._synthesize_random_llm_result(state, actionable)
+            return {**state, "llm_attempts": [llm_result]}
         image_paths = list(state.get("frame_paths", [])) if state.get("use_vision") else None
         llm_result = ollama_invoke(str(state.get("prompt_text", "")), image_paths=image_paths)
         return {**state, "llm_attempts": [llm_result]}
+
+    def _synthesize_random_llm_result(
+        self,
+        state: Dict[str, Any],
+        actionable: Sequence[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """Build an LLM-shaped response by uniformly sampling each agent's allowed
+        turns. Used when GUIDANCE_SOURCE != "real" to test whether the auxiliary
+        loss benefit depends on the LLM's reasoning or only on the shadow-eval
+        framework wrapping any advisory signal. No Ollama call is made.
+        """
+        core = state.get("core")
+        actions_payload: Dict[str, Dict[str, Any]] = {}
+        for item in actionable:
+            agent_id = str(item.get("agent_id", ""))
+            call_name = str(item.get("call_name", ""))
+            if not agent_id or not call_name:
+                continue
+            try:
+                allowed = self._allowed_turns(core, agent_id, call_name)
+            except Exception:
+                allowed = list(ACTION_BINS)
+            if not allowed:
+                allowed = list(ACTION_BINS)
+            choice = int(self._guidance_rng.choice(list(allowed)))
+            actions_payload[agent_id] = {
+                "rationale": f"uniform random pick from {call_name} allowed turns",
+                "maneuver": {"heading_change_deg": choice},
+            }
+        synthesized = {
+            "answer": {
+                "scenario_summary": "uniform random baseline (no LLM call)",
+                "actions": actions_payload,
+            }
+        }
+        return {
+            "llm_status": "ok",
+            "raw_text": json.dumps(synthesized),
+            "error": "",
+            "used_vision": False,
+            "synthetic_source": self.guidance_source,
+        }
 
     def _actions_from_payload(
         self,

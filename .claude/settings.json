@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(/home/aradhya.dhruv/anaconda3/envs/llmdrl/bin/python3 -)"
+      "Bash(/home/aradhya.dhruv/anaconda3/envs/llmdrl/bin/python3 -)",
+      "Bash(/home/aradhya.dhruv/anaconda3/bin/python3 -c ' *)",
+      "Read(//home/aradhya.dhruv/anaconda3/envs/**)",
+      "Bash(/home/aradhya.dhruv/anaconda3/envs/llmdrl/bin/python -c \"import langgraph; print\\('langgraph available'\\)\")",
+      "Bash(/home/aradhya.dhruv/anaconda3/envs/llmdrl/bin/python -m unittest tests.test_llm_controller.RandomGuidanceSourceTests -v)",
+      "Bash(/home/aradhya.dhruv/anaconda3/envs/llmdrl/bin/python -m unittest discover tests -v)"
     ]
   }
 }

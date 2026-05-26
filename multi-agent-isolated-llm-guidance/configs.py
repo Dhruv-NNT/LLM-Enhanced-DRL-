@@ -175,6 +175,17 @@ LLM_GUIDANCE_MEMORY_PATH = None  # Backward-compatible alias; prefer LLM_MEMORY_
 LLM_MEMORY_RUN_ID = None
 LLM_MEMORY_PATH = None
 
+# Guidance source for the controller. "real" calls Ollama as today. "uniform"
+# skips the Ollama call(s) entirely and synthesizes random picks from the legal
+# action bins per stage. Used to test the hypothesis that the gains from LLM
+# guidance are not just noise from any random advisory signal. The rest of the
+# pipeline (turn previews, shadow evaluation, hybrid weighting, memory writes /
+# corrections, auxiliary loss) runs identically regardless of this setting.
+GUIDANCE_SOURCE = "uniform"
+# Optional explicit seed for the random-guidance RNG. If None, the controller
+# uses Python's default random module (non-deterministic but isolated from torch).
+GUIDANCE_RANDOM_SEED = 42
+
 # LLM-guided MAPPO artifact logging.
 LLM_GUIDANCE_ARTIFACTS_ENABLED = False
 LLM_GUIDANCE_ARTIFACT_MAX_CALLS = 2

@@ -1830,5 +1830,132 @@ class ControllerTests(unittest.TestCase):
                                 if done or truncated:
                                     break
 
+class RandomGuidanceSourceTests(unittest.TestCase):
+    """Verify GUIDANCE_SOURCE='uniform' bypasses Ollama and synthesizes random
+    actions, while leaving GUIDANCE_SOURCE='real' (default) untouched."""
+
+    def _ollama_must_not_be_called(self, *args, **kwargs):
+        raise RuntimeError(
+            "ollama_invoke was called in uniform mode; the bypass is broken"
+        )
+
+    def test_normalize_guidance_source_rejects_invalid(self):
+        from rl_llm_multi.llm import _normalize_guidance_source
+        self.assertEqual(_normalize_guidance_source("real"), "real")
+        self.assertEqual(_normalize_guidance_source("uniform"), "uniform")
+        self.assertEqual(_normalize_guidance_source("UNIFORM"), "uniform")
+        with self.assertRaises(ValueError):
+            _normalize_guidance_source("garbage")
+
+    def test_synthesize_random_payload_uses_allowed_turns(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(
+                tmpdir, guidance_source="uniform", guidance_random_seed=42
+            )
+            ctrl._allowed_turns = lambda core, agent_id, call_name: {
+                "EXECUTE_TURN": [-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30],
+                "EMERGENCY_MANEUVER": [-30, -25, -20, -15, -10, -5, 5, 10, 15, 20, 25, 30],
+                "MERGE_BACK": [5, 10, 15, 20, 25, 30],
+            }.get(call_name, [])
+            actionable = [
+                {"agent_id": "A1", "call_name": "EXECUTE_TURN"},
+                {"agent_id": "A2", "call_name": "EMERGENCY_MANEUVER"},
+                {"agent_id": "A3", "call_name": "MERGE_BACK"},
+            ]
+            state = {"core": object(), "actionable": actionable}
+            result = ctrl._synthesize_random_llm_result(state, actionable)
+        self.assertEqual(result["llm_status"], "ok")
+        self.assertEqual(result["synthetic_source"], "uniform")
+        payload = json.loads(result["raw_text"])
+        actions = payload["answer"]["actions"]
+        self.assertEqual(sorted(actions.keys()), ["A1", "A2", "A3"])
+        self.assertIn(actions["A1"]["maneuver"]["heading_change_deg"],
+                      [-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30])
+        self.assertNotEqual(actions["A2"]["maneuver"]["heading_change_deg"], 0,
+                            "EMERGENCY must not return 0")
+        self.assertGreater(actions["A3"]["maneuver"]["heading_change_deg"], 0,
+                           "MERGE_BACK left-side test should pick positive turn")
+
+    def test_call_llm_uniform_does_not_invoke_ollama(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(
+                tmpdir, guidance_source="uniform", guidance_random_seed=7
+            )
+            ctrl._allowed_turns = lambda core, agent_id, call_name: [-10, 0, 10]
+            state = {
+                "core": object(),
+                "actionable": [{"agent_id": "A1", "call_name": "EXECUTE_TURN"}],
+            }
+            with patch(
+                "rl_llm_multi.llm.ollama_invoke",
+                side_effect=self._ollama_must_not_be_called,
+            ):
+                out = ctrl._graph_call_llm(state)
+        self.assertEqual(len(out["llm_attempts"]), 1)
+        self.assertEqual(out["llm_attempts"][0]["llm_status"], "ok")
+        self.assertEqual(out["llm_attempts"][0]["synthetic_source"], "uniform")
+
+    def test_call_llm_real_mode_invokes_ollama(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(tmpdir, guidance_source="real")
+            state = {
+                "core": object(),
+                "actionable": [{"agent_id": "A1", "call_name": "EXECUTE_TURN"}],
+                "prompt_text": "test prompt",
+                "frame_paths": [],
+                "use_vision": False,
+            }
+            invoked = {"count": 0}
+
+            def fake_ollama(prompt, image_paths=None):
+                invoked["count"] += 1
+                return {
+                    "llm_status": "ok",
+                    "raw_text": "{}",
+                    "error": "",
+                    "used_vision": False,
+                }
+
+            with patch("rl_llm_multi.llm.ollama_invoke", side_effect=fake_ollama):
+                ctrl._graph_call_llm(state)
+        self.assertEqual(invoked["count"], 1)
+
+    def test_call_llm_empty_actionable_short_circuits(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(tmpdir, guidance_source="uniform")
+            state = {"core": object(), "actionable": []}
+            with patch(
+                "rl_llm_multi.llm.ollama_invoke",
+                side_effect=self._ollama_must_not_be_called,
+            ):
+                out = ctrl._graph_call_llm(state)
+        self.assertEqual(out["llm_attempts"], [])
+        self.assertEqual(out["candidate_actions"], {})
+
+    def test_determinism_same_seed_same_actions(self):
+        with tempfile.TemporaryDirectory() as tmpdir1, tempfile.TemporaryDirectory() as tmpdir2:
+            c1 = _global_controller(tmpdir1, guidance_source="uniform", guidance_random_seed=123)
+            c2 = _global_controller(tmpdir2, guidance_source="uniform", guidance_random_seed=123)
+            for c in (c1, c2):
+                c._allowed_turns = lambda core, a, n: [-30, -20, -10, 0, 10, 20, 30]
+            actionable = [
+                {"agent_id": f"A{i}", "call_name": "EXECUTE_TURN"} for i in range(10)
+            ]
+            state = {"core": object(), "actionable": actionable}
+            r1 = c1._synthesize_random_llm_result(state, actionable)
+            r2 = c2._synthesize_random_llm_result(state, actionable)
+        self.assertEqual(r1["raw_text"], r2["raw_text"])
+
+    def test_invalid_source_rejected_at_construction(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with self.assertRaises(ValueError):
+                _global_controller(tmpdir, guidance_source="bogus")
+
+    def test_real_mode_is_default(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(tmpdir)
+        self.assertEqual(ctrl.guidance_source, "real")
+
+
 if __name__ == "__main__":
     unittest.main()

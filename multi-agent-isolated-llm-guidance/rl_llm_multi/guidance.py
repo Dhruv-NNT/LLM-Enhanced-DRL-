@@ -12,6 +12,8 @@ from configs import (
     DECISION_MEMORY_VISUAL_AUDIT_DIR,
     DECISION_MEMORY_VISUAL_AUDIT_ENABLED,
     DECISION_MEMORY_VISUAL_AUDIT_FRAME_COUNT,
+    GUIDANCE_RANDOM_SEED,
+    GUIDANCE_SOURCE,
     JSON_ANSWERS_DIR,
     LLM_GUIDANCE_USE_VISION,
     LLM_SHADOW_GAMMA,
@@ -96,6 +98,8 @@ class LLMGuidanceProvider:
         memory_visual_audit_dir: str | Path = DECISION_MEMORY_VISUAL_AUDIT_DIR,
         memory_visual_audit_frame_count: int = DECISION_MEMORY_VISUAL_AUDIT_FRAME_COUNT,
         controller: Optional[Any] = None,
+        guidance_source: str = GUIDANCE_SOURCE,
+        guidance_random_seed: Optional[int] = GUIDANCE_RANDOM_SEED,
     ) -> None:
         if controller is None:
             from .llm import GlobalLangGraphGuidanceController
@@ -106,6 +110,8 @@ class LLMGuidanceProvider:
                 memory_visual_audit_enabled=bool(memory_visual_audit_enabled),
                 memory_visual_audit_dir=str(memory_visual_audit_dir),
                 memory_visual_audit_frame_count=int(memory_visual_audit_frame_count),
+                guidance_source=guidance_source,
+                guidance_random_seed=guidance_random_seed,
             )
         self.controller = controller
         self.use_vision = bool(use_vision)

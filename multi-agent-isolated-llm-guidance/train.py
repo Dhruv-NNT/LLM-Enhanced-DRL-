@@ -43,6 +43,8 @@ from configs import (
     LLM_MEMORY_PATH,
     LLM_MEMORY_RUN_ID,
     DECISION_MEMORY_PATH,
+    GUIDANCE_RANDOM_SEED,
+    GUIDANCE_SOURCE,
     LLM_GUIDANCE_START_STEP,
     LLM_GUIDANCE_USE_VISION,
     LLM_LOSS_DECAY_ENABLED,
@@ -970,8 +972,14 @@ def main() -> None:
             memory_visual_audit_enabled=bool(DECISION_MEMORY_VISUAL_AUDIT_ENABLED),
             memory_visual_audit_dir=DECISION_MEMORY_VISUAL_AUDIT_DIR,
             memory_visual_audit_frame_count=int(DECISION_MEMORY_VISUAL_AUDIT_FRAME_COUNT),
+            guidance_source=GUIDANCE_SOURCE,
+            guidance_random_seed=GUIDANCE_RANDOM_SEED,
         )
         memory_store: Optional[DecisionMemoryStore] = DecisionMemoryStore(llm_memory_path, max_episodes=LLM_GUIDED_MEMORY_MAX_EPISODES)
+        print(
+            f"Guidance source: {GUIDANCE_SOURCE} "
+            f"(random_seed={GUIDANCE_RANDOM_SEED})"
+        )
     else:
         guidance = NoGuidanceProvider()
         memory_store = None
