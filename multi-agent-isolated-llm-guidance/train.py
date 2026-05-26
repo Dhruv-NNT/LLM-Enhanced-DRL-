@@ -979,15 +979,17 @@ def main() -> None:
     agent_steps = 0
     env_steps = 0
     episode = 0
+    restored_extra: Dict[str, object] = {}
     if not args.no_resume and last_ckpt_path.exists():
         try:
-            agent_steps, env_steps, episode = agent.load_checkpoint(last_ckpt_path)
+            agent_steps, env_steps, episode, restored_extra = agent.load_checkpoint(last_ckpt_path)
             print(
                 f"Resumed MAPPO checkpoint from {last_ckpt_path} | "
                 f"agent_steps={agent_steps} env_steps={env_steps} episode={episode}"
             )
         except Exception as exc:
             print(f"Failed to load checkpoint {last_ckpt_path}: {exc}. Starting fresh.")
+            restored_extra = {}
 
     writer = SummaryWriter(str(tensorboard_run_dir), purge_step=agent_steps)
     print(f"Run directory: {log_dir}")
@@ -995,13 +997,36 @@ def main() -> None:
     print(f"TensorBoard run directory: {tensorboard_run_dir}")
     print(f"Weights directory: {weights_dir}")
     print(f"Guided memory path: {llm_memory_path}")
+
     best_eval_stats: Optional[Dict[str, float]] = None
+    _restored_best = restored_extra.get("best_eval_stats")
+    if isinstance(_restored_best, Mapping):
+        best_eval_stats = {str(k): float(v) for k, v in _restored_best.items()}
+        print(
+            f"Restored best_eval_stats from checkpoint | "
+            f"score={_eval_score(best_eval_stats):.3f}"
+        )
+
     next_update = agent_steps + int(args.update_agent_steps)
     next_eval = agent_steps + int(args.eval_freq)
     next_save = agent_steps + int(args.save_model_freq)
     start_time = datetime.now()
 
     failure_counts = {"collision": 0, "weather": 0, "truncated": 0, "success": 0}
+    _restored_counts = restored_extra.get("failure_counts")
+    if isinstance(_restored_counts, Mapping):
+        for key in failure_counts:
+            value = _restored_counts.get(key)
+            if isinstance(value, (int, float)):
+                failure_counts[key] = int(value)
+        print(
+            "Restored failure_counts from checkpoint | "
+            f"success={failure_counts['success']} "
+            f"collision={failure_counts['collision']} "
+            f"weather={failure_counts['weather']} "
+            f"truncated={failure_counts['truncated']}"
+        )
+
     print(
         "Starting MAPPO training | num_agents={} weather_cells={} global_dim={} local_dim={} max_agent_steps={}".format(
             args.num_agents,
@@ -1018,6 +1043,48 @@ def main() -> None:
             num_weather_cells=args.num_weather_cells,
             episode_step_cap=args.episode_step_cap,
         )
+
+    def _checkpoint_extras() -> Dict[str, object]:
+        extras: Dict[str, object] = {"failure_counts": dict(failure_counts)}
+        if best_eval_stats is not None:
+            extras["best_eval_stats"] = dict(best_eval_stats)
+        return extras
+
+    # Defensive baseline: if best_model.pt exists but we have no recorded score
+    # (e.g., resuming from a pre-fix checkpoint), evaluate it once so we do not
+    # blindly overwrite a good best model with the next eval.
+    if best_eval_stats is None and best_model_path.exists():
+        try:
+            print(
+                f"best_model.pt exists but score unknown -- running baseline eval "
+                f"to avoid overwriting it. ({best_model_path})"
+            )
+            agent.load_model(best_model_path)
+            baseline_stats = evaluate_policy(
+                agent,
+                make_eval_env,
+                n_episodes=int(args.n_eval_episodes),
+                seed=int(args.seed) + 10_000,
+                reset_options=reset_options,
+            )
+            best_eval_stats = dict(baseline_stats)
+            print(
+                f"Baseline best_model eval | "
+                f"score={_eval_score(best_eval_stats):.3f} "
+                f"success={best_eval_stats.get('success_rate', 0.0):.3f}"
+            )
+        except Exception as exc:
+            print(f"Could not run baseline eval on best_model.pt: {exc}. Continuing.")
+            best_eval_stats = None
+        finally:
+            # Reload the training checkpoint so we don't keep best_model weights live.
+            if last_ckpt_path.exists():
+                try:
+                    agent.load_checkpoint(last_ckpt_path)
+                except Exception as exc:
+                    print(
+                        f"Warning: failed to reload last_checkpoint after baseline eval: {exc}"
+                    )
 
     try:
         while agent_steps < int(args.max_agent_steps):
@@ -1393,6 +1460,7 @@ def main() -> None:
                     agent_steps=agent_steps,
                     env_steps=env_steps,
                     episode=episode,
+                    extra=_checkpoint_extras(),
                 )
                 next_update = agent_steps + int(args.update_agent_steps)
 
@@ -1405,12 +1473,6 @@ def main() -> None:
                     reset_options=reset_options,
                 )
                 _log_eval(writer, stats, agent_steps)
-                agent.save_checkpoint(
-                    last_ckpt_path,
-                    agent_steps=agent_steps,
-                    env_steps=env_steps,
-                    episode=episode,
-                )
                 if best_eval_stats is None or _eval_score(stats) > _eval_score(best_eval_stats):
                     best_eval_stats = dict(stats)
                     agent.save_model(best_model_path)
@@ -1423,6 +1485,15 @@ def main() -> None:
                         f"truncated={stats['truncation_rate']:.3f} "
                         f"mean_episode_total_reward={stats['mean_episode_total_reward']:.3f}"
                     )
+                # Save checkpoint AFTER the best decision so the saved extras
+                # reflect any updated best_eval_stats from this eval.
+                agent.save_checkpoint(
+                    last_ckpt_path,
+                    agent_steps=agent_steps,
+                    env_steps=env_steps,
+                    episode=episode,
+                    extra=_checkpoint_extras(),
+                )
                 next_eval = agent_steps + int(args.eval_freq)
 
             if agent_steps >= next_save:
@@ -1454,6 +1525,7 @@ def main() -> None:
             agent_steps=agent_steps,
             env_steps=env_steps,
             episode=episode,
+            extra=_checkpoint_extras(),
         )
         if not best_model_path.exists():
             agent.save_model(best_model_path)
@@ -1464,6 +1536,7 @@ def main() -> None:
             agent_steps=agent_steps,
             env_steps=env_steps,
             episode=episode,
+            extra=_checkpoint_extras(),
         )
         print(f"\nInterrupted. Saved checkpoint to {last_ckpt_path}")
         raise

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/home/aradhya.dhruv/anaconda3/envs/llmdrl/bin/python3 -)"
+    ]
+  }
+}

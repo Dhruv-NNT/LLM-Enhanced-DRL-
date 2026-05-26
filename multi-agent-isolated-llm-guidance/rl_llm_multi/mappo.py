@@ -804,6 +804,7 @@ class MAPPO:
         agent_steps: int,
         env_steps: int,
         episode: int,
+        extra: Optional[Mapping[str, object]] = None,
     ) -> None:
         payload = {
             **self._model_payload(),
@@ -816,10 +817,13 @@ class MAPPO:
             "numpy_rng": np.random.get_state(),
             "py_rng": random.getstate(),
             "cuda_rng": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
+            "extra": dict(extra) if extra else {},
         }
         _atomic_torch_save(payload, str(path))
 
-    def load_checkpoint(self, path: str | os.PathLike[str]) -> Tuple[int, int, int]:
+    def load_checkpoint(
+        self, path: str | os.PathLike[str]
+    ) -> Tuple[int, int, int, Dict[str, object]]:
         payload = _torch_load(str(path), map_location=device)
         self._validate_model_payload(payload)
         self.policy.load_state_dict(payload["policy"])
@@ -841,7 +845,14 @@ class MAPPO:
                 for state in cuda_rng
             ]
             torch.cuda.set_rng_state_all(cuda_rng_tensors)
-        return int(payload["agent_steps"]), int(payload["env_steps"]), int(payload["episode"])
+        extra_raw = payload.get("extra", {})
+        extra = dict(extra_raw) if isinstance(extra_raw, Mapping) else {}
+        return (
+            int(payload["agent_steps"]),
+            int(payload["env_steps"]),
+            int(payload["episode"]),
+            extra,
+        )
 
 
 def evaluate_policy(

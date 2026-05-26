@@ -1114,9 +1114,35 @@ class MAPPOTests(unittest.TestCase):
             agent.save_checkpoint(path, agent_steps=12, env_steps=7, episode=3)
 
             restored = _make_agent(env)
-            counters = restored.load_checkpoint(path)
+            agent_steps, env_steps, episode, extra = restored.load_checkpoint(path)
 
-        self.assertEqual(counters, (12, 7, 3))
+        self.assertEqual((agent_steps, env_steps, episode), (12, 7, 3))
+        self.assertEqual(extra, {})
+
+    def test_checkpoint_roundtrip_restores_extras(self) -> None:
+        env = _make_env()
+        env.reset(seed=42)
+        agent = _make_agent(env)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "mappo.ckpt"
+            failure_counts = {"collision": 11, "weather": 2, "truncated": 1, "success": 4}
+            best_eval_stats = {"total_episode_reward": 5.5, "success_rate": 0.4}
+            agent.save_checkpoint(
+                path,
+                agent_steps=20,
+                env_steps=10,
+                episode=4,
+                extra={
+                    "failure_counts": failure_counts,
+                    "best_eval_stats": best_eval_stats,
+                },
+            )
+
+            restored = _make_agent(env)
+            _, _, _, extra = restored.load_checkpoint(path)
+
+        self.assertEqual(extra.get("failure_counts"), failure_counts)
+        self.assertEqual(extra.get("best_eval_stats"), best_eval_stats)
 
     def test_deterministic_evaluation_returns_metrics(self) -> None:
         env = _make_env(max_step=3)
