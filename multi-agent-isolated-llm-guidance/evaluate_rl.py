@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 from PIL import Image
+from tqdm import tqdm
 
 from configs import (
     ACTION_BINS,
@@ -247,7 +248,19 @@ def main() -> None:
     output_root.mkdir(parents=True, exist_ok=True)
 
     results: List[RLEpisodeResult] = []
-    for ep_idx in range(int(args.n_episodes)):
+    n_total = int(args.n_episodes)
+    progress = tqdm(
+        range(n_total),
+        total=n_total,
+        desc="evaluating",
+        unit="ep",
+        dynamic_ncols=True,
+    )
+    successes = 0
+    collisions = 0
+    weather_failures = 0
+    truncations = 0
+    for ep_idx in progress:
         frame_dir = None
         gif_path = None
         if args.save_gif and ep_idx == 0:
@@ -265,6 +278,19 @@ def main() -> None:
             gif_path=gif_path,
         )
         results.append(result)
+        successes += int(bool(result.success))
+        collisions += int(result.failure_reason == "collision")
+        weather_failures += int(result.failure_reason == "weather")
+        truncations += int(bool(result.truncated))
+        denom = float(len(results))
+        progress.set_postfix(
+            success=f"{successes / denom:.2f}",
+            collision=f"{collisions / denom:.2f}",
+            weather=f"{weather_failures / denom:.2f}",
+            trunc=f"{truncations / denom:.2f}",
+            mean_R=f"{float(np.mean([r.total_reward for r in results])):.1f}",
+        )
+    progress.close()
 
     returns = [result.total_reward for result in results]
     total_episode_reward = float(np.sum(returns)) if returns else 0.0

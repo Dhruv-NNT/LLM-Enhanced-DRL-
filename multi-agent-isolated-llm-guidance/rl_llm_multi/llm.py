@@ -53,7 +53,7 @@ from configs import (
 )
 
 
-_VALID_GUIDANCE_SOURCES = ("real", "uniform")
+_VALID_GUIDANCE_SOURCES = ("real", "uniform", "preview_safe", "best_preview")
 
 
 def _normalize_guidance_source(value: object) -> str:
@@ -3034,32 +3034,38 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
         state: Dict[str, Any],
         actionable: Sequence[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        """Build an LLM-shaped response by uniformly sampling each agent's allowed
-        turns. Used when GUIDANCE_SOURCE != "real" to test whether the auxiliary
-        loss benefit depends on the LLM's reasoning or only on the shadow-eval
-        framework wrapping any advisory signal. No Ollama call is made.
+        """Build an LLM-shaped response without calling Ollama. The exact action
+        choice per agent depends on self.guidance_source:
+
+          - "uniform": uniform random pick from the stage-allowed turn bins.
+            Tests whether the LLM beats random noise filtered by shadow eval.
+
+          - "preview_safe": uniform random pick from preview rows whose
+            safe_over_preview flag is True (falls back to the top-sorted row if
+            no row is marked safe). Tests whether the LLM beats random selection
+            from preview-safe options.
+
+          - "best_preview": deterministically pick the top-sorted preview row.
+            Tests whether the LLM beats the controller's deterministic heuristic.
+
+        All three branches return an Ollama-shaped payload so the rest of the
+        controller pipeline (parse / guardrail / fallback / commit) runs
+        unchanged.
         """
-        core = state.get("core")
         actions_payload: Dict[str, Dict[str, Any]] = {}
         for item in actionable:
             agent_id = str(item.get("agent_id", ""))
             call_name = str(item.get("call_name", ""))
             if not agent_id or not call_name:
                 continue
-            try:
-                allowed = self._allowed_turns(core, agent_id, call_name)
-            except Exception:
-                allowed = list(ACTION_BINS)
-            if not allowed:
-                allowed = list(ACTION_BINS)
-            choice = int(self._guidance_rng.choice(list(allowed)))
+            choice, rationale = self._pick_synthetic_action(state, agent_id, call_name)
             actions_payload[agent_id] = {
-                "rationale": f"uniform random pick from {call_name} allowed turns",
-                "maneuver": {"heading_change_deg": choice},
+                "rationale": rationale,
+                "maneuver": {"heading_change_deg": int(choice)},
             }
         synthesized = {
             "answer": {
-                "scenario_summary": "uniform random baseline (no LLM call)",
+                "scenario_summary": f"{self.guidance_source} baseline (no LLM call)",
                 "actions": actions_payload,
             }
         }
@@ -3070,6 +3076,71 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             "used_vision": False,
             "synthetic_source": self.guidance_source,
         }
+
+    def _pick_synthetic_action(
+        self,
+        state: Dict[str, Any],
+        agent_id: str,
+        call_name: str,
+    ) -> Tuple[int, str]:
+        """Return (heading_change_deg, rationale) for the current guidance_source.
+
+        Each branch is independently defensive: if its preferred source of
+        candidate turns is empty, it falls back to the next-best source so the
+        synthesis never returns nothing.
+        """
+        core = state.get("core")
+        preview_rows_by_agent = state.get("preview_rows_by_agent", {})
+        rows = preview_rows_by_agent.get(agent_id, []) if isinstance(preview_rows_by_agent, dict) else []
+
+        if self.guidance_source == "uniform":
+            try:
+                allowed = self._allowed_turns(core, agent_id, call_name)
+            except Exception:
+                allowed = list(ACTION_BINS)
+            if not allowed:
+                allowed = list(ACTION_BINS)
+            choice = int(self._guidance_rng.choice(list(allowed)))
+            return choice, f"uniform random pick from {call_name} allowed turns"
+
+        if self.guidance_source == "preview_safe":
+            safe_rows = [r for r in rows if bool(r.get("safe_over_preview", False))]
+            if safe_rows:
+                row = self._guidance_rng.choice(safe_rows)
+                choice = int(row.get("heading_change_deg", 0))
+                return choice, f"preview_safe random pick from {len(safe_rows)} safe rows"
+            if rows:
+                # No safe rows available -- fall back to the top-sorted row so
+                # we still produce a valid action. This is the same behaviour
+                # the controller's fallback path uses.
+                choice = int(rows[0].get("heading_change_deg", 0))
+                return choice, "preview_safe fallback: no safe rows, used top-sorted row"
+            # No preview rows at all -- fall back to allowed turns.
+            try:
+                allowed = self._allowed_turns(core, agent_id, call_name)
+            except Exception:
+                allowed = list(ACTION_BINS)
+            if not allowed:
+                allowed = list(ACTION_BINS)
+            choice = int(self._guidance_rng.choice(list(allowed)))
+            return choice, "preview_safe fallback: no preview rows, used random allowed turn"
+
+        if self.guidance_source == "best_preview":
+            if rows:
+                choice = int(rows[0].get("heading_change_deg", 0))
+                return choice, "best_preview deterministic pick (top-sorted preview row)"
+            # No preview rows -- fall back to the first allowed turn.
+            try:
+                allowed = self._allowed_turns(core, agent_id, call_name)
+            except Exception:
+                allowed = list(ACTION_BINS)
+            if not allowed:
+                return 0, "best_preview fallback: no preview rows, no allowed turns, used 0"
+            return int(allowed[0]), "best_preview fallback: no preview rows, used first allowed turn"
+
+        # Should be unreachable thanks to _normalize_guidance_source, but be
+        # defensive: degrade to a safe hold rather than crash.
+        return 0, f"unknown guidance_source={self.guidance_source!r}, defaulted to 0"
 
     def _actions_from_payload(
         self,

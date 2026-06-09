@@ -175,15 +175,25 @@ LLM_GUIDANCE_MEMORY_PATH = None  # Backward-compatible alias; prefer LLM_MEMORY_
 LLM_MEMORY_RUN_ID = None
 LLM_MEMORY_PATH = None
 
-# Guidance source for the controller. "real" calls Ollama as today. "uniform"
-# skips the Ollama call(s) entirely and synthesizes random picks from the legal
-# action bins per stage. Used to test the hypothesis that the gains from LLM
-# guidance are not just noise from any random advisory signal. The rest of the
-# pipeline (turn previews, shadow evaluation, hybrid weighting, memory writes /
-# corrections, auxiliary loss) runs identically regardless of this setting.
-GUIDANCE_SOURCE = "uniform"
-# Optional explicit seed for the random-guidance RNG. If None, the controller
-# uses Python's default random module (non-deterministic but isolated from torch).
+# Guidance source for the controller. Determines how the per-step advisory
+# action is chosen. The rest of the pipeline (turn previews, shadow evaluation,
+# hybrid weighting, memory writes / corrections, auxiliary loss) runs
+# identically regardless of this setting.
+#
+#   "real"          -> call Ollama as today (production behaviour).
+#   "uniform"       -> skip the LLM, uniform random pick from the stage-allowed
+#                      turn bins. Tests whether the LLM beats random noise that
+#                      passes through shadow eval.
+#   "preview_safe"  -> skip the LLM, uniform random pick from preview rows
+#                      marked safe_over_preview=True (falls back to top-sorted
+#                      row if no row is safe). Tests whether the LLM beats
+#                      random selection from preview-safe options.
+#   "best_preview"  -> skip the LLM, deterministically pick the top-sorted
+#                      preview row. Tests whether the LLM beats the
+#                      controller's deterministic heuristic.
+GUIDANCE_SOURCE = "best_preview"
+# Optional explicit seed for the random-guidance RNG (used by "uniform" and
+# "preview_safe"). If None, Python's default random module is used.
 GUIDANCE_RANDOM_SEED = 42
 
 # LLM-guided MAPPO artifact logging.

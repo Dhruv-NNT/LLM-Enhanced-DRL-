@@ -42,6 +42,11 @@ from rl_llm_multi.utils import assign_routes, weather_axis_units  # noqa: E402
 
 
 def _global_controller(save_dir: str, **kwargs) -> GlobalLangGraphGuidanceController:
+    # Default to guidance_source="real" so existing tests that mock
+    # ollama_invoke behave the same regardless of what the user has set in
+    # configs.GUIDANCE_SOURCE for their current experiment. Tests that want a
+    # synthetic guidance source pass it explicitly via kwargs.
+    kwargs.setdefault("guidance_source", "real")
     return GlobalLangGraphGuidanceController(
         save_dir=save_dir,
         memory_path=str(Path(save_dir) / "decision_memory.json"),
@@ -1951,10 +1956,221 @@ class RandomGuidanceSourceTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 _global_controller(tmpdir, guidance_source="bogus")
 
-    def test_real_mode_is_default(self):
+    def test_controller_uses_config_default_when_not_overridden(self):
+        # When guidance_source is not passed, controller should inherit the
+        # current configs.GUIDANCE_SOURCE value (whatever the user has set).
+        # NOTE: this constructs the controller directly (without the test
+        # helper, which forces "real") so we can observe the true default.
+        import configs as _cfg
         with tempfile.TemporaryDirectory() as tmpdir:
-            ctrl = _global_controller(tmpdir)
+            ctrl = GlobalLangGraphGuidanceController(
+                save_dir=tmpdir,
+                memory_path=str(Path(tmpdir) / "decision_memory.json"),
+            )
+        self.assertEqual(
+            ctrl.guidance_source,
+            _cfg.GUIDANCE_SOURCE,
+            "Controller default should match configs.GUIDANCE_SOURCE",
+        )
+
+    def test_controller_real_mode_when_explicitly_passed(self):
+        # Independent of config, explicitly passing guidance_source="real"
+        # must yield a real-mode controller.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(tmpdir, guidance_source="real")
         self.assertEqual(ctrl.guidance_source, "real")
+
+    def test_normalize_accepts_preview_safe_and_best_preview(self):
+        from rl_llm_multi.llm import _normalize_guidance_source
+        self.assertEqual(_normalize_guidance_source("preview_safe"), "preview_safe")
+        self.assertEqual(_normalize_guidance_source("PREVIEW_SAFE"), "preview_safe")
+        self.assertEqual(_normalize_guidance_source("best_preview"), "best_preview")
+        self.assertEqual(_normalize_guidance_source("BEST_PREVIEW"), "best_preview")
+
+    def test_preview_safe_picks_only_from_safe_rows(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(
+                tmpdir, guidance_source="preview_safe", guidance_random_seed=42
+            )
+            # Three rows: only +10 and -5 are safe. Many trials must never
+            # produce the unsafe values (-30, +20, 0).
+            preview_rows = {
+                "A1": [
+                    {"heading_change_deg": -30, "safe_over_preview": False},
+                    {"heading_change_deg": +10, "safe_over_preview": True},
+                    {"heading_change_deg": -5, "safe_over_preview": True},
+                    {"heading_change_deg": +20, "safe_over_preview": False},
+                    {"heading_change_deg": 0, "safe_over_preview": False},
+                ],
+            }
+            state = {
+                "core": object(),
+                "actionable": [{"agent_id": "A1", "call_name": "EXECUTE_TURN"}],
+                "preview_rows_by_agent": preview_rows,
+            }
+            picks = set()
+            for _ in range(50):
+                deg, _ = ctrl._pick_synthetic_action(state, "A1", "EXECUTE_TURN")
+                picks.add(deg)
+        # All picks must be from the safe set; no unsafe value can appear.
+        self.assertTrue(picks.issubset({+10, -5}),
+                        f"preview_safe picked unsafe rows: {picks}")
+        self.assertEqual(picks, {+10, -5},
+                         f"preview_safe didn't cover all safe rows in 50 trials: {picks}")
+
+    def test_preview_safe_falls_back_to_top_row_when_no_safe_rows(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(
+                tmpdir, guidance_source="preview_safe", guidance_random_seed=0
+            )
+            # No safe rows -- expect deterministic fall-back to rows[0]
+            preview_rows = {
+                "A1": [
+                    {"heading_change_deg": -25, "safe_over_preview": False},
+                    {"heading_change_deg": -20, "safe_over_preview": False},
+                ],
+            }
+            state = {
+                "core": object(),
+                "actionable": [{"agent_id": "A1", "call_name": "EXECUTE_TURN"}],
+                "preview_rows_by_agent": preview_rows,
+            }
+            deg, rationale = ctrl._pick_synthetic_action(state, "A1", "EXECUTE_TURN")
+        self.assertEqual(deg, -25, "Expected top-sorted row fallback when no safe rows")
+        self.assertIn("preview_safe fallback", rationale)
+
+    def test_preview_safe_falls_back_to_allowed_when_no_preview_rows(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(
+                tmpdir, guidance_source="preview_safe", guidance_random_seed=0
+            )
+            ctrl._allowed_turns = lambda core, agent_id, call_name: [-5, 0, +5]
+            state = {
+                "core": object(),
+                "actionable": [{"agent_id": "A1", "call_name": "EXECUTE_TURN"}],
+                "preview_rows_by_agent": {},
+            }
+            deg, rationale = ctrl._pick_synthetic_action(state, "A1", "EXECUTE_TURN")
+        self.assertIn(deg, [-5, 0, +5])
+        self.assertIn("preview_safe fallback", rationale)
+
+    def test_best_preview_picks_top_sorted_row_deterministically(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(tmpdir, guidance_source="best_preview")
+            preview_rows = {
+                "A1": [
+                    {"heading_change_deg": +15, "safe_over_preview": True},
+                    {"heading_change_deg": -10, "safe_over_preview": True},
+                    {"heading_change_deg": 0, "safe_over_preview": False},
+                ],
+                "A2": [
+                    {"heading_change_deg": -5, "safe_over_preview": True},
+                ],
+            }
+            state = {
+                "core": object(),
+                "actionable": [
+                    {"agent_id": "A1", "call_name": "EXECUTE_TURN"},
+                    {"agent_id": "A2", "call_name": "EMERGENCY_MANEUVER"},
+                ],
+                "preview_rows_by_agent": preview_rows,
+            }
+            # Run 10x -- result must be identical every time (deterministic)
+            picks_a1 = set()
+            picks_a2 = set()
+            for _ in range(10):
+                deg_a1, _ = ctrl._pick_synthetic_action(state, "A1", "EXECUTE_TURN")
+                deg_a2, _ = ctrl._pick_synthetic_action(state, "A2", "EMERGENCY_MANEUVER")
+                picks_a1.add(deg_a1)
+                picks_a2.add(deg_a2)
+        self.assertEqual(picks_a1, {+15}, "best_preview must pick rows[0]")
+        self.assertEqual(picks_a2, {-5}, "best_preview must pick rows[0]")
+
+    def test_best_preview_falls_back_to_allowed_when_no_preview_rows(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(tmpdir, guidance_source="best_preview")
+            ctrl._allowed_turns = lambda core, agent_id, call_name: [+15, -10, +5]
+            state = {
+                "core": object(),
+                "actionable": [{"agent_id": "A1", "call_name": "EXECUTE_TURN"}],
+                "preview_rows_by_agent": {},
+            }
+            deg, rationale = ctrl._pick_synthetic_action(state, "A1", "EXECUTE_TURN")
+        self.assertEqual(deg, +15, "Expected first allowed turn when no preview rows")
+        self.assertIn("best_preview fallback", rationale)
+
+    def test_preview_safe_does_not_invoke_ollama(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(
+                tmpdir, guidance_source="preview_safe", guidance_random_seed=1
+            )
+            state = {
+                "core": object(),
+                "actionable": [{"agent_id": "A1", "call_name": "EXECUTE_TURN"}],
+                "preview_rows_by_agent": {
+                    "A1": [{"heading_change_deg": +5, "safe_over_preview": True}]
+                },
+            }
+            with patch(
+                "rl_llm_multi.llm.ollama_invoke",
+                side_effect=self._ollama_must_not_be_called,
+            ):
+                out = ctrl._graph_call_llm(state)
+        self.assertEqual(out["llm_attempts"][0]["llm_status"], "ok")
+        self.assertEqual(out["llm_attempts"][0]["synthetic_source"], "preview_safe")
+
+    def test_best_preview_does_not_invoke_ollama(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(tmpdir, guidance_source="best_preview")
+            state = {
+                "core": object(),
+                "actionable": [{"agent_id": "A1", "call_name": "EXECUTE_TURN"}],
+                "preview_rows_by_agent": {
+                    "A1": [{"heading_change_deg": -10, "safe_over_preview": True}]
+                },
+            }
+            with patch(
+                "rl_llm_multi.llm.ollama_invoke",
+                side_effect=self._ollama_must_not_be_called,
+            ):
+                out = ctrl._graph_call_llm(state)
+        self.assertEqual(out["llm_attempts"][0]["llm_status"], "ok")
+        self.assertEqual(out["llm_attempts"][0]["synthetic_source"], "best_preview")
+        payload = json.loads(out["llm_attempts"][0]["raw_text"])
+        self.assertEqual(
+            payload["answer"]["actions"]["A1"]["maneuver"]["heading_change_deg"], -10
+        )
+
+    def test_preview_safe_uniform_distribution_over_safe_rows(self):
+        """Across many trials, preview_safe should approach uniform over safe rows."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ctrl = _global_controller(
+                tmpdir, guidance_source="preview_safe", guidance_random_seed=999
+            )
+            preview_rows = {
+                "A1": [
+                    {"heading_change_deg": v, "safe_over_preview": True}
+                    for v in (-20, -10, 0, 10, 20)
+                ],
+            }
+            state = {
+                "core": object(),
+                "actionable": [{"agent_id": "A1", "call_name": "EXECUTE_TURN"}],
+                "preview_rows_by_agent": preview_rows,
+            }
+            from collections import Counter
+            counts = Counter()
+            for _ in range(2000):
+                deg, _ = ctrl._pick_synthetic_action(state, "A1", "EXECUTE_TURN")
+                counts[deg] += 1
+        # Each of 5 rows should appear roughly 400 times (2000/5). Allow wide
+        # tolerance (200-600) -- this is just a sanity check, not a strict
+        # uniformity test.
+        for value in (-20, -10, 0, 10, 20):
+            self.assertGreater(counts[value], 200,
+                               f"Row {value} sampled {counts[value]}/2000 times, too few")
+            self.assertLess(counts[value], 600,
+                            f"Row {value} sampled {counts[value]}/2000 times, too many")
 
 
 if __name__ == "__main__":
