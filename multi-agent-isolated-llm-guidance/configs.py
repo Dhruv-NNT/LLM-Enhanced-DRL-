@@ -191,7 +191,7 @@ LLM_MEMORY_PATH = None
 #   "best_preview"  -> skip the LLM, deterministically pick the top-sorted
 #                      preview row. Tests whether the LLM beats the
 #                      controller's deterministic heuristic.
-GUIDANCE_SOURCE = "best_preview"
+GUIDANCE_SOURCE = "real"
 # Optional explicit seed for the random-guidance RNG (used by "uniform" and
 # "preview_safe"). If None, Python's default random module is used.
 GUIDANCE_RANDOM_SEED = 42

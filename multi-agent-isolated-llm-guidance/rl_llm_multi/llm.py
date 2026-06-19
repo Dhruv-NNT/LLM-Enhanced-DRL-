@@ -56,6 +56,10 @@ from configs import (
 _VALID_GUIDANCE_SOURCES = ("real", "uniform", "preview_safe", "best_preview")
 
 
+def _ollama_model_name() -> str:
+    return os.environ.get("OLLAMA_MODEL", OLLAMA_MODEL).strip() or OLLAMA_MODEL
+
+
 def _normalize_guidance_source(value: object) -> str:
     text = str(value or "real").strip().lower()
     if text not in _VALID_GUIDANCE_SOURCES:
@@ -692,7 +696,7 @@ def ollama_invoke(
         message["images"] = usable_images
 
     payload = {
-        "model": OLLAMA_MODEL,
+        "model": _ollama_model_name(),
         "stream": False,
         "messages": [message],
         "options": {
@@ -2660,7 +2664,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             "eligible_agent_ids": expected_agent_ids,
             "used_vision": bool(state.get("use_vision", False) and state.get("frame_paths")),
             "frame_paths": list(state.get("frame_paths", [])) if state.get("use_vision") else [],
-            "model": OLLAMA_MODEL,
+            "model": _ollama_model_name(),
             "weather": core.weather_dict(),
         }
         self._log_hltp_call(
@@ -3496,7 +3500,7 @@ class GlobalLangGraphGuidanceController(MultiAgentThreeCallController):
             "memory_visual_audit_error": memory_visual_audit_error,
             "advisory_only": advisory_only,
             "weather": core.weather_dict(),
-            "model": OLLAMA_MODEL,
+            "model": _ollama_model_name(),
         }
         self._log_global_call(
             step=step,
