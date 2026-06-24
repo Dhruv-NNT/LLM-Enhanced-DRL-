@@ -1,0 +1,113 @@
+{
+  "created_at": "20260622T171911Z",
+  "mappo_ckpt": "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_mappo_logs/ERandom_ce_5percent/weights/last_checkpoint.pt",
+  "ollama_model": "gpt-oss:20b",
+  "guides": [
+    "llm",
+    "best_preview",
+    "preview_safe"
+  ],
+  "num_agents": 4,
+  "num_weather_cells": 2,
+  "route_ids": null,
+  "seed": 3000,
+  "n_episodes": 60,
+  "shadow_horizon": 5,
+  "gamma": 0.99,
+  "margin": 0.05,
+  "states_scored": 2752,
+  "n_llm_calls": 1591,
+  "wall_clock_seconds": 52874.37364053726,
+  "report": {
+    "traffic": {
+      "n": 764,
+      "mean_g_mappo": -2.477530880644117,
+      "mean_g_llm": -3.4483979023099525,
+      "llm_beats_mappo": 0.47643979057591623,
+      "mean_g_best_preview": -3.357774751812335,
+      "best_preview_beats_mappo": 0.46335078534031415,
+      "mean_g_preview_safe": -3.9291136921219647,
+      "preview_safe_beats_mappo": 0.43455497382198954,
+      "best_preview_beats_llm": 0.3036649214659686,
+      "preview_safe_beats_llm": 0.3102094240837696,
+      "best_source_share": {
+        "mappo": 0.412303664921466,
+        "llm": 0.3494764397905759,
+        "best_preview": 0.17801047120418848,
+        "preview_safe": 0.060209424083769635
+      }
+    },
+    "weather": {
+      "n": 455,
+      "mean_g_mappo": -0.1304721660009675,
+      "mean_g_llm": -2.007219339435208,
+      "llm_beats_mappo": 0.4043956043956044,
+      "mean_g_best_preview": -1.6894983017885121,
+      "best_preview_beats_mappo": 0.37362637362637363,
+      "mean_g_preview_safe": -1.6724260962513284,
+      "preview_safe_beats_mappo": 0.3912087912087912,
+      "best_preview_beats_llm": 0.2725274725274725,
+      "preview_safe_beats_llm": 0.3120879120879121,
+      "best_source_share": {
+        "mappo": 0.432967032967033,
+        "llm": 0.3252747252747253,
+        "best_preview": 0.15604395604395604,
+        "preview_safe": 0.08571428571428572
+      }
+    },
+    "boundary": {
+      "n": 1343,
+      "mean_g_mappo": 13.340175407946589,
+      "mean_g_llm": 13.755411861972663,
+      "llm_beats_mappo": 0.44527177959791514,
+      "mean_g_best_preview": 13.576053126042979,
+      "best_preview_beats_mappo": 0.4571854058078928,
+      "mean_g_preview_safe": 13.487033118218978,
+      "preview_safe_beats_mappo": 0.44080416976917347,
+      "best_preview_beats_llm": 0.21593447505584512,
+      "preview_safe_beats_llm": 0.27848101265822783,
+      "best_source_share": {
+        "mappo": 0.39314966492926284,
+        "llm": 0.39538346984363365,
+        "best_preview": 0.13998510796723754,
+        "preview_safe": 0.07148175725986597
+      }
+    },
+    "nominal": {
+      "n": 190,
+      "mean_g_mappo": 6.766448026165991,
+      "mean_g_llm": 5.2328684708103905,
+      "llm_beats_mappo": 0.5842105263157895,
+      "mean_g_best_preview": 5.130828529222962,
+      "best_preview_beats_mappo": 0.5894736842105263,
+      "mean_g_preview_safe": 4.935046460398992,
+      "preview_safe_beats_mappo": 0.4631578947368421,
+      "best_preview_beats_llm": 0.06842105263157895,
+      "preview_safe_beats_llm": 0.20526315789473684,
+      "best_source_share": {
+        "mappo": 0.29473684210526313,
+        "llm": 0.49473684210526314,
+        "best_preview": 0.06315789473684211,
+        "preview_safe": 0.14736842105263157
+      }
+    },
+    "ALL": {
+      "n": 2752,
+      "mean_g_mappo": 6.26790780141761,
+      "mean_g_llm": 5.784848235201832,
+      "llm_beats_mappo": 0.45675872093023256,
+      "mean_g_best_preview": 5.7679633470674725,
+      "best_preview_beats_mappo": 0.45421511627906974,
+      "mean_g_preview_safe": 5.555213506783562,
+      "preview_safe_beats_mappo": 0.4324127906976744,
+      "best_preview_beats_llm": 0.2394622093023256,
+      "preview_safe_beats_llm": 0.2877906976744186,
+      "best_source_share": {
+        "mappo": 0.39825581395348836,
+        "llm": 0.37790697674418605,
+        "best_preview": 0.14789244186046513,
+        "preview_safe": 0.07594476744186046
+      }
+    }
+  }
+}

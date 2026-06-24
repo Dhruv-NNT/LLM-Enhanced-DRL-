@@ -303,6 +303,58 @@ def shadow_evaluate_actions(
     )
 
 
+def shadow_evaluate_teachers(
+    core: Any,
+    agent: Any,
+    *,
+    proposed_actions: Mapping[str, int],
+    teacher_actions_deg: Mapping[str, Mapping[str, int]],
+    horizon: int = LLM_SHADOW_HORIZON,
+    gamma: float = LLM_SHADOW_GAMMA,
+    episode_id: int = 0,
+) -> tuple[Dict[str, float], Dict[str, Dict[str, float]], list[str]]:
+    """Shadow-evaluate MAPPO vs each teacher's first action over a short horizon.
+
+    Reuses the same cloned-rollout machinery as ``shadow_evaluate_actions`` but
+    compares the MAPPO branch against an arbitrary set of named teacher branches
+    (e.g. ``{"llm": {...}, "heur": {...}}``). ``proposed_actions`` are MAPPO
+    action indexes; ``teacher_actions_deg`` maps a teacher name to per-agent
+    heading-change degrees. Only the first shadow step is forced; later steps use
+    deterministic MAPPO actions.
+
+    Returns ``(mappo_returns, teacher_returns_by_name, tracked_agent_ids)``.
+    """
+    tracked_ids = sorted(
+        set(str(agent_id) for agent_id in proposed_actions)
+        | {str(agent_id) for acts in teacher_actions_deg.values() for agent_id in acts}
+    )
+    mappo_first = _degree_actions_from_indices(proposed_actions)
+    mappo_returns = _rollout_branch(
+        core,
+        agent,
+        first_actions_deg=mappo_first,
+        tracked_agent_ids=tracked_ids,
+        horizon=int(horizon),
+        gamma=float(gamma),
+        episode_id=int(episode_id),
+    )
+    teacher_returns: Dict[str, Dict[str, float]] = {}
+    for name, acts in teacher_actions_deg.items():
+        first = dict(mappo_first)
+        for agent_id, deg in acts.items():
+            first[str(agent_id)] = int(deg)
+        teacher_returns[str(name)] = _rollout_branch(
+            core,
+            agent,
+            first_actions_deg=first,
+            tracked_agent_ids=tracked_ids,
+            horizon=int(horizon),
+            gamma=float(gamma),
+            episode_id=int(episode_id),
+        )
+    return mappo_returns, teacher_returns, tracked_ids
+
+
 def _mean_return_for_ids(returns: Mapping[str, float], agent_ids: Sequence[str]) -> float:
     values = [float(returns[str(agent_id)]) for agent_id in agent_ids if str(agent_id) in returns]
     return sum(values) / float(len(values)) if values else 0.0

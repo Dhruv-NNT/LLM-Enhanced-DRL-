@@ -234,6 +234,86 @@ LLM_MEMORY_EVALUATOR_ENABLED = True
 LLM_MEMORY_UPDATE_MARGIN = 0.10
 LLM_MEMORY_UPDATE_WITH_BEST_OF = "mappo_or_llm"
 
+# ---------------------------------------------------------------------------
+# Dual-teacher distillation (competence-weighted).
+#
+# Idea: no single guide is best everywhere. We distill the MAPPO student from
+# TWO complementary teachers at once -- an LLM guide and the cheap preview
+# heuristic -- trusting each where it is stronger.
+#
+# Offline (run once): generate_guided_trajectories.py records (state -> guide
+# action) for each guide; train_teachers.py turns each guide into a small
+# network (pi_LLM, pi_heur). This removes the slow LLM from the training loop.
+#
+# Training: train.py distills BOTH teacher networks into the student with a
+# competence-weighted loss, reusing the existing shadow-evaluation / auxiliary-
+# loss machinery. The environment is always MAPPO-controlled.
+# ---------------------------------------------------------------------------
+DISTILL_DATASET_DIR = PROJECT_ROOT / "distill_data"
+DISTILL_TEACHER_DIR = PROJECT_ROOT / "teachers"
+
+# Master switch. When True, train.py distills from the two teacher networks
+# instead of calling the live LLM controller / Ollama shadow evaluator.
+DISTILL_ENABLED = False
+
+# Teacher checkpoints produced by train_teachers.py.
+TEACHER_LLM_PATH = DISTILL_TEACHER_DIR / "teacher_llm.pt"
+TEACHER_HEUR_PATH = DISTILL_TEACHER_DIR / "teacher_heur.pt"
+
+# Teacher network architecture. Same input convention as the student actor
+# (local_obs + one-hot(agent_index)); kept small.
+TEACHER_HIDDEN_DIMS = (128, 128)
+TEACHER_ACTIVATION = "silu"
+TEACHER_USE_LAYER_NORM = True
+
+# Teacher supervised-training defaults (train_teachers.py).
+TEACHER_LR = 3e-4
+TEACHER_EPOCHS = 30
+TEACHER_BATCH_SIZE = 256
+TEACHER_VAL_FRACTION = 0.1
+TEACHER_LABEL_SMOOTHING = 0.05
+TEACHER_WEIGHT_DECAY = 0.0
+TEACHER_EARLY_STOP_PATIENCE = 5
+
+# Distillation loss applied to the MAPPO student.
+#   "js"      -> Jensen-Shannon divergence between student and teacher (default).
+#   "ce"      -> cross-entropy toward the teacher's argmax action.
+#   "soft_kl" -> KL toward a Gaussian-smoothed target around the teacher action.
+DISTILL_LOSS_TYPE = "js"
+DISTILL_LOSS_WEIGHT = 0.25
+DISTILL_DECAY_ENABLED = True
+DISTILL_MIN_WEIGHT = 0.0
+# Decay window for the distillation weight (agent steps). Past the end step the
+# weight is held at DISTILL_MIN_WEIGHT so late training is pure PPO fine-tune.
+DISTILL_DECAY_START_STEP = 0
+DISTILL_DECAY_END_STEP = LLM_GUIDANCE_END_STEP
+
+# Which teachers participate. Names map to networks attached in MAPPO.
+DISTILL_TEACHERS = ("llm", "heur")
+# Reuse the existing LLM phase weights for the LLM teacher; flat for others.
+DISTILL_USE_PHASE_WEIGHTS = True
+
+# ----- Competence weighting (which teacher to trust in a given state) -----
+#   "shadow"        -> reuse the shadow-rollout advantage of each teacher over
+#                      MAPPO (same machinery already used for the LLM). A teacher
+#                      is trusted in proportion to how much its action beats
+#                      MAPPO over LLM_SHADOW_HORIZON steps.
+#   "weather_rule"  -> fixed rule: trust the heuristic more when a weather cell
+#                      is near, the LLM more otherwise.
+#   "equal"         -> both teachers weighted equally (ablation).
+COMPETENCE_MODE = "shadow"
+
+# weather_rule parameters. "Near" means the (predicted) weather clearance is
+# below CLEARANCE_MULT * core.weather_clearance_buffer_units. The threshold and
+# softness are expressed as multiples of the simulator's own weather buffer
+# (grid units), so they stay unit-correct regardless of the nm->grid scaling.
+WEATHER_RULE_CLEARANCE_MULT = 1.5    # "near" if predicted clearance < mult * weather buffer
+WEATHER_RULE_SOFTNESS_MULT = 0.5     # sigmoid width as a fraction of the buffer; <=0 -> hard switch
+WEATHER_RULE_HEUR_WHEN_NEAR = 1.0
+WEATHER_RULE_LLM_WHEN_NEAR = 0.0
+WEATHER_RULE_HEUR_WHEN_FAR = 0.0
+WEATHER_RULE_LLM_WHEN_FAR = 1.0
+
 # Pure-LLM defaults.
 RUN_MODES = ("LLM_ONLY",)
 FRAME_DURATION_MS = 250

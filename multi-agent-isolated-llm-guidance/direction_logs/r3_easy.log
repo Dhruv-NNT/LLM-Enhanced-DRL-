@@ -1,0 +1,51 @@
+Complementarity diagnostic
+  reference MAPPO : /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_mappo_logs/ERandom_ce_5percent/weights/last_checkpoint.pt
+  guides          : ['llm', 'best_preview', 'preview_safe']
+  ollama model    : gpt-oss:20b
+  episodes        : 60  (seeds 3000..3059)
+  agents / weather: 4 / 2
+  shadow horizon  : 5  gamma=0.99  margin=0.05
+  out dir         : complementarity/easy
+diag:   0%|          | 0/60 [00:00<?, ?ep/s]diag:   2%|▏         | 1/60 [09:13<9:04:10, 553.39s/ep]diag:   3%|▎         | 2/60 [38:01<20:02:47, 1244.27s/ep]diag:   5%|▌         | 3/60 [55:34<18:19:13, 1157.07s/ep]diag:   7%|▋         | 4/60 [1:18:42<19:25:08, 1248.37s/ep]diag:   8%|▊         | 5/60 [1:34:33<17:26:03, 1141.15s/ep]diag:  10%|█         | 6/60 [1:36:05<11:45:49, 784.26s/ep] diag:  12%|█▏        | 7/60 [1:54:09<12:59:25, 882.38s/ep]diag:  13%|█▎        | 8/60 [2:08:40<12:41:34, 878.75s/ep]diag:  15%|█▌        | 9/60 [2:28:06<13:43:08, 968.41s/ep]diag:  17%|█▋        | 10/60 [2:38:46<12:02:33, 867.07s/ep]diag:  18%|█▊        | 11/60 [2:51:42<11:25:22, 839.23s/ep]diag:  20%|██        | 12/60 [3:08:35<11:53:45, 892.19s/ep]diag:  22%|██▏       | 13/60 [3:14:36<9:32:42, 731.12s/ep] diag:  23%|██▎       | 14/60 [3:27:07<9:25:06, 737.10s/ep]diag:  25%|██▌       | 15/60 [3:40:03<9:21:44, 748.99s/ep]diag:  27%|██▋       | 16/60 [3:56:13<9:57:54, 815.33s/ep]diag:  28%|██▊       | 17/60 [4:15:13<10:54:23, 913.10s/ep]diag:  30%|███       | 18/60 [4:25:08<9:32:18, 817.59s/ep] diag:  32%|███▏      | 19/60 [4:40:58<9:45:44, 857.17s/ep]diag:  33%|███▎      | 20/60 [4:54:10<9:18:22, 837.55s/ep]diag:  35%|███▌      | 21/60 [5:12:36<9:56:55, 918.34s/ep]diag:  37%|███▋      | 22/60 [5:23:54<8:55:54, 846.18s/ep]diag:  38%|███▊      | 23/60 [5:40:01<9:04:11, 882.49s/ep]diag:  40%|████      | 24/60 [5:57:34<9:20:11, 933.65s/ep]diag:  42%|████▏     | 25/60 [6:12:28<8:57:32, 921.50s/ep]diag:  43%|████▎     | 26/60 [6:23:53<8:02:05, 850.76s/ep]diag:  45%|████▌     | 27/60 [6:39:45<8:04:30, 880.93s/ep]diag:  47%|████▋     | 28/60 [6:40:37<5:37:16, 632.39s/ep]diag:  48%|████▊     | 29/60 [6:50:37<5:21:38, 622.55s/ep]diag:  50%|█████     | 30/60 [7:03:45<5:36:06, 672.21s/ep]diag:  52%|█████▏    | 31/60 [7:17:42<5:48:45, 721.57s/ep]diag:  53%|█████▎    | 32/60 [7:31:07<5:48:26, 746.66s/ep]diag:  55%|█████▌    | 33/60 [7:43:08<5:32:33, 739.01s/ep]diag:  57%|█████▋    | 34/60 [8:00:52<6:02:28, 836.49s/ep]diag:  58%|█████▊    | 35/60 [8:14:44<5:47:56, 835.06s/ep]diag:  60%|██████    | 36/60 [8:37:13<6:35:43, 989.32s/ep]diag:  62%|██████▏   | 37/60 [8:48:27<5:42:58, 894.70s/ep]diag:  63%|██████▎   | 38/60 [8:59:08<5:00:11, 818.73s/ep]diag:  65%|██████▌   | 39/60 [9:16:59<5:13:02, 894.41s/ep]diag:  67%|██████▋   | 40/60 [9:30:14<4:48:12, 864.62s/ep]diag:  68%|██████▊   | 41/60 [9:39:36<4:05:00, 773.72s/ep]diag:  70%|███████   | 42/60 [9:56:22<4:13:04, 843.56s/ep]diag:  72%|███████▏  | 43/60 [10:15:42<4:25:50, 938.26s/ep]diag:  73%|███████▎  | 44/60 [10:30:25<4:05:46, 921.64s/ep]diag:  75%|███████▌  | 45/60 [10:43:22<3:39:34, 878.30s/ep]diag:  77%|███████▋  | 46/60 [10:54:52<3:11:46, 821.90s/ep]diag:  78%|███████▊  | 47/60 [11:13:03<3:15:33, 902.59s/ep]diag:  80%|████████  | 48/60 [11:27:09<2:57:06, 885.52s/ep]diag:  82%|████████▏ | 49/60 [11:46:10<2:56:25, 962.28s/ep]diag:  83%|████████▎ | 50/60 [11:58:43<2:29:55, 899.51s/ep]diag:  85%|████████▌ | 51/60 [12:17:46<2:25:51, 972.42s/ep]diag:  87%|████████▋ | 52/60 [12:35:42<2:13:48, 1003.50s/ep]diag:  88%|████████▊ | 53/60 [12:48:52<1:49:36, 939.55s/ep] diag:  90%|█████████ | 54/60 [13:09:01<1:42:02, 1020.43s/ep]diag:  92%|█████████▏| 55/60 [13:22:41<1:20:01, 960.33s/ep] diag:  93%|█████████▎| 56/60 [13:39:46<1:05:19, 979.79s/ep]diag:  95%|█████████▌| 57/60 [13:57:12<49:58, 999.52s/ep]  diag:  97%|█████████▋| 58/60 [14:14:11<33:30, 1005.45s/ep]diag:  98%|█████████▊| 59/60 [14:25:24<15:05, 905.62s/ep] diag: 100%|██████████| 60/60 [14:41:14<00:00, 918.93s/ep]diag: 100%|██████████| 60/60 [14:41:14<00:00, 881.24s/ep]
+
+================================================================================================
+COMPLEMENTARITY DIAGNOSTIC  |  states scored=2752  |  guides=['llm', 'best_preview', 'preview_safe']
+================================================================================================
+
+[traffic]  n=764
+  mean return: mappo=-2.478  llm=-3.448  best_preview=-3.358  preview_safe=-3.929
+  beats MAPPO : llm=48%  best_preview=46%  preview_safe=43%
+  beats LLM   : best_preview=30%  preview_safe=31%
+  best source : mappo=41%  llm=35%  best_preview=18%  preview_safe=6%
+
+[weather]  n=455
+  mean return: mappo=-0.130  llm=-2.007  best_preview=-1.689  preview_safe=-1.672
+  beats MAPPO : llm=40%  best_preview=37%  preview_safe=39%
+  beats LLM   : best_preview=27%  preview_safe=31%
+  best source : mappo=43%  llm=33%  best_preview=16%  preview_safe=9%
+
+[boundary]  n=1343
+  mean return: mappo=13.340  llm=13.755  best_preview=13.576  preview_safe=13.487
+  beats MAPPO : llm=45%  best_preview=46%  preview_safe=44%
+  beats LLM   : best_preview=22%  preview_safe=28%
+  best source : mappo=39%  llm=40%  best_preview=14%  preview_safe=7%
+
+[nominal]  n=190
+  mean return: mappo=6.766  llm=5.233  best_preview=5.131  preview_safe=4.935
+  beats MAPPO : llm=58%  best_preview=59%  preview_safe=46%
+  beats LLM   : best_preview=7%  preview_safe=21%
+  best source : mappo=29%  llm=49%  best_preview=6%  preview_safe=15%
+
+[ALL]  n=2752
+  mean return: mappo=6.268  llm=5.785  best_preview=5.768  preview_safe=5.555
+  beats MAPPO : llm=46%  best_preview=45%  preview_safe=43%
+  beats LLM   : best_preview=24%  preview_safe=29%
+  best source : mappo=40%  llm=38%  best_preview=15%  preview_safe=8%
+
+================================================================================================
+HEADLINE: a heuristic is the single best choice in 22% of states; a heuristic beats the LLM in up to 29% of states.
+  Rule of thumb: >~15-20% (especially concentrated in one scenario) => a second teacher is worth it.
+================================================================================================
+
+Wrote complementarity/easy/complementarity_report.json
+Wall clock: 52874.4s | LLM calls: 1591

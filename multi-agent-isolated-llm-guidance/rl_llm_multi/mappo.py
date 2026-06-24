@@ -18,6 +18,10 @@ from torch.distributions import Categorical
 
 from configs import (
     ACTION_BINS,
+    DISTILL_ENABLED,
+    DISTILL_LOSS_TYPE,
+    DISTILL_LOSS_WEIGHT,
+    DISTILL_USE_PHASE_WEIGHTS,
     LLM_LOSS_ENABLED,
     LLM_LOSS_TYPE,
     LLM_LOSS_WEIGHT,
@@ -102,6 +106,21 @@ def _torch_load(path: str, map_location):
         return torch.load(path, map_location=map_location, weights_only=False)
     except TypeError:
         return torch.load(path, map_location=map_location)
+
+
+def _js_divergence(student_logp: torch.Tensor, teacher_probs: torch.Tensor) -> torch.Tensor:
+    """Per-sample Jensen-Shannon divergence (natural log, range [0, ln 2]).
+
+    ``student_logp`` is log-probabilities (B, A); ``teacher_probs`` is
+    probabilities (B, A). Returns a (B,) tensor. Gradient flows through
+    ``student_logp``; ``teacher_probs`` is treated as a constant target.
+    """
+    student_p = student_logp.exp()
+    m = 0.5 * (student_p + teacher_probs)
+    logm = torch.log(m + 1e-8)
+    student_term = (student_p * (student_logp - logm)).sum(dim=-1)
+    teacher_term = (teacher_probs * (torch.log(teacher_probs + 1e-8) - logm)).sum(dim=-1)
+    return 0.5 * student_term + 0.5 * teacher_term
 
 
 def agent_id_to_index(agent_id: str, max_agents: int = MAX_AGENTS) -> int:
@@ -193,6 +212,15 @@ class RolloutBuffer:
         self.memory_action_degs: List[int] = []
         self.memory_refs: List[Optional[Dict[str, object]]] = []
         self.memory_update_applied: List[bool] = []
+        # Dual-teacher distillation labels (precomputed at decision time).
+        self.distill_available: List[bool] = []
+        self.distill_phases: List[str] = []
+        self.teacher_llm_probs: List[torch.Tensor] = []
+        self.teacher_heur_probs: List[torch.Tensor] = []
+        self.teacher_llm_action_indices: List[int] = []
+        self.teacher_heur_action_indices: List[int] = []
+        self.distill_weight_llm: List[float] = []
+        self.distill_weight_heur: List[float] = []
 
     def add(
         self,
@@ -226,6 +254,25 @@ class RolloutBuffer:
         memory_ref = metadata.get("memory_ref")
         self.memory_refs.append(dict(memory_ref) if isinstance(memory_ref, MappingABC) else None)
         self.memory_update_applied.append(bool(metadata.get("memory_update_applied", False)))
+        action_dim = len(ACTION_BINS)
+        self.distill_available.append(bool(metadata.get("distill_label_available", False)))
+        self.distill_phases.append(str(metadata.get("distill_phase", "") or ""))
+        llm_probs = metadata.get("teacher_llm_probs")
+        heur_probs = metadata.get("teacher_heur_probs")
+        self.teacher_llm_probs.append(
+            torch.as_tensor(llm_probs, dtype=torch.float32).detach().cpu().view(-1)
+            if llm_probs is not None
+            else torch.zeros(action_dim, dtype=torch.float32)
+        )
+        self.teacher_heur_probs.append(
+            torch.as_tensor(heur_probs, dtype=torch.float32).detach().cpu().view(-1)
+            if heur_probs is not None
+            else torch.zeros(action_dim, dtype=torch.float32)
+        )
+        self.teacher_llm_action_indices.append(int(metadata.get("teacher_llm_action_idx", 0) or 0))
+        self.teacher_heur_action_indices.append(int(metadata.get("teacher_heur_action_idx", 0) or 0))
+        self.distill_weight_llm.append(float(metadata.get("distill_weight_llm", 0.0) or 0.0))
+        self.distill_weight_heur.append(float(metadata.get("distill_weight_heur", 0.0) or 0.0))
 
     def clear(self) -> None:
         self.__init__()
@@ -611,6 +658,7 @@ class MAPPO:
         bootstrap_values: Optional[Mapping[Tuple[int, str], float]] = None,
         *,
         llm_loss_weight: Optional[float] = None,
+        distill_loss_weight: Optional[float] = None,
     ) -> Dict[str, float]:
         if len(self.buffer) == 0:
             return {"loss": 0.0, "policy_loss": 0.0, "value_loss": 0.0, "entropy": 0.0}
@@ -628,6 +676,20 @@ class MAPPO:
         llm_return_weights = torch.tensor(self.buffer.llm_return_weights, dtype=torch.float32, device=device)
         llm_phase_weights = self._llm_phase_weight_tensor(self.buffer.llm_phases)
         llm_label_count = int(llm_available.to(dtype=torch.int64).sum().item())
+
+        distill_enabled = bool(DISTILL_ENABLED)
+        if distill_enabled:
+            distill_available = torch.tensor(self.buffer.distill_available, dtype=torch.bool, device=device)
+            distill_phase_weights = self._llm_phase_weight_tensor(self.buffer.distill_phases)
+            teacher_llm_probs_all = torch.stack(self.buffer.teacher_llm_probs, dim=0).to(device)
+            teacher_heur_probs_all = torch.stack(self.buffer.teacher_heur_probs, dim=0).to(device)
+            teacher_llm_actions_all = torch.tensor(self.buffer.teacher_llm_action_indices, dtype=torch.long, device=device)
+            teacher_heur_actions_all = torch.tensor(self.buffer.teacher_heur_action_indices, dtype=torch.long, device=device)
+            distill_w_llm_all = torch.tensor(self.buffer.distill_weight_llm, dtype=torch.float32, device=device)
+            distill_w_heur_all = torch.tensor(self.buffer.distill_weight_heur, dtype=torch.float32, device=device)
+            distill_label_count = int(distill_available.to(dtype=torch.int64).sum().item())
+        else:
+            distill_label_count = 0
         llm_action_match_count = 0.0
         llm_abs_turn_difference_sum = 0.0
         if llm_label_count > 0:
@@ -695,6 +757,11 @@ class MAPPO:
                     if llm_loss_weight is None
                     else float(llm_loss_weight)
                 )
+                current_distill_weight = (
+                    float(DISTILL_LOSS_WEIGHT)
+                    if distill_loss_weight is None
+                    else float(distill_loss_weight)
+                )
                 llm_loss = torch.zeros((), dtype=torch.float32, device=device)
                 llm_effective_weight_mean = torch.zeros((), dtype=torch.float32, device=device)
                 if bool(LLM_LOSS_ENABLED) and current_llm_loss_weight > 0.0:
@@ -721,7 +788,53 @@ class MAPPO:
                     selected_losses = per_sample_llm_loss[label_mask]
                     llm_loss = (selected_losses * selected_weights).mean()
                     llm_effective_weight_mean = selected_weights.mean()
-                loss = policy_loss + 0.5 * value_loss - 0.01 * entropy_mean + current_llm_loss_weight * llm_loss
+
+                # Dual-teacher distillation loss: competence-weighted divergence
+                # between the student and each frozen teacher distribution.
+                distill_loss = torch.zeros((), dtype=torch.float32, device=device)
+                distill_weight_llm_mean = torch.zeros((), dtype=torch.float32, device=device)
+                distill_weight_heur_mean = torch.zeros((), dtype=torch.float32, device=device)
+                if distill_enabled and current_distill_weight > 0.0:
+                    mb_distill_available = distill_available[idx]
+                    mb_w_llm = distill_w_llm_all[idx]
+                    mb_w_heur = distill_w_heur_all[idx]
+                    # Average only over samples where at least one teacher has a
+                    # positive competence weight (mirrors the LLM-loss masking so
+                    # zero-weight samples do not dilute the distillation signal).
+                    contrib_mask = mb_distill_available & ((mb_w_llm > 0.0) | (mb_w_heur > 0.0))
+                    if bool(contrib_mask.any().item()):
+                        mb_distill_phase_w = (
+                            distill_phase_weights[idx]
+                            if bool(DISTILL_USE_PHASE_WEIGHTS)
+                            else torch.ones_like(distill_phase_weights[idx])
+                        )
+                        student_logits_d = self.policy.action_logits(mb_local_observations, mb_agents)
+                        student_logp_d = F.log_softmax(student_logits_d, dim=-1)
+                        loss_type = str(DISTILL_LOSS_TYPE).lower()
+                        per_sample_total = torch.zeros(student_logp_d.size(0), dtype=torch.float32, device=device)
+                        teacher_specs = (
+                            (teacher_llm_probs_all[idx], mb_w_llm, teacher_llm_actions_all[idx]),
+                            (teacher_heur_probs_all[idx], mb_w_heur, teacher_heur_actions_all[idx]),
+                        )
+                        for teacher_probs, w_col, teacher_actions in teacher_specs:
+                            if loss_type == "ce":
+                                per = -student_logp_d.gather(1, teacher_actions.long().view(-1, 1)).squeeze(1)
+                            elif loss_type == "soft_kl":
+                                target = self._soft_teacher_distribution(teacher_actions)
+                                per = F.kl_div(student_logp_d, target, reduction="none").sum(dim=-1)
+                            else:  # "js" (default): symmetric Jensen-Shannon divergence
+                                per = _js_divergence(student_logp_d, teacher_probs)
+                            per_sample_total = per_sample_total + per * (w_col * mb_distill_phase_w)
+                        distill_loss = per_sample_total[contrib_mask].mean()
+                        distill_weight_llm_mean = mb_w_llm[contrib_mask].mean()
+                        distill_weight_heur_mean = mb_w_heur[contrib_mask].mean()
+                loss = (
+                    policy_loss
+                    + 0.5 * value_loss
+                    - 0.01 * entropy_mean
+                    + current_llm_loss_weight * llm_loss
+                    + current_distill_weight * distill_loss
+                )
 
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -737,10 +850,15 @@ class MAPPO:
                 metric_sums["llm_loss"] += float(llm_loss.item())
                 metric_sums["llm_effective_weight"] += float(llm_effective_weight_mean.item())
                 metric_sums["llm_global_weight"] += float(current_llm_loss_weight)
+                metric_sums["distill_loss"] += float(distill_loss.item())
+                metric_sums["distill_weight_llm"] += float(distill_weight_llm_mean.item())
+                metric_sums["distill_weight_heur"] += float(distill_weight_heur_mean.item())
+                metric_sums["distill_global_weight"] += float(current_distill_weight)
                 metric_count += 1
 
         if metric_count > 0:
             metric_sums["llm_label_count"] += float(llm_label_count) * float(metric_count)
+            metric_sums["distill_label_count"] += float(distill_label_count) * float(metric_count)
             metric_sums["llm_action_match_rate"] += (
                 llm_action_match_count / max(float(llm_label_count), 1.0)
             ) * float(metric_count)

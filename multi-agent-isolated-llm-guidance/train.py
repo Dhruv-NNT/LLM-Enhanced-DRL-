@@ -64,6 +64,8 @@ from configs import (
     LLM_SHADOW_MAX_WEIGHT,
     LLM_SHADOW_RETURN_WEIGHT_CLIP,
     USE_LLM_GUIDED_TRAINING,
+    DISTILL_ENABLED,
+    COMPETENCE_MODE,
     DECISION_MEMORY_VISUAL_AUDIT_DIR,
     DECISION_MEMORY_VISUAL_AUDIT_ENABLED,
     DECISION_MEMORY_VISUAL_AUDIT_FRAME_COUNT,
@@ -81,6 +83,7 @@ from rl_llm_multi import LLMGuidanceProvider, MAPPO, MultiAgentParallelEnv, NoGu
 from rl_llm_multi.mappo import evaluate_policy
 from rl_llm_multi.memory import DecisionMemoryStore
 from rl_llm_multi.utils import action_idx_to_deg
+from rl_llm_multi.distill import build_distill_metadata, current_distill_weight, load_distill_teachers
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -964,7 +967,20 @@ def main() -> None:
         reset_options=reset_options,
     )
     llm_audit_path = log_dir / "llm_guided_mappo_audit.jsonl"
-    if USE_LLM_GUIDED_TRAINING:
+    distill_active = bool(DISTILL_ENABLED)
+    distill_teachers = None
+    memory_store: Optional[DecisionMemoryStore] = None
+    if distill_active:
+        # Distillation takes precedence over the live LLM guidance path: the LLM
+        # is never called during training; the two frozen teacher networks supply
+        # the distillation target, and the environment stays MAPPO-controlled.
+        guidance = NoGuidanceProvider()
+        distill_teachers = load_distill_teachers()
+        print(
+            f"Distillation mode ON | competence_mode={COMPETENCE_MODE} | "
+            f"teachers=[llm, heur] | live LLM guidance disabled"
+        )
+    elif USE_LLM_GUIDED_TRAINING:
         guidance = LLMGuidanceProvider(
             save_dir=log_dir / "llm_guidance_json",
             memory_path=llm_memory_path,
@@ -975,7 +991,7 @@ def main() -> None:
             guidance_source=GUIDANCE_SOURCE,
             guidance_random_seed=GUIDANCE_RANDOM_SEED,
         )
-        memory_store: Optional[DecisionMemoryStore] = DecisionMemoryStore(llm_memory_path, max_episodes=LLM_GUIDED_MEMORY_MAX_EPISODES)
+        memory_store = DecisionMemoryStore(llm_memory_path, max_episodes=LLM_GUIDED_MEMORY_MAX_EPISODES)
         print(
             f"Guidance source: {GUIDANCE_SOURCE} "
             f"(random_seed={GUIDANCE_RANDOM_SEED})"
@@ -1103,7 +1119,7 @@ def main() -> None:
             )
             observations, info = env.reset(seed=int(args.seed) + int(episode), options=reset_options)
             guidance.reset()
-            episode_llm_guidance_active = _llm_guidance_active_for_episode(agent_steps)
+            episode_llm_guidance_active = (not distill_active) and _llm_guidance_active_for_episode(agent_steps)
             done = bool(info["__common__"]["episode_done"])
             truncated = bool(info["__common__"]["episode_truncated"])
             ep_return = 0.0
@@ -1268,6 +1284,23 @@ def main() -> None:
                     ep_memory_note_llm_count += sum(1 for value in memory_corrections.note_sources.values() if value == "llm")
                     ep_memory_note_fallback_count += sum(1 for value in memory_corrections.note_sources.values() if value == "fallback")
                     ep_advisory_memory_write_count += sum(1 for value in advisory_memory_writes.values() if value)
+
+                if distill_active and active_ids and current_distill_weight(agent_steps) > 0.0:
+                    # Build distillation targets from the two frozen teacher
+                    # networks (no Ollama) and competence weights. Stored as
+                    # buffer metadata; consumed by MAPPO.update's distill loss.
+                    # Skipped once the weight has decayed to 0 (pure-PPO phase),
+                    # which also avoids pointless shadow rollouts.
+                    llm_metadata_by_agent = build_distill_metadata(
+                        env.core,
+                        agent,
+                        observations,
+                        active_ids,
+                        teachers=distill_teachers,
+                        proposed_actions=policy_actions,
+                        competence_mode=COMPETENCE_MODE,
+                        episode_id=episode,
+                    )
 
                 final_actions = dict(policy_actions)
                 if advice_by_agent:
@@ -1460,7 +1493,10 @@ def main() -> None:
             writer.add_scalar("train/llm/merge_back_count", ep_phase_counts["MERGE_BACK"], agent_steps)
 
             if agent_steps >= next_update and len(agent.buffer) > 0:
-                metrics = agent.update(llm_loss_weight=_current_llm_loss_weight(agent_steps))
+                metrics = agent.update(
+                    llm_loss_weight=_current_llm_loss_weight(agent_steps),
+                    distill_loss_weight=current_distill_weight(agent_steps),
+                )
                 for key, value in metrics.items():
                     writer.add_scalar(f"loss/{key}", value, agent_steps)
                 agent.save_checkpoint(
@@ -1525,7 +1561,10 @@ def main() -> None:
                 )
 
         if len(agent.buffer) > 0:
-            metrics = agent.update(llm_loss_weight=_current_llm_loss_weight(agent_steps))
+            metrics = agent.update(
+                llm_loss_weight=_current_llm_loss_weight(agent_steps),
+                distill_loss_weight=current_distill_weight(agent_steps),
+            )
             for key, value in metrics.items():
                 writer.add_scalar(f"loss/{key}", value, agent_steps)
         agent.save_checkpoint(
