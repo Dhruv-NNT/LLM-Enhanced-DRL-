@@ -31,7 +31,7 @@ import torch
 import torch.nn as nn
 
 from configs import ACTION_BINS, MAX_AGENTS
-from .mappo import _atomic_torch_save, _build_mlp, _torch_load, device
+from .mappo import _atomic_torch_save, _build_mlp, _orthogonal_init, _torch_load, device
 
 TEACHER_SCHEMA_VERSION = 1
 
@@ -52,6 +52,7 @@ class TeacherPolicy(nn.Module):
         hidden_dims: Sequence[int] = (128, 128),
         activation: str = "silu",
         use_layer_norm: bool = True,
+        orthogonal_init: bool = False,
     ) -> None:
         super().__init__()
         self.local_obs_dim = int(local_obs_dim)
@@ -60,6 +61,7 @@ class TeacherPolicy(nn.Module):
         self.hidden_dims = tuple(int(dim) for dim in hidden_dims)
         self.activation = str(activation)
         self.use_layer_norm = bool(use_layer_norm)
+        self.orthogonal_init = bool(orthogonal_init)
         in_dim = self.local_obs_dim + self.max_agents
         self.net = _build_mlp(
             in_dim,
@@ -68,6 +70,11 @@ class TeacherPolicy(nn.Module):
             activation=self.activation,
             use_layer_norm=self.use_layer_norm,
         )
+        # Match the MAPPO actor's initialization exactly when requested (same
+        # orthogonal init with a small output gain), so the teacher and student
+        # actor are the identical network.
+        if self.orthogonal_init:
+            _orthogonal_init(self.net, activation=self.activation, output_gain=0.01)
         # Frozen input standardization, fit on the training dataset.
         self.register_buffer("input_mean", torch.zeros(self.local_obs_dim))
         self.register_buffer("input_std", torch.ones(self.local_obs_dim))
@@ -126,6 +133,7 @@ def save_teacher(teacher: TeacherPolicy, path: str | Path, meta: Optional[Dict] 
         "hidden_dims": list(teacher.hidden_dims),
         "activation": str(teacher.activation),
         "use_layer_norm": bool(teacher.use_layer_norm),
+        "orthogonal_init": bool(teacher.orthogonal_init),
         "action_bins": list(ACTION_BINS),
         "meta": dict(meta or {}),
     }
@@ -141,6 +149,7 @@ def load_teacher(path: str | Path, map_location=device) -> TeacherPolicy:
         hidden_dims=tuple(payload.get("hidden_dims", (128, 128))),
         activation=str(payload.get("activation", "silu")),
         use_layer_norm=bool(payload.get("use_layer_norm", True)),
+        orthogonal_init=bool(payload.get("orthogonal_init", False)),
     )
     teacher.load_state_dict(payload["state_dict"])
     teacher.to(map_location)
@@ -220,11 +229,18 @@ def load_trajectory_dataset(path: str | Path) -> TrajectoryArrays:
     """Load all shards under ``path`` (a directory) into one TrajectoryArrays."""
     path = Path(path)
     meta: Dict = {}
+    # Prefer a top-level meta; otherwise use the first one found in a subdir
+    # (parallel generation writes one meta per part_XX/ worker directory).
     meta_path = path / "dataset_meta.json"
+    if not meta_path.exists():
+        sub_metas = sorted(path.rglob("dataset_meta.json"))
+        meta_path = sub_metas[0] if sub_metas else meta_path
     if meta_path.exists():
         with meta_path.open("r", encoding="utf-8") as handle:
             meta = json.load(handle)
-    shard_paths = sorted(path.glob("shard_*.npz"))
+    # Recursive so a parent dir containing part_XX/ worker subdirs merges cleanly;
+    # a flat dataset directory still matches at the top level.
+    shard_paths = sorted(path.rglob("shard_*.npz"))
     if not shard_paths:
         raise FileNotFoundError(f"No shard_*.npz files found under {path}")
     chunks: Dict[str, List[np.ndarray]] = {

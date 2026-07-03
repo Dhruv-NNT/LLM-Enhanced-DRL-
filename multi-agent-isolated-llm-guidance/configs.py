@@ -136,7 +136,9 @@ MAPPO_METRICS_DIR = PROJECT_ROOT / "evaluation" / "mappo"
 #   "1"    -> use only physical GPU 1
 #   "0,1"  -> expose GPUs 0 and 1; current MAPPO still uses one visible GPU
 #   ""     -> hide GPUs and run on CPU
-MAPPO_CUDA_VISIBLE_DEVICES = "0"
+# MAPPO_CUDA_VISIBLE_DEVICES = "0"
+
+MAPPO_CUDA_VISIBLE_DEVICES = None
 
 MAPPO_MAX_AGENT_STEPS = 5_000_000
 MAPPO_UPDATE_AGENT_STEPS = 2_048
@@ -260,11 +262,26 @@ DISTILL_ENABLED = False
 TEACHER_LLM_PATH = DISTILL_TEACHER_DIR / "teacher_llm.pt"
 TEACHER_HEUR_PATH = DISTILL_TEACHER_DIR / "teacher_heur.pt"
 
-# Teacher network architecture. Same input convention as the student actor
-# (local_obs + one-hot(agent_index)); kept small.
-TEACHER_HIDDEN_DIMS = (128, 128)
-TEACHER_ACTIVATION = "silu"
-TEACHER_USE_LAYER_NORM = True
+# Registry of all known teacher checkpoints. DISTILL_TEACHERS selects an
+# arbitrary subset of these names to distill from (1, 2, or 3 teachers). The
+# "heur" alias is kept for backward compatibility with the two-teacher setup;
+# "best_preview"/"preview_safe" are the named heuristic teachers used in the
+# three-teacher study. Add more names here to register more teachers.
+DISTILL_TEACHER_PATHS = {
+    "llm": TEACHER_LLM_PATH,
+    "heur": TEACHER_HEUR_PATH,
+    "best_preview": DISTILL_TEACHER_DIR / "teacher_best_preview.pt",
+    "preview_safe": DISTILL_TEACHER_DIR / "teacher_preview_safe.pt",
+}
+
+# Teacher network architecture. Made identical to the MAPPO actor (same hidden
+# dims, activation, LayerNorm, and orthogonal init) so the teacher and the
+# student actor are the exact same network — removing any capacity confound in
+# the distillation experiments. To shrink the teacher again, override these here.
+TEACHER_HIDDEN_DIMS = MAPPO_HIDDEN_DIMS
+TEACHER_ACTIVATION = MAPPO_ACTIVATION
+TEACHER_USE_LAYER_NORM = MAPPO_USE_LAYER_NORM
+TEACHER_ORTHOGONAL_INIT = MAPPO_ORTHOGONAL_INIT
 
 # Teacher supervised-training defaults (train_teachers.py).
 TEACHER_LR = 3e-4
@@ -288,8 +305,15 @@ DISTILL_MIN_WEIGHT = 0.0
 DISTILL_DECAY_START_STEP = 0
 DISTILL_DECAY_END_STEP = LLM_GUIDANCE_END_STEP
 
-# Which teachers participate. Names map to networks attached in MAPPO.
+# Which teachers participate. Any subset of DISTILL_TEACHER_PATHS keys. Examples:
+#   ("llm",)                                -> single LLM teacher (prior work)
+#   ("llm", "heur")                         -> two teachers (default)
+#   ("llm", "best_preview", "preview_safe") -> three-teacher study
 DISTILL_TEACHERS = ("llm", "heur")
+# For weather_rule competence: teacher names treated as "LLM-type" (favored when
+# weather is FAR). Every other active teacher is treated as heuristic-type
+# (favored when weather is NEAR). The shadow/equal modes ignore this setting.
+DISTILL_LLM_TEACHER_NAMES = ("llm",)
 # Reuse the existing LLM phase weights for the LLM teacher; flat for others.
 DISTILL_USE_PHASE_WEIGHTS = True
 

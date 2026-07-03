@@ -25,8 +25,10 @@ from configs import (
     DISTILL_DECAY_ENABLED,
     DISTILL_DECAY_END_STEP,
     DISTILL_DECAY_START_STEP,
+    DISTILL_LLM_TEACHER_NAMES,
     DISTILL_LOSS_WEIGHT,
     DISTILL_MIN_WEIGHT,
+    DISTILL_TEACHER_PATHS,
     DISTILL_TEACHERS,
     LLM_RETURN_WEIGHT_AGENT_COEF,
     LLM_RETURN_WEIGHT_JOINT_COEF,
@@ -36,8 +38,6 @@ from configs import (
     LLM_SHADOW_RETURN_MARGIN,
     LLM_SHADOW_RETURN_SCALE,
     LLM_SHADOW_RETURN_WEIGHT_CLIP,
-    TEACHER_HEUR_PATH,
-    TEACHER_LLM_PATH,
     WEATHER_RULE_CLEARANCE_MULT,
     WEATHER_RULE_HEUR_WHEN_FAR,
     WEATHER_RULE_HEUR_WHEN_NEAR,
@@ -70,13 +70,22 @@ def current_distill_weight(agent_steps: int) -> float:
 
 
 def load_distill_teachers(
-    llm_path: str | Path = TEACHER_LLM_PATH,
-    heur_path: str | Path = TEACHER_HEUR_PATH,
+    teacher_names: Sequence[str] = DISTILL_TEACHERS,
+    paths: Optional[Mapping[str, str | Path]] = None,
 ) -> Dict[str, TeacherPolicy]:
-    """Load the two frozen teacher networks. Raises if a checkpoint is missing."""
+    """Load the frozen teacher networks named in ``teacher_names`` from the
+    registry. Only the requested teachers are loaded, so single-teacher and
+    two-teacher runs do not require checkpoints for teachers they will not use.
+    Raises if a requested teacher is unregistered or its checkpoint is missing."""
+    registry = dict(DISTILL_TEACHER_PATHS if paths is None else paths)
     teachers: Dict[str, TeacherPolicy] = {}
-    for name, path in (("llm", llm_path), ("heur", heur_path)):
-        path = Path(path)
+    for name in teacher_names:
+        if name not in registry:
+            raise KeyError(
+                f"Teacher '{name}' is not registered in DISTILL_TEACHER_PATHS. "
+                f"Known teachers: {sorted(registry)}."
+            )
+        path = Path(registry[name])
         if not path.exists():
             raise FileNotFoundError(
                 f"Teacher checkpoint for '{name}' not found at {path}. "
@@ -159,6 +168,14 @@ def weather_rule_weights(core, agent_id: str) -> tuple[float, float]:
     return w_llm, w_heur
 
 
+def weather_rule_weight_for(core, agent_id: str, teacher_name: str) -> float:
+    """Per-teacher weather-rule weight: LLM-type teachers (named in
+    DISTILL_LLM_TEACHER_NAMES) get the 'far' branch, all other teachers get the
+    heuristic 'near' branch."""
+    w_llm, w_heur = weather_rule_weights(core, agent_id)
+    return w_llm if teacher_name in set(DISTILL_LLM_TEACHER_NAMES) else w_heur
+
+
 @torch.no_grad()
 def build_distill_metadata(
     core,
@@ -176,12 +193,16 @@ def build_distill_metadata(
     MAPPO.store_outcomes(llm_metadata_by_agent=...)."""
     if not active_ids or not teachers:
         return {}
-    teacher_llm = teachers["llm"]
-    teacher_heur = teachers["heur"]
+    # Honor DISTILL_TEACHERS: distill only from teachers that are both loaded and
+    # listed as active. This drives the single-teacher (T1/T2), two-teacher, and
+    # three-teacher runs from one code path.
+    active_names = [str(name) for name in DISTILL_TEACHERS if str(name) in teachers]
+    if not active_names:
+        return {}
 
+    # Per-agent teacher action index + probability vector for each active teacher.
     info: Dict[str, Dict[str, object]] = {}
-    llm_actions_deg: Dict[str, int] = {}
-    heur_actions_deg: Dict[str, int] = {}
+    actions_deg_by_teacher: Dict[str, Dict[str, int]] = {name: {} for name in active_names}
     for agent_id in active_ids:
         agent_id = str(agent_id)
         obs_np = observations.get(agent_id)
@@ -191,67 +212,59 @@ def build_distill_metadata(
             agent_index = agent_id_to_index(agent_id)
         except ValueError:
             continue
-        llm_a, llm_p = _teacher_action_and_probs(teacher_llm, obs_np, agent_index)
-        heur_a, heur_p = _teacher_action_and_probs(teacher_heur, obs_np, agent_index)
-        info[agent_id] = {"llm_a": llm_a, "llm_p": llm_p, "heur_a": heur_a, "heur_p": heur_p}
-        llm_actions_deg[agent_id] = action_idx_to_deg(int(llm_a), ACTION_BINS)
-        heur_actions_deg[agent_id] = action_idx_to_deg(int(heur_a), ACTION_BINS)
+        rec: Dict[str, object] = {}
+        for name in active_names:
+            a, p = _teacher_action_and_probs(teachers[name], obs_np, agent_index)
+            rec[name] = {"a": int(a), "p": p}
+            actions_deg_by_teacher[name][agent_id] = action_idx_to_deg(int(a), ACTION_BINS)
+        info[agent_id] = rec
 
     if not info:
         return {}
 
     mode = str(competence_mode).lower()
-    weights: Dict[str, tuple[float, float]] = {}
+    # weights[agent_id][teacher_name] -> competence weight.
+    weights: Dict[str, Dict[str, float]] = {agent_id: {} for agent_id in info}
     if mode == "shadow":
         mappo_returns, teacher_returns, tracked = shadow_evaluate_teachers(
             core,
             agent,
             proposed_actions=proposed_actions,
-            teacher_actions_deg={"llm": llm_actions_deg, "heur": heur_actions_deg},
+            teacher_actions_deg=actions_deg_by_teacher,
             horizon=int(LLM_SHADOW_HORIZON),
             gamma=float(LLM_SHADOW_GAMMA),
             episode_id=int(episode_id),
         )
-        llm_returns = teacher_returns.get("llm", {})
-        heur_returns = teacher_returns.get("heur", {})
         g_mappo_joint = _mean_return_for_ids(mappo_returns, tracked)
-        g_llm_joint = _mean_return_for_ids(llm_returns, tracked)
-        g_heur_joint = _mean_return_for_ids(heur_returns, tracked)
+        joint_by_teacher = {
+            name: _mean_return_for_ids(teacher_returns.get(name, {}), tracked)
+            for name in active_names
+        }
         for agent_id in info:
             g_mappo_i = float(mappo_returns.get(agent_id, 0.0))
-            g_llm_i = float(llm_returns.get(agent_id, 0.0))
-            g_heur_i = float(heur_returns.get(agent_id, 0.0))
-            w_llm = _hybrid_weight(g_llm_i, g_mappo_i, g_llm_joint, g_mappo_joint)
-            w_heur = _hybrid_weight(g_heur_i, g_mappo_i, g_heur_joint, g_mappo_joint)
-            weights[agent_id] = (w_llm, w_heur)
+            for name in active_names:
+                g_t_i = float(teacher_returns.get(name, {}).get(agent_id, 0.0))
+                weights[agent_id][name] = _hybrid_weight(
+                    g_t_i, g_mappo_i, joint_by_teacher[name], g_mappo_joint
+                )
     elif mode == "weather_rule":
         for agent_id in info:
-            weights[agent_id] = weather_rule_weights(core, agent_id)
+            for name in active_names:
+                weights[agent_id][name] = weather_rule_weight_for(core, agent_id, name)
     else:  # "equal"
         for agent_id in info:
-            weights[agent_id] = (1.0, 1.0)
-
-    # Honor DISTILL_TEACHERS: zero the weight of any teacher not in the active
-    # set. This enables the single-teacher ablations (T1 = llm-only via
-    # DISTILL_TEACHERS=("llm",), T2 = heur-only) in every competence mode.
-    active = {str(name).lower() for name in DISTILL_TEACHERS}
-    llm_on = "llm" in active
-    heur_on = "heur" in active
-    if not (llm_on and heur_on):
-        for agent_id, (w_llm, w_heur) in list(weights.items()):
-            weights[agent_id] = (w_llm if llm_on else 0.0, w_heur if heur_on else 0.0)
+            for name in active_names:
+                weights[agent_id][name] = 1.0
 
     metadata: Dict[str, Dict[str, object]] = {}
     for agent_id, rec in info.items():
-        w_llm, w_heur = weights.get(agent_id, (0.0, 0.0))
         metadata[agent_id] = {
             "distill_label_available": True,
             "distill_phase": "",  # no controller phase in distillation mode
-            "teacher_llm_probs": rec["llm_p"],
-            "teacher_heur_probs": rec["heur_p"],
-            "teacher_llm_action_idx": int(rec["llm_a"]),
-            "teacher_heur_action_idx": int(rec["heur_a"]),
-            "distill_weight_llm": float(w_llm),
-            "distill_weight_heur": float(w_heur),
+            "teacher_probs": {name: rec[name]["p"] for name in active_names},
+            "teacher_action_idx": {name: int(rec[name]["a"]) for name in active_names},
+            "distill_weight": {
+                name: float(weights[agent_id].get(name, 0.0)) for name in active_names
+            },
         }
     return metadata

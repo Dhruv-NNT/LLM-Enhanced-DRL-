@@ -192,42 +192,74 @@ class TestBufferDistillFields(unittest.TestCase):
         meta = {
             "distill_label_available": True,
             "distill_phase": "",
-            "teacher_llm_probs": probs,
-            "teacher_heur_probs": probs,
-            "teacher_llm_action_idx": 3,
-            "teacher_heur_action_idx": 5,
-            "distill_weight_llm": 0.4,
-            "distill_weight_heur": 0.7,
+            "teacher_probs": {"llm": probs, "heur": probs},
+            "teacher_action_idx": {"llm": 3, "heur": 5},
+            "distill_weight": {"llm": 0.4, "heur": 0.7},
         }
         buf.add(self._record(), reward=1.0, terminal=False, llm_metadata=meta)
         self.assertEqual(buf.distill_available, [True])
-        self.assertEqual(buf.teacher_llm_action_indices, [3])
-        self.assertEqual(buf.teacher_heur_action_indices, [5])
-        self.assertAlmostEqual(buf.distill_weight_llm[0], 0.4)
-        self.assertAlmostEqual(buf.distill_weight_heur[0], 0.7)
-        self.assertEqual(tuple(buf.teacher_llm_probs[0].shape), (ACTION_DIM,))
+        self.assertEqual(buf.teacher_action_indices["llm"], [3])
+        self.assertEqual(buf.teacher_action_indices["heur"], [5])
+        self.assertAlmostEqual(buf.distill_weights["llm"][0], 0.4)
+        self.assertAlmostEqual(buf.distill_weights["heur"][0], 0.7)
+        self.assertEqual(tuple(buf.teacher_probs["llm"][0].shape), (ACTION_DIM,))
+
+    def test_three_teacher_columns(self):
+        buf = RolloutBuffer()
+        probs = torch.softmax(torch.randn(ACTION_DIM), dim=-1)
+        meta = {
+            "distill_label_available": True,
+            "teacher_probs": {"llm": probs, "best_preview": probs, "preview_safe": probs},
+            "teacher_action_idx": {"llm": 1, "best_preview": 2, "preview_safe": 3},
+            "distill_weight": {"llm": 0.1, "best_preview": 0.2, "preview_safe": 0.3},
+        }
+        buf.add(self._record(), reward=1.0, terminal=False, llm_metadata=meta)
+        self.assertEqual(set(buf.teacher_action_indices), {"llm", "best_preview", "preview_safe"})
+        self.assertEqual(buf.teacher_action_indices["preview_safe"], [3])
+        self.assertAlmostEqual(buf.distill_weights["best_preview"][0], 0.2)
 
     def test_placeholder_when_absent(self):
         buf = RolloutBuffer()
         buf.add(self._record(), reward=0.0, terminal=False, llm_metadata={})
         self.assertEqual(buf.distill_available, [False])
-        self.assertEqual(tuple(buf.teacher_llm_probs[0].shape), (ACTION_DIM,))
-        self.assertTrue(torch.allclose(buf.teacher_llm_probs[0], torch.zeros(ACTION_DIM)))
+        # No teacher metadata seen yet -> no teacher columns created.
+        self.assertEqual(buf.teacher_probs, {})
+
+    def test_ragged_backfill_for_late_teacher(self):
+        buf = RolloutBuffer()
+        # Row 0 has no teacher metadata; row 1 introduces a teacher.
+        buf.add(self._record(), reward=0.0, terminal=False, llm_metadata={})
+        probs = torch.softmax(torch.randn(ACTION_DIM), dim=-1)
+        meta = {
+            "distill_label_available": True,
+            "teacher_probs": {"llm": probs},
+            "teacher_action_idx": {"llm": 2},
+            "distill_weight": {"llm": 0.5},
+        }
+        buf.add(self._record(), reward=1.0, terminal=False, llm_metadata=meta)
+        # Column is back-filled for row 0 so it aligns with the row count.
+        self.assertEqual(buf.teacher_action_indices["llm"], [0, 2])
+        self.assertAlmostEqual(buf.distill_weights["llm"][0], 0.0)
+        self.assertAlmostEqual(buf.distill_weights["llm"][1], 0.5)
+        self.assertTrue(torch.allclose(buf.teacher_probs["llm"][0], torch.zeros(ACTION_DIM)))
 
 
 class TestTeacherGate(unittest.TestCase):
-    """DISTILL_TEACHERS must enable single-teacher ablations (T1/T2)."""
+    """DISTILL_TEACHERS selects the active subset: single-teacher ablations
+    (T1/T2), the two-teacher default, and the three-teacher study."""
 
-    def _teachers(self, obs_dim=6):
+    def _teachers(self, names, obs_dim=6):
         return {
-            "llm": TeacherPolicy(local_obs_dim=obs_dim, action_dim=ACTION_DIM, max_agents=4),
-            "heur": TeacherPolicy(local_obs_dim=obs_dim, action_dim=ACTION_DIM, max_agents=4),
+            name: TeacherPolicy(local_obs_dim=obs_dim, action_dim=ACTION_DIM, max_agents=4)
+            for name in names
         }
 
-    def _meta(self):
+    def _meta(self, teacher_names):
         obs = {"A1": np.zeros(6, dtype=np.float32)}
+        # Always supply all known teachers; DISTILL_TEACHERS must do the gating.
+        teachers = self._teachers(("llm", "heur", "best_preview", "preview_safe"))
         return distill.build_distill_metadata(
-            None, None, obs, ["A1"], teachers=self._teachers(6),
+            None, None, obs, ["A1"], teachers=teachers,
             proposed_actions={}, competence_mode="equal", episode_id=0,
         )["A1"]
 
@@ -235,9 +267,8 @@ class TestTeacherGate(unittest.TestCase):
         orig = distill.DISTILL_TEACHERS
         try:
             distill.DISTILL_TEACHERS = ("llm",)
-            meta = self._meta()
-            self.assertEqual(meta["distill_weight_llm"], 1.0)
-            self.assertEqual(meta["distill_weight_heur"], 0.0)
+            meta = self._meta(distill.DISTILL_TEACHERS)
+            self.assertEqual(meta["distill_weight"], {"llm": 1.0})
         finally:
             distill.DISTILL_TEACHERS = orig
 
@@ -245,9 +276,8 @@ class TestTeacherGate(unittest.TestCase):
         orig = distill.DISTILL_TEACHERS
         try:
             distill.DISTILL_TEACHERS = ("heur",)
-            meta = self._meta()
-            self.assertEqual(meta["distill_weight_llm"], 0.0)
-            self.assertEqual(meta["distill_weight_heur"], 1.0)
+            meta = self._meta(distill.DISTILL_TEACHERS)
+            self.assertEqual(meta["distill_weight"], {"heur": 1.0})
         finally:
             distill.DISTILL_TEACHERS = orig
 
@@ -255,9 +285,22 @@ class TestTeacherGate(unittest.TestCase):
         orig = distill.DISTILL_TEACHERS
         try:
             distill.DISTILL_TEACHERS = ("llm", "heur")
-            meta = self._meta()
-            self.assertEqual(meta["distill_weight_llm"], 1.0)
-            self.assertEqual(meta["distill_weight_heur"], 1.0)
+            meta = self._meta(distill.DISTILL_TEACHERS)
+            self.assertEqual(meta["distill_weight"], {"llm": 1.0, "heur": 1.0})
+        finally:
+            distill.DISTILL_TEACHERS = orig
+
+    def test_three_teachers(self):
+        orig = distill.DISTILL_TEACHERS
+        try:
+            distill.DISTILL_TEACHERS = ("llm", "best_preview", "preview_safe")
+            meta = self._meta(distill.DISTILL_TEACHERS)
+            self.assertEqual(
+                set(meta["distill_weight"]), {"llm", "best_preview", "preview_safe"}
+            )
+            self.assertEqual(set(meta["teacher_action_idx"]), set(meta["distill_weight"]))
+            self.assertEqual(set(meta["teacher_probs"]), set(meta["distill_weight"]))
+            self.assertTrue(all(w == 1.0 for w in meta["distill_weight"].values()))
         finally:
             distill.DISTILL_TEACHERS = orig
 

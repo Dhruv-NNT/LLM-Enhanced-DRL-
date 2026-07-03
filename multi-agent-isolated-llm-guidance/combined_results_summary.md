@@ -13,8 +13,8 @@ The two experiments look at this question from two different angles:
 
 ## Part 1 — Pure LLM Evaluation (no MAPPO)
 
-Source folder: `Evaluation_LLM_only`
-Source summary: `llm_only_results_summary.md`
+Source folder: `Evaluation_old_approach/Evaluation_LLM_only`
+Source summary: `archive_docs/llm_only_results_summary.md`
 
 ### What was evaluated
 
@@ -65,7 +65,7 @@ Also recorded: mean reward, mean steps per episode, mean number of guidance call
 
 ## Part 2 — MAPPO Trained with 5% LLM Guidance
 
-Source folder: `Evaluation_wts_5percent`
+Source folder: `Evaluation_old_approach/Evaluation_wts_5percent`
 Source file used for the new row: `E2_ce_5percent.json`
 
 ### What was evaluated
@@ -191,3 +191,341 @@ Do Direction 1 first. It is cheap (about a day, no new training) and converts th
 - If the LLM is statistically worse: go to Direction 5 (cheaper LLM) and re-test in Direction 2.
 
 In all cases the framework itself is the defensible contribution. The role of the LLM is what the next experiment should pin down.
+
+---
+
+# Three-Teacher Complementary Distillation Study (gpt-oss-20B)
+
+This section documents the *next* research direction, decided after the Gemma study
+above. Two things changed since Part 1/Part 2:
+
+1. **The LLM was upgraded** from Gemma 3:12B to the much stronger **gpt-oss-20B**.
+   As a pure controller it now clearly beats the heuristics on average (R1 below),
+   which threatened the premise that a cheap heuristic is worth keeping.
+2. **A per-decision diagnostic (R3) showed the threat is unfounded:** even though
+   the strong LLM is the best *overall* guide, it is *not* the best guide at every
+   individual decision. A cheap heuristic is the single best choice in a meaningful
+   minority of states, concentrated in safety-critical (traffic / weather) moments.
+
+This motivates a shift from a single teacher to **competence-weighted distillation
+from multiple complementary teachers**: an LLM teacher plus one or two cheap
+simulator-based heuristic teachers (`best_preview`, `preview_safe`), where the
+student trusts whichever teacher is more reliable *in that state*. The student
+(MAPPO) always remains the only thing that acts in the real environment.
+
+## Direction-finding evidence already collected
+
+All numbers below are factual outputs from the direction-finding runs (R1/R2/R3).
+
+**R1 — controller comparison, easy (4 aircraft, 100 episodes):** success / collision / weather / truncation (%)
+
+| Controller | Success | Coll | Weather | Trunc |
+|---|---:|---:|---:|---:|
+| gpt-oss-20B | 76 | 1 | 12 | 11 |
+| best_preview (heuristic) | 64 | 2 | 11 | 23 |
+| preview_safe (heuristic) | 54 | 1 | 15 | 30 |
+
+**R2 — controller comparison, hard (8 aircraft, 60 episodes):**
+
+| Controller | Success | Coll | Weather | Trunc |
+|---|---:|---:|---:|---:|
+| gpt-oss-20B | 18 | 3 | 57 | 22 |
+| best_preview (heuristic) | 15 | 3 | 50 | 32 |
+| preview_safe (heuristic) | 13 | 2 | 57 | 28 |
+
+In the hard regime every controller collapses (success < 20%, weather failures
+dominate), but the heuristics are not worse on safety (best_preview has the fewest
+weather failures, preview_safe the fewest collisions).
+
+**R3 — per-decision diagnostic (`direction_finding/analyze_complementarity.py`).** At ~2,750 decision
+states a fixed reference MAPPO policy is queried, then each guide's suggested action
+is shadow-rolled 5 steps and scored. "% of states" = % of those individual decision
+moments. Share of decisions where each guide is the single best of all four (the
+strictest test — beating every other guide including the second heuristic):
+
+| Single best guide | Easy (2752 states) | Hard (2746 states) |
+|---|---:|---:|
+| MAPPO (student — already best) | 40% | 40% |
+| LLM | 38% | 39% |
+| best_preview | 15% | 10% |
+| preview_safe | 8% | 11% |
+
+Reading: in ~40% of states the student is already best (no teacher needed); in the
+remaining ~60% a heuristic is the single best in ~23% and the LLM in ~38%. Crucially
+**both heuristics hold a distinct, non-trivial slice** — preview_safe is outright best
+(beating best_preview, the LLM, and MAPPO) in 8–11% of states — so they are
+complementary to *each other*, not redundant. This is the diagnostic pre-check that
+justifies investigating a three-teacher (rather than two-teacher) study.
+
+## Ladder of claims
+
+"No single teacher is best" is really four nested claims; each experiment maps to one:
+
+1. **Per-decision (diagnostic):** no single teacher is the best advisor in all
+   situations. *(Supported by R3 above.)*
+2. **Trained outcome:** a combination of teachers produces a better trained policy
+   than *any* single teacher.
+3. **Mechanism:** the gain comes from *competence weighting*, not merely from
+   averaging several teachers.
+4. **Marginal value:** inside the winning combination, *every* teacher pulls its
+   weight — drop any one and the trained result gets worse. (Strongest, most direct
+   evidence; requires the all-three-teacher runs.)
+
+## Experiment matrix (three teachers: LLM, best_preview, preview_safe)
+
+The three "leave-one-out" runs are exactly the three pairwise combinations, so the
+pairs come for free. All runs train a *separate* MAPPO policy and differ only in
+which teachers are active and how they are weighted; evaluate each with
+`evaluate_rl.py` and compare success rate (paired by seed).
+
+| Run | Teachers used | Weighting | Tests |
+|---|---|---|---|
+| **T0** | none (baseline) | — | reference point |
+| **S-LLM** | LLM only | shadow | single-teacher baseline (prior work) |
+| **S-BP** | best_preview only | shadow | single-teacher baseline |
+| **S-PS** | preview_safe only | shadow | single-teacher baseline |
+| **TRI-equal** | all three | equal | Claim 3 (is weighting needed?) |
+| **TRI-shadow** ⭐ | all three | shadow | the proposed method |
+| **LOO−LLM** | best_preview + preview_safe | shadow | Claim 4: marginal value of LLM |
+| **LOO−BP** | LLM + preview_safe | shadow | Claim 4: marginal value of best_preview |
+| **LOO−PS** | LLM + best_preview | shadow | Claim 4: marginal value of preview_safe |
+
+How the comparisons read:
+
+- **TRI-shadow beats S-LLM, S-BP, S-PS** → no single teacher is enough (Claims 1–2).
+- **TRI-shadow beats TRI-equal** → it is the competence weighting, not just
+  ensembling (Claim 3).
+- **TRI-shadow beats each LOO run** → each teacher contributes something the others
+  cannot supply (Claim 4). If, e.g., TRI-shadow ≈ LOO−PS, that is honest evidence
+  preview_safe is redundant and the method drops back to two teachers.
+
+Suggested sequencing: (1) diagnostic pre-check — already done, see R3; (2) pilot —
+TRI-shadow vs S-LLM vs LOO−LLM, seeds [0,1,2], short steps; (3) full matrix, seeds
+[0,1,2,3,4], full steps. Full matrix = 9 configs × 5 seeds = 45 runs, so the tiering
+matters.
+
+## Code-readiness audit (as of this study)
+
+The distillation pipeline is currently built for **exactly two teachers** (`llm` +
+`heur`). The trajectory-generation and shadow-evaluation cores are already generic;
+the buffer, loss, metadata, loader and config are hard-coded to two named slots.
+
+| Component | File | Ready for 3? | Note |
+|---|---|---|---|
+| Trajectory generation | `new_approach/generate_guided_trajectories.py` | yes | generic via `--guidance-source` |
+| Teacher training | `new_approach/train_teachers.py` | yes | explicit `--dataset-dir/--out-path/--name` trains any teacher (`--both` is the only hardwired-to-2 path) |
+| Shadow evaluation | `guidance.py::shadow_evaluate_teachers` | yes | already loops an arbitrary teacher dict |
+| Teacher loading | `distill.py::load_distill_teachers` | no | hardwired to `("llm","heur")`; loads both unconditionally |
+| Metadata build | `distill.py::build_distill_metadata` | no | fixed `llm`/`heur` keys and 2-tuple weights |
+| Buffer storage | `mappo.py::RolloutBuffer` | no | fixed `teacher_llm_*` / `teacher_heur_*` fields |
+| Loss loop | `mappo.py::MAPPO.update` | no | `teacher_specs` is a literal 2-tuple; metrics per fixed name |
+| Config | `configs.py` | no | only two teacher paths; `DISTILL_TEACHERS` fixed to `{llm,heur}` |
+
+**Key nuance:** the two slots are labelled `"llm"`/`"heur"` but, for the `shadow` and
+`equal` competence modes, those labels are cosmetic — any teacher can occupy either
+slot (only `weather_rule` mode is semantically asymmetric). Consequences:
+
+- **Runnable today, no code changes** (with `shadow` or `equal` weighting): **T0, all
+  three singles (S-LLM/S-BP/S-PS), and all three pairs (LOO−LLM/LOO−BP/LOO−PS)** — 7
+  of the 9 runs. For the BP+PS pair, put one heuristic in each slot and use shadow/equal.
+- **Blocked, needs code changes:** **TRI-equal and TRI-shadow** (all three teachers
+  at once). A genuine third slot must be threaded end-to-end.
+
+So Claims 1–3 are testable with the current code; **Claim 4 (the full leave-one-out
+story) requires the three-teacher generalization.**
+
+### Three-teacher generalization — change map (IMPLEMENTED)
+
+Status: done. The distillation pipeline now supports an arbitrary set of named
+teachers (1..N); all 20 distillation unit tests pass and a three-teacher
+`MAPPO.update()` runs end-to-end (teacher columns aligned, competence-weighted
+JS loss finite, per-teacher weight metrics logged, gradients flow). To run the
+three-teacher study set, e.g., `DISTILL_TEACHERS = ("llm", "best_preview",
+"preview_safe")` and register the checkpoints in `DISTILL_TEACHER_PATHS`
+(`teacher_best_preview.pt`, `teacher_preview_safe.pt`). The change touched:
+
+1. **`configs.py`** — replace the two fixed paths with a registry
+   `DISTILL_TEACHER_PATHS = {name: path, ...}`; `DISTILL_TEACHERS` becomes the active
+   subset.
+2. **`distill.py::load_distill_teachers`** — load only the teachers named in
+   `DISTILL_TEACHERS` from the registry (also fixes the "must exist even if unused"
+   wart that currently forces a placeholder `teacher_llm.pt`).
+3. **`distill.py::build_distill_metadata`** — build per-teacher action/probs in a loop
+   over active names; shadow returns one weight per teacher; emit metadata as dicts
+   keyed by teacher name.
+4. **`mappo.py::RolloutBuffer`** — store teacher probs/actions/weights as name-keyed
+   dicts of lists instead of fixed `llm`/`heur` fields.
+5. **`mappo.py::MAPPO.update`** — build `teacher_specs` by iterating active teacher
+   names; `contrib_mask` = OR over all teacher weights; per-teacher metrics keyed by
+   name.
+6. **`distill.py` weather_rule** — generalize the 2-tuple to a per-teacher weight
+   (only needed if `weather_rule` is used with 3 teachers; `shadow`/`equal` are already
+   general once the plumbing is dict-based).
+7. **`tests/test_distill.py`** — extend teacher-gate and buffer tests to N teachers.
+
+Each run is now fully specified on the command line via `train.py` flags
+(`--distill` / `--no-distill`, `--distill-teachers`, `--competence-mode`), so
+concurrent runs in separate tmux sessions never race on `configs.py`.
+
+## Runbook — Commands (CPU, Ollama-free first)
+
+This runbook runs every experiment that does **not** need Ollama first, on CPU.
+Only the LLM teacher's trajectory generation needs Ollama; once that teacher
+checkpoint exists, even the LLM runs are Ollama-free. The MAPPO training itself
+never calls Ollama in distillation mode.
+
+### One-time setup
+
+Force CPU everywhere. The machine has GPUs and PyTorch sees them, and `train.py`
+otherwise overrides the shell's `CUDA_VISIBLE_DEVICES` from the config, so you
+need both of these:
+
+1. In `configs.py` set `MAPPO_CUDA_VISIBLE_DEVICES = None` (so `train.py` stops
+   overriding and respects the shell). This makes the shell line below the single
+   control for every script.
+2. In every tmux session, set the shell line:
+
+```bash
+export CUDA_VISIBLE_DEVICES=""        # "" = CPU; later set to a free GPU id, e.g. "3"
+PY=/home/aradhya.dhruv/anaconda3/envs/llmdrl/bin/python
+cd "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance"
+```
+
+To switch to a GPU later, leave the config as `None` and just change the shell
+line to a free GPU id (e.g. `export CUDA_VISIBLE_DEVICES="3"`) — no config edits.
+
+CPU note: MAPPO training is slow on CPU. Phase A (data + teachers) is cheap and
+finishes quickly. For the Phase B training runs, use a reduced `STEPS` for a CPU
+pilot (the distillation window ends at 250k, so `STEPS=300000` covers it; drop to
+`STEPS=60000` for a faster first signal). Final-quality numbers will want more
+steps / a GPU.
+
+### Recommended order (one experiment per tmux session)
+
+**Phase A — offline, Ollama-free (datasets + heuristic teachers).** A1 and A2 can
+run concurrently; A3/A4 depend on them.
+
+Notes on the generation settings:
+- `--keep success` keeps only episodes where all aircraft reached their
+  destination — a clean, outcome-validated distillation target.
+- `--n-episodes` / `--total-episodes` is now a **target number of KEPT episodes**,
+  not games played: the generator keeps playing new games (fresh seeds) until it
+  has collected that many successful episodes. Default target is **6000**
+  successful episodes (~200k+ records — ample for the small teacher).
+- Generation is CPU-simulator-bound, so use **`new_approach/generate_parallel.py`** to split the
+  target across many worker processes. Each worker gets a disjoint seed range and
+  writes its own `part_XX/` subdirectory; the teacher loader reads the parent
+  directory recursively and merges the parts automatically (no merge step). The
+  launcher also auto-pins each worker to one math thread (OMP/BLAS), so workers map
+  cleanly to cores instead of oversubscribing — no manual `OMP_NUM_THREADS` needed.
+- Choose `--workers` from **physical** cores, not the inflated logical count
+  (`lscpu`: cores/socket × sockets = 32 here). **This box is shared, so use ~16
+  workers** (about half the cores) to leave room for co-tenants; bump toward 30
+  only when the machine is idle (`uptime` / `htop` to check). `--math-threads N`
+  overrides the 1-thread pin if you run few workers.
+- The launcher runs workers at **niceness 10** by default (lower CPU priority), so
+  others' jobs are not starved. Tune with `--nice` (0 = normal priority).
+- Route coverage is not a concern: the catalog has only **12 routes** (PATH1–PATH6
+  × forward/reversed); even 100 episodes already sees all 12 origin/destination
+  pairs, so 6000 covers every pair many times over.
+- Trade-off of success-only: it under-represents the hardest configurations (which
+  fail most), but a large 6000-episode target still captures many hard-but-handled
+  cases. If early distillation shows the student weak in conflict/weather moments,
+  regenerate with `--keep success_or_truncated` (keeps ran-out-of-time episodes,
+  still drops collision/weather crashes).
+
+```bash
+# Session A1: best_preview dataset — 6000 successful episodes across 12 CPU workers
+$PY new_approach/generate_parallel.py --guidance-source best_preview --keep success \
+    --total-episodes 6000 --workers 16 --seed 42 --num-agents 4 --num-weather-cells 2
+
+# Session A2: preview_safe dataset — 6000 successful episodes across 12 CPU workers
+$PY new_approach/generate_parallel.py --guidance-source preview_safe --keep success \
+    --total-episodes 6000 --workers 16 --seed 42 --num-agents 4 --num-weather-cells 2
+
+# Session A3: train the best_preview teacher (loader merges all part_XX/ dirs)
+$PY new_approach/train_teachers.py --dataset-dir distill_data/best_preview \
+    --out-path teachers/teacher_best_preview.pt --name best_preview
+
+# Session A4: train the preview_safe teacher
+$PY new_approach/train_teachers.py --dataset-dir distill_data/preview_safe \
+    --out-path teachers/teacher_preview_safe.pt --name preview_safe
+```
+
+(Single-process alternative, if you don't want parallelism:
+`$PY new_approach/generate_guided_trajectories.py --guidance-source best_preview --keep success --n-episodes 6000 ...`)
+
+**Phase B — Ollama-free training runs (4 experiments × seeds 0,1,2).** Each block
+is one tmux session running its 3 seeds sequentially. Set `STEPS` first.
+
+```bash
+STEPS=300000          # CPU pilot: lower to 60000 for a faster first look
+
+# Session B0: T0 baseline (no teachers)
+for s in 0 1 2; do
+  $PY train.py --no-distill --seed $s --max-agent-steps $STEPS \
+      --num-agents 4 --num-weather-cells 2 \
+      --log-dir runs/T0_baseline_seed$s --no-resume
+done
+
+# Session B1: S-BP (best_preview teacher only)
+for s in 0 1 2; do
+  $PY train.py --distill --distill-teachers best_preview --competence-mode shadow \
+      --seed $s --max-agent-steps $STEPS --num-agents 4 --num-weather-cells 2 \
+      --log-dir runs/S_BP_seed$s --no-resume
+done
+
+# Session B2: S-PS (preview_safe teacher only)
+for s in 0 1 2; do
+  $PY train.py --distill --distill-teachers preview_safe --competence-mode shadow \
+      --seed $s --max-agent-steps $STEPS --num-agents 4 --num-weather-cells 2 \
+      --log-dir runs/S_PS_seed$s --no-resume
+done
+
+# Session B3: LOO-LLM = both heuristics, no LLM (best_preview + preview_safe)
+for s in 0 1 2; do
+  $PY train.py --distill --distill-teachers best_preview preview_safe \
+      --competence-mode shadow --seed $s --max-agent-steps $STEPS \
+      --num-agents 4 --num-weather-cells 2 \
+      --log-dir runs/LOO_noLLM_seed$s --no-resume
+done
+```
+
+**Phase C — evaluate every Phase-B run.** Replace `<TAG>` with `T0_baseline`,
+`S_BP`, `S_PS`, `LOO_noLLM`.
+
+```bash
+for s in 0 1 2; do
+  $PY evaluate_rl.py --model-path runs/<TAG>_seed$s/weights/best_model.pt \
+      --n-episodes 100 --num-agents 4 --num-weather-cells 2 \
+      --metrics-path runs/<TAG>_seed$s/eval.json
+done
+```
+
+### Phase D — needs Ollama (run later, when gpt-oss is available)
+
+```bash
+# D1: LLM teacher dataset — target 250 successful episodes (needs Ollama; slow, so
+#     a smaller target than Phase A). Use FEW workers since they share one Ollama
+#     server (or run the single-process form).
+$PY new_approach/generate_parallel.py --guidance-source real --keep success \
+    --total-episodes 250 --workers 2 --ollama-model gpt-oss:20b \
+    --seed 42 --num-agents 4 --num-weather-cells 2
+
+# D2: train the LLM teacher
+$PY new_approach/train_teachers.py --dataset-dir distill_data/real \
+    --out-path teachers/teacher_llm.pt --name llm
+```
+
+Once `teacher_llm.pt` exists, these runs are Ollama-free (same `train.py` flags):
+
+| Run | `--distill-teachers` | `--competence-mode` |
+|---|---|---|
+| S-LLM | `llm` | `shadow` |
+| LOO-BP (llm + preview_safe) | `llm preview_safe` | `shadow` |
+| LOO-PS (llm + best_preview) | `llm best_preview` | `shadow` |
+| TRI-equal | `llm best_preview preview_safe` | `equal` |
+| TRI-shadow ⭐ | `llm best_preview preview_safe` | `shadow` |
+
+These flags override `configs.py` per run, so each tmux session is fully
+self-contained.

@@ -65,6 +65,7 @@ from configs import (
     LLM_SHADOW_RETURN_WEIGHT_CLIP,
     USE_LLM_GUIDED_TRAINING,
     DISTILL_ENABLED,
+    DISTILL_TEACHERS,
     COMPETENCE_MODE,
     DECISION_MEMORY_VISUAL_AUDIT_DIR,
     DECISION_MEMORY_VISUAL_AUDIT_ENABLED,
@@ -122,6 +123,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--last-ckpt-path", type=str, default=None, help="Optional override; defaults to <log-dir>/weights/last_checkpoint.pt.")
     parser.add_argument("--episode-step-cap", type=int, default=None)
     parser.add_argument("--no-resume", action="store_true")
+    # Distillation overrides. When omitted, the configs.py values are used. These
+    # let each run be fully specified on the command line, so concurrent runs
+    # (e.g. separate tmux sessions) never race on configs.py.
+    distill_group = parser.add_mutually_exclusive_group()
+    distill_group.add_argument("--distill", dest="distill", action="store_true", default=None,
+                               help="Force distillation ON (overrides DISTILL_ENABLED).")
+    distill_group.add_argument("--no-distill", dest="distill", action="store_false",
+                               help="Force distillation OFF (baseline run).")
+    parser.add_argument("--distill-teachers", nargs="*", default=None,
+                        help="Override DISTILL_TEACHERS, e.g. --distill-teachers llm best_preview preview_safe.")
+    parser.add_argument("--competence-mode", choices=("shadow", "equal", "weather_rule"), default=None,
+                        help="Override COMPETENCE_MODE for this run.")
     return parser.parse_args()
 
 
@@ -967,18 +980,31 @@ def main() -> None:
         reset_options=reset_options,
     )
     llm_audit_path = log_dir / "llm_guided_mappo_audit.jsonl"
-    distill_active = bool(DISTILL_ENABLED)
+    # Resolve distillation settings: CLI flags override configs.py so each run is
+    # self-contained (safe for concurrent tmux sessions). Overrides are pushed
+    # into the modules that read these as globals at loss/metadata time.
+    import rl_llm_multi.mappo as _mappo_module
+    import rl_llm_multi.distill as _distill_module
+
+    distill_active = bool(DISTILL_ENABLED if args.distill is None else args.distill)
+    competence_mode = COMPETENCE_MODE if args.competence_mode is None else args.competence_mode
+    distill_teacher_names = (
+        tuple(args.distill_teachers) if args.distill_teachers else tuple(DISTILL_TEACHERS)
+    )
+    _mappo_module.DISTILL_ENABLED = distill_active
+    _distill_module.DISTILL_TEACHERS = distill_teacher_names
+
     distill_teachers = None
     memory_store: Optional[DecisionMemoryStore] = None
     if distill_active:
         # Distillation takes precedence over the live LLM guidance path: the LLM
-        # is never called during training; the two frozen teacher networks supply
-        # the distillation target, and the environment stays MAPPO-controlled.
+        # is never called during training; the frozen teacher networks supply the
+        # distillation target, and the environment stays MAPPO-controlled.
         guidance = NoGuidanceProvider()
-        distill_teachers = load_distill_teachers()
+        distill_teachers = load_distill_teachers(distill_teacher_names)
         print(
-            f"Distillation mode ON | competence_mode={COMPETENCE_MODE} | "
-            f"teachers=[llm, heur] | live LLM guidance disabled"
+            f"Distillation mode ON | competence_mode={competence_mode} | "
+            f"teachers={list(distill_teacher_names)} | live LLM guidance disabled"
         )
     elif USE_LLM_GUIDED_TRAINING:
         guidance = LLMGuidanceProvider(
@@ -1286,8 +1312,8 @@ def main() -> None:
                     ep_advisory_memory_write_count += sum(1 for value in advisory_memory_writes.values() if value)
 
                 if distill_active and active_ids and current_distill_weight(agent_steps) > 0.0:
-                    # Build distillation targets from the two frozen teacher
-                    # networks (no Ollama) and competence weights. Stored as
+                    # Build distillation targets from the frozen teacher networks
+                    # (no Ollama) and competence weights. Stored as
                     # buffer metadata; consumed by MAPPO.update's distill loss.
                     # Skipped once the weight has decayed to 0 (pure-PPO phase),
                     # which also avoids pointless shadow rollouts.
@@ -1298,7 +1324,7 @@ def main() -> None:
                         active_ids,
                         teachers=distill_teachers,
                         proposed_actions=policy_actions,
-                        competence_mode=COMPETENCE_MODE,
+                        competence_mode=competence_mode,
                         episode_id=episode,
                     )
 

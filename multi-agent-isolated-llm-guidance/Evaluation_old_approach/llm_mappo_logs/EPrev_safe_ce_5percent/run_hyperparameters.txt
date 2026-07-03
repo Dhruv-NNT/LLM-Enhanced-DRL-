@@ -1,0 +1,225 @@
+Run Hyperparameters
+===================
+
+Created UTC: 2026-05-26T08:47:52.209443Z
+Python: 3.11.13
+
+Run Paths
+---------
+run_dir: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_mappo_logs/EPrev_safe_ce_5percent
+tensorboard_dir: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_mappo_logs/EPrev_safe_ce_5percent/tensorboard
+tensorboard_run_dir: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_mappo_logs/EPrev_safe_ce_5percent/tensorboard/EPrev_safe_ce_5percent
+weights_dir: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_mappo_logs/EPrev_safe_ce_5percent/weights
+best_model_path: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_mappo_logs/EPrev_safe_ce_5percent/weights/best_model.pt
+last_ckpt_path: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_mappo_logs/EPrev_safe_ce_5percent/weights/last_checkpoint.pt
+llm_memory_path: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_mappo_logs/EPrev_safe_ce_5percent/memory/decision_memory.json
+llm_guidance_json_dir: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_mappo_logs/EPrev_safe_ce_5percent/llm_guidance_json
+llm_guided_mappo_audit_path: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_mappo_logs/EPrev_safe_ce_5percent/llm_guided_mappo_audit.jsonl
+
+Command Line Arguments
+----------------------
+best_model_path: None
+episode_step_cap: None
+eval_freq: 10000
+last_ckpt_path: None
+log_dir: '/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_mappo_logs/EPrev_safe_ce_5percent'
+max_agent_steps: 5000000
+n_eval_episodes: 50
+no_resume: False
+num_agents: 4
+num_weather_cells: 2
+route_ids: None
+save_model_freq: 50000
+seed: 42
+update_agent_steps: 2048
+
+Resolved Reset Options
+----------------------
+num_agents: 4
+num_weather_cells: 2
+route_ids: None
+
+Environment Hyperparameters
+---------------------------
+ACTION_BINS: [-30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30]
+AGENT_SPEED: 2.0
+GOAL_RADIUS: 5.0
+LAUNCH_SEPARATION_R: 6.5
+LOCAL_TRAFFIC_NEIGHBOR_COUNT: 3
+MAX_AGENTS: 12
+MAX_STEP: 60
+NUM_AGENTS_DEFAULT: 4
+ROUTE_IDS_DEFAULT: None
+ROUTE_MIRROR_SUFFIX: '_REV'
+SAFE_R: 5.0
+SEED: 42
+TRAFFIC_CAUTION_R: 6.5
+
+Hazard And Guidance Geometry
+----------------------------
+BOUNDARY_WARNING_DISTANCE_UNITS: 2.0
+CLEAR_STREAK_REQUIRED: 2
+DESTINATION_ALIGNMENT_DEG: 8.0
+EMERGENCY_LOOKAHEAD_STEPS: 5
+HAZARD_LOOKAHEAD_STEPS: 12
+HAZARD_RISK_DECAY_EXPONENT: 0.4
+MERGE_BACK_RECHECK_STEPS: 2
+MERGE_BACK_REPEAT_ERROR_DEG: 30.0
+PAIR_RISK_BUFFER: 1.8
+PREVIEW_TOP_K: 6
+ROUTE_RECOVERY_XTRACK_UNITS: 2.5
+TURN_PREVIEW_STEPS: 10
+
+Other Config Values
+-------------------
+DATA_ROOT: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL
+DECISION_MEMORY_MAX_EPISODES: 100
+DECISION_MEMORY_MIN_SIMILARITY: 0.75
+DECISION_MEMORY_PROMPT_UNVERIFIED_ACTIONS: True
+DECISION_MEMORY_VISUAL_AUDIT_ENABLED: False
+DECISION_MEMORY_VISUAL_AUDIT_FRAME_COUNT: 4
+EVAL_RUN_NAME: 'isolated_multi_agent_llm_eval'
+FRAME_DURATION_MS: 250
+GUIDANCE_RANDOM_SEED: 42
+GUIDANCE_SOURCE: 'preview_safe'
+MODEL_NAME: 'isolated_multi_agent_llm'
+PROJECT_ROOT: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance
+RUN_MODES: ['LLM_ONLY']
+RUN_NAME: 'isolated_multi_agent_llm'
+USE_VISION_DEFAULT: False
+WORKSPACE_ROOT: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code
+
+Configured Paths
+----------------
+DECISION_MEMORY_PATH: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/memory/decision_memory.json
+DECISION_MEMORY_VISUAL_AUDIT_DIR: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/memory/visual_audit
+EVAL_DIR: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/evaluation
+EVAL_MEMORY_PATH: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/memory/eval_memory.json
+EVAL_OUTPUT_DIR: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/outputs/isolated_multi_agent_llm_eval
+JSON_ANSWERS_DIR: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_episode_logs/json_answers
+LOG_DIR: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/log/isolated_multi_agent_llm
+MEMORY_DIR: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/memory
+PLOT_DIR: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/outputs
+ROUTES_CSV: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/22feb_paths.csv
+SECTOR_GEOJSON: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/test.geojson
+TRAIN_LOG_DIR: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/log/MAPPO/local_obs_k3_neighbor_risk_13th_may
+WAYPOINTS_CSV: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/path_Waypoints22feb.csv
+
+LLM Guidance Hyperparameters
+----------------------------
+LLM_ADVISORY_MEMORY_WRITE_ENABLED: True
+LLM_ADVISORY_MEMORY_WRITE_MARGIN: 0.05
+LLM_EPISODE_LOG_DIR: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/llm_episode_logs
+LLM_EPISODE_LOG_MAX_EPISODE_DIRS: 3
+LLM_EPISODE_LOG_RETENTION_ENABLED: True
+LLM_GUIDANCE_ARTIFACTS_ENABLED: False
+LLM_GUIDANCE_ARTIFACT_MAX_CALLS: 2
+LLM_GUIDANCE_END_STEP: 250000
+LLM_GUIDANCE_MEMORY_ISOLATED_PER_RUN: True
+LLM_GUIDANCE_MEMORY_PATH: None
+LLM_GUIDANCE_MODE: 'label_only_shadow_eval'
+LLM_GUIDANCE_START_STEP: 0
+LLM_GUIDANCE_USE_VISION: False
+LLM_GUIDED_MAPPO_AUDIT_ENABLED: True
+LLM_GUIDED_MAPPO_AUDIT_MAX_ROWS: 30
+LLM_GUIDED_MEMORY_MAX_EPISODES: 300
+LLM_LOSS_DECAY_ENABLED: True
+LLM_LOSS_ENABLED: True
+LLM_LOSS_MIN_WEIGHT: 0.05
+LLM_LOSS_TYPE: 'ce'
+LLM_LOSS_WEIGHT: 1.0
+LLM_MEMORY_EVALUATOR_ENABLED: True
+LLM_MEMORY_PATH: None
+LLM_MEMORY_RUN_ID: None
+LLM_MEMORY_UPDATE_MARGIN: 0.1
+LLM_MEMORY_UPDATE_WITH_BEST_OF: 'mappo_or_llm'
+LLM_PHASE_WEIGHTS: {EMERGENCY_MANEUVER: 1.0, EXECUTE_TURN: 0.5, MERGE_BACK: 0.6}
+LLM_RETURN_WEIGHT_AGENT_COEF: 0.65
+LLM_RETURN_WEIGHT_JOINT_COEF: 0.35
+LLM_SHADOW_EVAL_ENABLED: True
+LLM_SHADOW_GAMMA: 0.99
+LLM_SHADOW_HORIZON: 5
+LLM_SHADOW_MAX_WEIGHT: 1.0
+LLM_SHADOW_RETURN_MARGIN: 0.05
+LLM_SHADOW_RETURN_SCALE: 1.0
+LLM_SHADOW_RETURN_WEIGHT_CLIP: 1.0
+LLM_SOFT_KL_SIGMA_DEG: 5.0
+OLLAMA_HOST: 'http://127.0.0.1:11434'
+OLLAMA_MAX_TOKENS: 6000
+OLLAMA_MODEL: 'gemma3:12b'
+OLLAMA_NUM_CTX: 10000
+OLLAMA_TEMPERATURE: 0
+OLLAMA_TIMEOUT_SECONDS: 30
+OLLAMA_TOP_P: 0.95
+USE_LLM_GUIDED_TRAINING: True
+
+MAPPO Hyperparameters
+---------------------
+MAPPO_ACTIVATION: 'silu'
+MAPPO_BEST_MODEL_PATH: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/log/MAPPO/local_obs_k3_neighbor_risk_13th_may/best_model.pt
+MAPPO_CUDA_VISIBLE_DEVICES: '0'
+MAPPO_EPS_CLIP: 0.2
+MAPPO_EVAL_FREQ: 10000
+MAPPO_EVAL_OUTPUT_DIR: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/outputs/mappo_eval
+MAPPO_GAE_LAMBDA: 0.95
+MAPPO_GAMMA: 0.99
+MAPPO_HIDDEN_DIM: 256
+MAPPO_HIDDEN_DIMS: [256, 256, 128]
+MAPPO_K_EPOCHS: 5
+MAPPO_LAST_CKPT_PATH: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/log/MAPPO/local_obs_k3_neighbor_risk_13th_may/last.ckpt
+MAPPO_LOG_DIR: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/log/MAPPO/local_obs_k3_neighbor_risk_13th_may
+MAPPO_LR_ACTOR: 0.0001
+MAPPO_LR_CRITIC: 0.0001
+MAPPO_MAX_AGENT_STEPS: 5000000
+MAPPO_METRICS_DIR: /home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance/evaluation/mappo
+MAPPO_MINIBATCH_SIZE: 256
+MAPPO_NORMALIZE_REWARD: False
+MAPPO_N_EVAL_EPISODES: 50
+MAPPO_ORTHOGONAL_INIT: True
+MAPPO_RUN_NAME: 'local_obs_k3_neighbor_risk_13th_may'
+MAPPO_SAVE_MODEL_FREQ: 50000
+MAPPO_UPDATE_AGENT_STEPS: 2048
+MAPPO_USE_LAYER_NORM: True
+
+Weather Hyperparameters
+-----------------------
+MAX_WEATHER_CELLS: 2
+NUM_WEATHER_CELLS_DEFAULT: 2
+WEATHER_CLEARANCE_BUFFER_NM: 8.0
+WEATHER_GROWTH_NM_PER_STEP_MAX: 0.6
+WEATHER_GROWTH_NM_PER_STEP_MIN: 0.15
+WEATHER_INIT_TRIES: 300
+WEATHER_MAJOR_RADIUS_NM_MAX: 25.0
+WEATHER_MAJOR_RADIUS_NM_MIN: 2.5
+WEATHER_MINOR_RATIO_MAX: 0.65
+WEATHER_MINOR_RATIO_MIN: 0.6
+WEATHER_SPEED_NM_PER_STEP_MAX: 1.1666666667
+WEATHER_SPEED_NM_PER_STEP_MIN: 0.5
+WEATHER_TRAIL_STEPS: 5
+
+Reward Hyperparameters
+----------------------
+REWARD_COLLISION_PENALTY: 100.0
+REWARD_CROSS_TRACK_CLIP: 2.0
+REWARD_CROSS_TRACK_HAZARD_RELIEF: 0.75
+REWARD_CROSS_TRACK_RECOVERY_CLIP: 1.0
+REWARD_CROSS_TRACK_RECOVERY_SCALE: 0.55
+REWARD_CROSS_TRACK_SCALE: 0.35
+REWARD_DEST_HEADING_SCALE: 0.5
+REWARD_FINISHED_AIRCRAFT: 30.0
+REWARD_GREEN_WEATHER_PENETRATION_SCALE: 2.0
+REWARD_MERGE_BACK_RISK_THRESHOLD: 0.3
+REWARD_MERGE_BACK_SCALE: 0.4
+REWARD_PROGRESS_CLIP: 1.0
+REWARD_PROGRESS_HAZARD_RELIEF: 0.6
+REWARD_PROGRESS_SCALE: 1.0
+REWARD_RISK_REDUCTION_CLIP: 1.0
+REWARD_STEP_PENALTY: 0.05
+REWARD_TEAM_SUCCESS: 120.0
+REWARD_TERMINAL_WEATHER_PENALTY: 100.0
+REWARD_TRAFFIC_RISK_PENALTY: 2.5
+REWARD_TRAFFIC_RISK_REDUCTION_SCALE: 1.8
+REWARD_TRUNCATION_DISTANCE_PENALTY_SCALE: 60.0
+REWARD_TRUNCATION_PENALTY: 80.0
+REWARD_WEATHER_RISK_PENALTY: 2.5
+REWARD_WEATHER_RISK_REDUCTION_SCALE: 1.8
