@@ -73,6 +73,7 @@ from rl_llm_multi.teacher import (
     TeacherPolicy,
     load_trajectory_dataset,
     save_teacher,
+    teacher_agreement_metrics,
 )
 
 
@@ -86,20 +87,14 @@ def _split_indices(n: int, val_fraction: float, seed: int) -> Tuple[np.ndarray, 
     return train_idx, val_idx
 
 
-@torch.no_grad()
-def _accuracy(teacher: TeacherPolicy, obs: torch.Tensor, agent_idx: torch.Tensor, labels: torch.Tensor, batch: int = 4096) -> float:
-    teacher.eval()
-    correct = 0
-    total = 0
-    for start in range(0, obs.size(0), batch):
-        o = obs[start:start + batch].to(device)
-        a = agent_idx[start:start + batch].to(device)
-        y = labels[start:start + batch].to(device)
-        logits = teacher.action_logits(o, a)
-        pred = logits.argmax(dim=-1)
-        correct += int((pred == y).sum().item())
-        total += int(y.numel())
-    return float(correct) / max(1, total)
+def _metrics(teacher: TeacherPolicy, obs: torch.Tensor, agent_idx: torch.Tensor, labels: torch.Tensor) -> Dict[str, float]:
+    """Exact-match acc, within-1-bin acc, and mean absolute degree error.
+
+    Top-1 (``exact``) treats the 13 ordered turns as unrelated labels; ``within1``
+    and ``deg_err`` respect that they are a number line, so a near-miss (+10 vs
+    +5) is scored gently instead of like a catastrophe (-30 vs +5).
+    """
+    return teacher_agreement_metrics(teacher, obs, agent_idx, labels)
 
 
 def train_one(
@@ -179,13 +174,18 @@ def train_one(
             n_batches += 1
 
         if val_idx.size > 0:
-            val_acc = _accuracy(teacher, obs[val_idx], agent_idx[val_idx], labels[val_idx])
+            val_m = _metrics(teacher, obs[val_idx], agent_idx[val_idx], labels[val_idx])
         else:
-            val_acc = _accuracy(teacher, obs[train_idx], agent_idx[train_idx], labels[train_idx])
-        print(f"  epoch {epoch + 1:3d}/{args.epochs}  loss={epoch_loss / max(1, n_batches):.4f}  val_acc={val_acc:.4f}")
+            val_m = _metrics(teacher, obs[train_idx], agent_idx[train_idx], labels[train_idx])
+        val_acc = val_m["exact"]
+        print(f"  epoch {epoch + 1:3d}/{args.epochs}  loss={epoch_loss / max(1, n_batches):.4f}  "
+              f"val_acc={val_acc:.4f}  within1={val_m['within1']:.4f}  deg_err={val_m['deg_err']:.2f}")
         step = epoch + 1
         writer.add_scalar("teacher/train_loss", epoch_loss / max(1, n_batches), step)
         writer.add_scalar("teacher/val_acc", val_acc, step)
+        # Near-miss-aware quality: within one bin, and mean turn error in degrees.
+        writer.add_scalar("teacher/val_within1_acc", val_m["within1"], step)
+        writer.add_scalar("teacher/val_deg_err", val_m["deg_err"], step)
         # Flat reference line so you can see val_acc rise above the lazy baseline.
         if majority_acc == majority_acc:  # not NaN
             writer.add_scalar("teacher/majority_val_acc", majority_acc, step)
@@ -203,7 +203,13 @@ def train_one(
     if best_state is not None:
         teacher.load_state_dict(best_state)
 
-    train_acc = _accuracy(teacher, obs[train_idx], agent_idx[train_idx], labels[train_idx])
+    # Final report on the *best* model (near-miss-aware metrics for both splits).
+    train_m = _metrics(teacher, obs[train_idx], agent_idx[train_idx], labels[train_idx])
+    train_acc = train_m["exact"]
+    if val_idx.size > 0:
+        val_m = _metrics(teacher, obs[val_idx], agent_idx[val_idx], labels[val_idx])
+    else:
+        val_m = train_m
     meta = {
         "teacher_name": name,
         "dataset_dir": str(dataset_dir),
@@ -213,6 +219,10 @@ def train_one(
         "n_val": int(val_idx.size),
         "best_val_acc": float(best_val),
         "final_train_acc": float(train_acc),
+        "val_within1_acc": float(val_m["within1"]),
+        "val_deg_err": float(val_m["deg_err"]),
+        "train_within1_acc": float(train_m["within1"]),
+        "train_deg_err": float(train_m["deg_err"]),
         "majority_baseline_val_acc": majority_acc,
         "epochs_run": int(epoch + 1),
         "lr": float(args.lr),
@@ -222,9 +232,13 @@ def train_one(
     save_teacher(teacher, out_path, meta=meta)
     print(f"  saved -> {out_path}")
     print(f"  best_val_acc={best_val:.4f}  train_acc={train_acc:.4f}  majority_val={majority_acc:.4f}")
+    print(f"  val within1={val_m['within1']:.4f}  val deg_err={val_m['deg_err']:.2f}  "
+          f"(exact top-1 undercounts an ordered action space)")
     final_step = int(epoch + 1)
     writer.add_scalar("teacher/best_val_acc", float(best_val), final_step)
     writer.add_scalar("teacher/final_train_acc", float(train_acc), final_step)
+    writer.add_scalar("teacher/val_within1_acc", float(val_m["within1"]), final_step)
+    writer.add_scalar("teacher/val_deg_err", float(val_m["deg_err"]), final_step)
     writer.close()
     return meta
 

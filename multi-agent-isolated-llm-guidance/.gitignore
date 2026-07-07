@@ -1,0 +1,76 @@
+# Python caches and test artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.ipynb_checkpoints/
+
+# Local environments and machine-specific settings
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+ENV/
+.vscode/
+.idea/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Project data inputs that are expected to live outside the repo
+/22feb_paths.csv
+/path_Waypoints22feb.csv
+/test.geojson
+
+# Generated distillation datasets and trained teacher checkpoints
+/distill_data/
+/teachers/*
+!/teachers/.gitkeep
+!/teachers/README.md
+
+# Training/evaluation run outputs
+/Evaluation_distillation_approach/*
+!/Evaluation_distillation_approach/README.md
+/runs/
+/log/
+/logs/
+/evaluation/
+/outputs/
+/llm_episode_logs/
+/tensorboard_logs/
+**/tensorboard/
+**/weights/
+**/checkpoints/
+
+# Runtime memory and visual audit outputs
+/memory/eval_memory.json
+/memory/visual_audit/
+
+# Model/data artifacts
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.npz
+*.npy
+*.pkl
+*.pickle
+*.joblib
+
+# Logs and audit streams
+*.log
+*.jsonl
+events.out.tfevents.*
+run_hyperparameters.txt

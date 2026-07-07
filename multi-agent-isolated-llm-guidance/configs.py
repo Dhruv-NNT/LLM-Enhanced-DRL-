@@ -284,13 +284,13 @@ TEACHER_USE_LAYER_NORM = MAPPO_USE_LAYER_NORM
 TEACHER_ORTHOGONAL_INIT = MAPPO_ORTHOGONAL_INIT
 
 # Teacher supervised-training defaults (train_teachers.py).
-TEACHER_LR = 3e-4
-TEACHER_EPOCHS = 30
-TEACHER_BATCH_SIZE = 256
-TEACHER_VAL_FRACTION = 0.1
-TEACHER_LABEL_SMOOTHING = 0.05
-TEACHER_WEIGHT_DECAY = 0.0
-TEACHER_EARLY_STOP_PATIENCE = 5
+TEACHER_LR = 1e-5
+TEACHER_EPOCHS = 500
+TEACHER_BATCH_SIZE = 64
+TEACHER_VAL_FRACTION = 0.20
+TEACHER_LABEL_SMOOTHING = 0.15  # regularizer: softens targets to curb overfitting/overconfidence
+TEACHER_WEIGHT_DECAY = 3e-4     # L2 regularizer: penalizes large weights to curb memorization
+TEACHER_EARLY_STOP_PATIENCE = 200 
 
 # Distillation loss applied to the MAPPO student.
 #   "js"      -> Jensen-Shannon divergence between student and teacher (default).

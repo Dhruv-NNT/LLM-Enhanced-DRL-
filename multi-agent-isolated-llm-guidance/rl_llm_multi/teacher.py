@@ -258,3 +258,55 @@ def load_trajectory_dataset(path: str | Path) -> TrajectoryArrays:
         step=np.concatenate(chunks["step"], axis=0),
         meta=meta,
     )
+
+
+@torch.no_grad()
+def teacher_agreement_metrics(
+    teacher: TeacherPolicy,
+    local_obs,
+    agent_index,
+    action_idx,
+    action_bins: Sequence[float] = ACTION_BINS,
+    batch: int = 4096,
+) -> Dict[str, float]:
+    """How well a teacher's argmax matches the guide's labels.
+
+    The 13 actions are an *ordered* number line of turn angles, so plain top-1
+    (``exact``) accuracy is harsh: predicting +10 deg when the guide chose +5 deg
+    is counted exactly as wrong as predicting -30 deg. These softer metrics
+    respect the ordering:
+
+    * ``exact``   -- fraction where predicted bin == guide bin (top-1 accuracy).
+    * ``within1`` -- fraction within one bin (|index diff| <= 1, i.e. one 5 deg
+      step). Assumes ``action_bins`` is ordered and equally spaced.
+    * ``deg_err`` -- mean absolute error in degrees between predicted and guide
+      turn (near-miss aware; a good teacher can be ~5-10 deg even at ~50% exact).
+    """
+    was_training = teacher.training
+    teacher.eval()
+    dev = next(teacher.parameters()).device
+    obs_t = torch.as_tensor(np.asarray(local_obs), dtype=torch.float32)
+    idx_t = torch.as_tensor(np.asarray(agent_index), dtype=torch.long)
+    y_t = torch.as_tensor(np.asarray(action_idx), dtype=torch.long).view(-1)
+    bins = torch.tensor([float(b) for b in action_bins], dtype=torch.float32)
+    n = int(y_t.numel())
+    n_exact = n_within1 = 0
+    deg_err_sum = 0.0
+    for start in range(0, n, batch):
+        o = obs_t[start:start + batch].to(dev)
+        a = idx_t[start:start + batch].to(dev)
+        y = y_t[start:start + batch]
+        pred = teacher.action_logits(o, a).argmax(dim=-1).cpu()
+        diff = (pred - y).abs()
+        n_exact += int((diff == 0).sum().item())
+        n_within1 += int((diff <= 1).sum().item())
+        deg_err_sum += float((bins[pred] - bins[y]).abs().sum().item())
+    if was_training:
+        teacher.train()
+    denom = max(1, n)
+    return {
+        "exact": n_exact / denom,
+        "within1": n_within1 / denom,
+        "deg_err": deg_err_sum / denom,
+        "n": float(n),
+    }
