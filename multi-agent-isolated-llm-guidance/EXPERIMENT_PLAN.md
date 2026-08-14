@@ -628,3 +628,106 @@ touch them, plus a cross-cutting block at the top and a troubleshooting block at
 Everything on CPU for now. When a GPU frees up, the only change is the shell line
 `export CUDA_VISIBLE_DEVICES="<free id>"` before launching — no code or command
 changes.
+
+---
+
+## Appendix A — Runs to start individually after the July 2026 interruption
+
+**Why this appendix exists.** In **late July 2026** a machine/tmux interruption killed
+the tmux server and all training processes. The **seed-0** runs (and `TRI_equal_seed1`,
+which already had a checkpoint) were **resumed** from `weights/last_checkpoint.pt` and
+are fine. But the **remaining seeds were never trained** — there is no checkpoint to
+resume, so each must be **started fresh** (from step 0) as its **own run**. A resume
+command (`--seed 0` + a seed-0 log-dir) only continues that one seed; it does **not**
+create the other seeds.
+
+### Status snapshot (as of 14 Aug 2026)
+
+| Experiment | seed 0 | seed 1 | seed 2 |
+|---|---|---|---|
+| T0_baseline | ✅ complete | ✅ complete | ✅ complete |
+| S_BP | ✅ complete | ⬜ **start** | ⬜ **start** |
+| S_PS | ✅ complete | ⬜ **start** | ⬜ **start** |
+| S_LLM | 🔄 running | ⬜ **start** | ⬜ **start** |
+| LOO_noBP | 🔄 running | ⬜ **start** | ⬜ **start** |
+| LOO_noLLM | 🔄 running | ⬜ **start** | ⬜ **start** |
+| LOO_noPS | 🔄 running | ⬜ **start** | ⬜ **start** |
+| TRI_equal | ✅ complete | 🔄 running (resumed) | ⬜ **start** |
+| TRI_shadow | 🔄 running | ⬜ **start** | ⬜ **start** |
+
+Legend: ✅ complete (5M) · 🔄 running · ⬜ must be started fresh.
+
+**15 seed-runs still to start** (each = a separate `train.py` run + its own tmux session).
+
+### How to launch each one (fresh run recipe)
+
+These are **fresh** runs (no checkpoint), so there is **no device-count/RNG concern** —
+just pin each to **one free GPU** and start it. Per session:
+
+```bash
+tmux new-session -d -s <SESSION>          # names below
+tmux send-keys -t <SESSION> 'cd "…/multi-agent-isolated-llm-guidance"' C-m
+tmux send-keys -t <SESSION> 'conda activate llmdrl' C-m
+tmux send-keys -t <SESSION> 'export CUDA_VISIBLE_DEVICES=<free id: 2, 3, or 4>' C-m
+tmux send-keys -t <SESSION> '<command from the table>' C-m
+```
+
+**Shared-machine etiquette:** these runs are CPU-bound and compete with each other, so
+**start ~3–5 at a time** (spread across free GPUs 2/3/4), not all 15 at once. Prioritise
+the headline experiments' seeds first: **TRI_shadow, S_LLM, TRI_equal**.
+
+### The 15 runs, with tmux session names and commands
+
+Every command below already omits `--max-agent-steps` (uses the 5,000,000 default) and
+uses `python` directly (activate `llmdrl` first).
+
+**S_BP** — sessions `S_BP_seed1`, `S_BP_seed2`
+```bash
+python train.py --distill --distill-teachers best_preview --competence-mode shadow --seed 1 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/S_BP_seed1
+python train.py --distill --distill-teachers best_preview --competence-mode shadow --seed 2 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/S_BP_seed2
+```
+
+**S_PS** — sessions `S_PS_seed1`, `S_PS_seed2`
+```bash
+python train.py --distill --distill-teachers preview_safe --competence-mode shadow --seed 1 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/S_PS_seed1
+python train.py --distill --distill-teachers preview_safe --competence-mode shadow --seed 2 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/S_PS_seed2
+```
+
+**S_LLM** — sessions `S_LLM_seed1`, `S_LLM_seed2`
+```bash
+python train.py --distill --distill-teachers llm --competence-mode shadow --seed 1 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/S_LLM_seed1
+python train.py --distill --distill-teachers llm --competence-mode shadow --seed 2 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/S_LLM_seed2
+```
+
+**LOO_noBP** (llm + preview_safe) — sessions `LOO_noBP_seed1`, `LOO_noBP_seed2`
+```bash
+python train.py --distill --distill-teachers llm preview_safe --competence-mode shadow --seed 1 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/LOO_noBP_seed1
+python train.py --distill --distill-teachers llm preview_safe --competence-mode shadow --seed 2 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/LOO_noBP_seed2
+```
+
+**LOO_noLLM** (best_preview + preview_safe) — sessions `LOO_noLLM_seed1`, `LOO_noLLM_seed2`
+```bash
+python train.py --distill --distill-teachers best_preview preview_safe --competence-mode shadow --seed 1 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/LOO_noLLM_seed1
+python train.py --distill --distill-teachers best_preview preview_safe --competence-mode shadow --seed 2 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/LOO_noLLM_seed2
+```
+
+**LOO_noPS** (llm + best_preview) — sessions `LOO_noPS_seed1`, `LOO_noPS_seed2`
+```bash
+python train.py --distill --distill-teachers llm best_preview --competence-mode shadow --seed 1 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/LOO_noPS_seed1
+python train.py --distill --distill-teachers llm best_preview --competence-mode shadow --seed 2 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/LOO_noPS_seed2
+```
+
+**TRI_equal** (all three, equal) — session `TRI_equal_seed2` *(seed 1 already running)*
+```bash
+python train.py --distill --distill-teachers llm best_preview preview_safe --competence-mode equal --seed 2 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/TRI_equal_seed2
+```
+
+**TRI_shadow** (all three, shadow — the proposed method) — sessions `TRI_shadow_seed1`, `TRI_shadow_seed2`
+```bash
+python train.py --distill --distill-teachers llm best_preview preview_safe --competence-mode shadow --seed 1 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/TRI_shadow_seed1
+python train.py --distill --distill-teachers llm best_preview preview_safe --competence-mode shadow --seed 2 --num-agents 4 --num-weather-cells 2 --log-dir Evaluation_distillation_approach/TRI_shadow_seed2
+```
+
+**Note:** because these are fresh runs, on launch they will **not** print
+`Resumed MAPPO checkpoint …` — they start at `agent_steps=0`. That is expected here (a
+resume line only appears when a `last_checkpoint.pt` already exists for that log-dir).
