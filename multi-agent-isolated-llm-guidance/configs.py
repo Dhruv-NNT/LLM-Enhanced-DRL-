@@ -140,11 +140,11 @@ MAPPO_METRICS_DIR = PROJECT_ROOT / "evaluation" / "mappo"
 
 MAPPO_CUDA_VISIBLE_DEVICES = None
 
-MAPPO_MAX_AGENT_STEPS = 5_000_000
+MAPPO_MAX_AGENT_STEPS = 5000000
 MAPPO_UPDATE_AGENT_STEPS = 2_048
 MAPPO_EVAL_FREQ = 10_000
 MAPPO_N_EVAL_EPISODES = 50
-MAPPO_SAVE_MODEL_FREQ = 50_000
+MAPPO_SAVE_MODEL_FREQ = 500_000
 
 # MAPPO_LR_ACTOR = 1e-4 # Original setting, which produced good results in early testing but may have been a bit high for stable convergence in the more complex environment. Left unchanged in the config for reference and easy reversion if desired.
 # MAPPO_LR_CRITIC = 1e-4 # Original setting, which produced good results in early testing but may have been a bit high for stable convergence in the more complex environment. Left unchanged in the config for reference and easy reversion if desired.
@@ -167,9 +167,9 @@ MAPPO_NORMALIZE_REWARD = False
 
 # LLM-guided MAPPO defaults. The master switch is intentionally false so the
 # existing train.py path remains pure MAPPO unless explicitly enabled here.
-USE_LLM_GUIDED_TRAINING = True
+USE_LLM_GUIDED_TRAINING = False
 LLM_GUIDANCE_START_STEP = 0
-LLM_GUIDANCE_END_STEP = 250000
+LLM_GUIDANCE_END_STEP = 3_000_000
 LLM_GUIDANCE_USE_VISION = False
 LLM_GUIDANCE_MODE = "label_only_shadow_eval"
 LLM_GUIDANCE_MEMORY_ISOLATED_PER_RUN = True
@@ -290,16 +290,16 @@ TEACHER_BATCH_SIZE = 64
 TEACHER_VAL_FRACTION = 0.20
 TEACHER_LABEL_SMOOTHING = 0.15  # regularizer: softens targets to curb overfitting/overconfidence
 TEACHER_WEIGHT_DECAY = 3e-4     # L2 regularizer: penalizes large weights to curb memorization
-TEACHER_EARLY_STOP_PATIENCE = 200 
+TEACHER_EARLY_STOP_PATIENCE = 500 
 
 # Distillation loss applied to the MAPPO student.
 #   "js"      -> Jensen-Shannon divergence between student and teacher (default).
 #   "ce"      -> cross-entropy toward the teacher's argmax action.
 #   "soft_kl" -> KL toward a Gaussian-smoothed target around the teacher action.
 DISTILL_LOSS_TYPE = "js"
-DISTILL_LOSS_WEIGHT = 0.25
+DISTILL_LOSS_WEIGHT = 0.50
 DISTILL_DECAY_ENABLED = True
-DISTILL_MIN_WEIGHT = 0.0
+DISTILL_MIN_WEIGHT = 0.10
 # Decay window for the distillation weight (agent steps). Past the end step the
 # weight is held at DISTILL_MIN_WEIGHT so late training is pure PPO fine-tune.
 DISTILL_DECAY_START_STEP = 0
@@ -345,7 +345,7 @@ USE_VISION_DEFAULT = False
 
 # LLM defaults.
 # OLLAMA_MODEL = "llama4:latest"
-OLLAMA_MODEL = "gemma3:12b"
+OLLAMA_MODEL = "gpt-oss:20b"
 OLLAMA_TEMPERATURE = 0
 OLLAMA_TOP_P = 0.95
 OLLAMA_MAX_TOKENS = 6000 

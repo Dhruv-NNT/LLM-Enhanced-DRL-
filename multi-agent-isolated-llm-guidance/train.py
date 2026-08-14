@@ -66,6 +66,7 @@ from configs import (
     USE_LLM_GUIDED_TRAINING,
     DISTILL_ENABLED,
     DISTILL_TEACHERS,
+    DISTILL_TEACHER_PATHS,
     COMPETENCE_MODE,
     DECISION_MEMORY_VISUAL_AUDIT_DIR,
     DECISION_MEMORY_VISUAL_AUDIT_ENABLED,
@@ -307,6 +308,8 @@ def _write_run_hyperparameters_file(
     run_paths: RunPaths,
     llm_memory_path: Path,
     reset_options: Mapping[str, object],
+    distill_resolved: Optional[Mapping[str, object]] = None,
+    distill_teacher_weight_paths: Optional[Mapping[str, object]] = None,
 ) -> None:
     if path.exists():
         print(f"Run hyperparameters file already exists; leaving unchanged: {path}")
@@ -343,6 +346,14 @@ def _write_run_hyperparameters_file(
     lines.append("----------------------")
     for key, value in sorted(reset_options.items()):
         lines.append(f"{key}: {_format_hparam_value(value)}")
+    if distill_resolved is not None:
+        lines.append("")
+        lines.append("Distillation (Resolved Effective Settings)")
+        lines.append("------------------------------------------")
+        for key, value in distill_resolved.items():
+            lines.append(f"{key}: {_format_hparam_value(value)}")
+        for name, weight_path in (distill_teacher_weight_paths or {}).items():
+            lines.append(f"teacher_weights[{name}]: {_format_hparam_value(weight_path)}")
     for group_name, values in _iter_config_hparams().items():
         lines.append("")
         lines.append(group_name)
@@ -972,17 +983,12 @@ def main() -> None:
         num_agents=int(args.num_agents),
         num_weather_cells=int(args.num_weather_cells),
     )
-    _write_run_hyperparameters_file(
-        log_dir / "run_hyperparameters.txt",
-        args=args,
-        run_paths=run_paths,
-        llm_memory_path=llm_memory_path,
-        reset_options=reset_options,
-    )
     llm_audit_path = log_dir / "llm_guided_mappo_audit.jsonl"
     # Resolve distillation settings: CLI flags override configs.py so each run is
     # self-contained (safe for concurrent tmux sessions). Overrides are pushed
-    # into the modules that read these as globals at loss/metadata time.
+    # into the modules that read these as globals at loss/metadata time. Resolved
+    # here — before run_hyperparameters.txt is written — so the file records the
+    # effective settings and the exact teacher checkpoint paths for this run.
     import rl_llm_multi.mappo as _mappo_module
     import rl_llm_multi.distill as _distill_module
 
@@ -993,6 +999,29 @@ def main() -> None:
     )
     _mappo_module.DISTILL_ENABLED = distill_active
     _distill_module.DISTILL_TEACHERS = distill_teacher_names
+
+    # Effective (post-override) distillation snapshot for the hyperparameters file.
+    distill_resolved: Dict[str, object] = {
+        "distill_active": distill_active,
+        "competence_mode": competence_mode,
+        "distill_teachers": list(distill_teacher_names),
+    }
+    distill_teacher_weight_paths: Dict[str, object] = {}
+    if distill_active:
+        for _name in distill_teacher_names:
+            _p = DISTILL_TEACHER_PATHS.get(_name)
+            _exists = Path(_p).exists() if _p is not None else False
+            distill_teacher_weight_paths[_name] = f"{_p} (exists={_exists})"
+
+    _write_run_hyperparameters_file(
+        log_dir / "run_hyperparameters.txt",
+        args=args,
+        run_paths=run_paths,
+        llm_memory_path=llm_memory_path,
+        reset_options=reset_options,
+        distill_resolved=distill_resolved,
+        distill_teacher_weight_paths=distill_teacher_weight_paths,
+    )
 
     distill_teachers = None
     memory_store: Optional[DecisionMemoryStore] = None

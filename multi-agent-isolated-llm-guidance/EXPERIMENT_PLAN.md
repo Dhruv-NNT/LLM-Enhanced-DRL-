@@ -94,19 +94,21 @@ This makes `train.py` obey the shell instead of grabbing a GPU.
 and makes every command a polite neighbour on the shared server):
 
 ```bash
-export CUDA_VISIBLE_DEVICES=""      # "" = CPU (later put a free GPU id here)
+conda activate llmdrl               # so `python` = the llmdrl env's python
 export OMP_NUM_THREADS=2            # each training run uses ~2 cores, not all of them
-PY="nice -n 19 /home/aradhya.dhruv/anaconda3/envs/llmdrl/bin/python"
 cd "/home/aradhya.dhruv/rl/behaviour_cloning/LLM enhanced DRL/LLM-DRL restructured code/multi-agent-isolated-llm-guidance"
 ```
 
-What they do:
-- `CUDA_VISIBLE_DEVICES=""` → run on CPU (no GPU right now).
+The commands below call `python` directly (run them from the activated `llmdrl` env).
+
+What the setup does:
+- **GPU choice** is handled in `configs.py` via `MAPPO_CUDA_VISIBLE_DEVICES` (e.g. `"1"`
+  for GPU 1, `""` for CPU); it **overrides** any shell `CUDA_VISIBLE_DEVICES`.
 - `OMP_NUM_THREADS=2` → caps how many cores one **training** process may use. (Data
   generation pins its own workers to 1 core each automatically.)
-- `PY="nice -n 19 ...python"` → runs everything at the **lowest CPU priority**, so
-  your jobs yield the moment a colleague needs the machine. This is the main
-  "don't disturb others" lever.
+- **Polite neighbour (optional but recommended on the shared box):** prefix training with
+  `nice -n 19 python ...` (lowest CPU priority, so your jobs yield when a colleague needs
+  the machine). Data generation already takes `--nice 19`.
 
 **Shared-machine etiquette:** this box has 32 real cores and is shared. Generate data
 with `--workers 12 --nice 19`, keep to **~3–4 training sessions at once**, and check
@@ -145,7 +147,7 @@ disk). Full list of choices in Section 10.
 
 **Session `gen_bp`** — best_preview data:
 ```bash
-$PY new_approach/generate_parallel.py --guidance-source best_preview --keep success \
+python new_approach/generate_parallel.py --guidance-source best_preview --keep success \
     --total-episodes 6000 --workers 12 --nice 19 --seed 42 \
     --num-agents 4 --num-weather-cells 2
 # output: distill_data/best_preview/part_00 .. part_11
@@ -153,7 +155,7 @@ $PY new_approach/generate_parallel.py --guidance-source best_preview --keep succ
 
 **Session `gen_ps`** — preview_safe data:
 ```bash
-$PY new_approach/generate_parallel.py --guidance-source preview_safe --keep success \
+python new_approach/generate_parallel.py --guidance-source preview_safe --keep success \
     --total-episodes 6000 --workers 12 --nice 19 --seed 42 \
     --num-agents 4 --num-weather-cells 2
 # output: distill_data/preview_safe/part_00 .. part_11
@@ -173,13 +175,13 @@ minutes). The trainer merges all `part_XX/` folders automatically.
 
 **Session `teach_bp`** (after `gen_bp`):
 ```bash
-$PY new_approach/train_teachers.py --dataset-dir distill_data/best_preview \
+python new_approach/train_teachers.py --dataset-dir distill_data/best_preview \
     --out-path teachers/teacher_best_preview.pt --name best_preview
 ```
 
 **Session `teach_ps`** (after `gen_ps`):
 ```bash
-$PY new_approach/train_teachers.py --dataset-dir distill_data/preview_safe \
+python new_approach/train_teachers.py --dataset-dir distill_data/preview_safe \
     --out-path teachers/teacher_preview_safe.pt --name preview_safe
 ```
 
@@ -205,14 +207,48 @@ teachers, then we compare. Each block is **one tmux session**, 3 seeds one after
 another. The gentle profile from Section 2 (`OMP_NUM_THREADS=2`, niced `PY`) keeps
 each run low-priority and core-limited automatically.
 
-```bash
-STEPS=60000                  # quick CPU pilot. 250000 covers the full teaching window.
-```
+> **Why 3 seeds per setup (and what a seed actually changes).** A single run is
+> *already* diverse **inside** itself: the RNG advances every episode, so one run walks
+> through thousands of different routes, start positions, and weather placements —
+> scenario variety is handled internally. So why repeat 3 times?
+>
+> Because the starting seed fixes the run's **whole random journey**: its **initial
+> network weights** *and* the exact sequence of scenarios/sampled actions it happens to
+> take. That makes one run a **single sample** of the outcome — deep RL is famous for
+> two identical-recipe runs finishing at, say, 74% and 78% purely from different
+> starting weights and paths. Internal scenario diversity does **not** remove this
+> run-to-run variation.
+>
+> So seeds 0/1/2 are **not** about adding scenario variety (you already have that) —
+> they sample the **outcome variation**, so we compare setups by their **average across
+> seeds**, not one lucky or unlucky journey. A gap that shows up in *all* seeds is real;
+> a gap smaller than the seed-to-seed spread is just noise. Use 3 seeds for a pilot, 5
+> for the final numbers.
+
+> **Steps:** these commands do **not** pass `--max-agent-steps`, so each run uses
+> `MAPPO_MAX_AGENT_STEPS` (5,000,000) from `configs.py` — the full run.
 
 **Session `T0`** — baseline, no teacher:
+
+> ⚠️ **`--no-distill` is NOT enough for a pure baseline.** It only turns off the
+> *distillation* teachers. If `USE_LLM_GUIDED_TRAINING = True` in `configs.py` (the
+> current default), a no-distill run **falls through to the old LLM-guidance path** and
+> silently calls **Ollama every step** — so T0 runs the real LLM, becomes far *slower*
+> than the distill runs, and is not a valid baseline. (Tell-tale signs in the run
+> folder: a `memory/` subfolder and an `llm_guided_mappo_audit.jsonl` file — a clean T0
+> has neither.)
+>
+> **Before launching T0, set `USE_LLM_GUIDED_TRAINING = False` in `configs.py`.** Then
+> `--no-distill` lands in the pure-MAPPO branch (no Ollama, no shadow eval, no memory) —
+> a true, fast baseline. This is **safe for the distill runs**: they set
+> `distill_active = True`, which takes precedence and ignores this switch, so you can
+> leave it `False` for the whole study. (Config is read at process start, so set it
+> *before* launching.) There is no CLI flag for this — it must be the config edit.
+
 ```bash
+# One-time (in configs.py):  USE_LLM_GUIDED_TRAINING = False
 for s in 0 1 2; do
-  $PY train.py --no-distill --seed $s --max-agent-steps $STEPS \
+  python train.py --no-distill --seed $s \
       --num-agents 4 --num-weather-cells 2 \
       --log-dir Evaluation_distillation_approach/T0_baseline_seed$s
 done
@@ -221,8 +257,8 @@ done
 **Session `S_BP`** — best_preview teacher only:
 ```bash
 for s in 0 1 2; do
-  $PY train.py --distill --distill-teachers best_preview --competence-mode shadow \
-      --seed $s --max-agent-steps $STEPS --num-agents 4 --num-weather-cells 2 \
+  python train.py --distill --distill-teachers best_preview --competence-mode shadow \
+      --seed $s --num-agents 4 --num-weather-cells 2 \
       --log-dir Evaluation_distillation_approach/S_BP_seed$s
 done
 ```
@@ -230,8 +266,8 @@ done
 **Session `S_PS`** — preview_safe teacher only:
 ```bash
 for s in 0 1 2; do
-  $PY train.py --distill --distill-teachers preview_safe --competence-mode shadow \
-      --seed $s --max-agent-steps $STEPS --num-agents 4 --num-weather-cells 2 \
+  python train.py --distill --distill-teachers preview_safe --competence-mode shadow \
+      --seed $s --num-agents 4 --num-weather-cells 2 \
       --log-dir Evaluation_distillation_approach/S_PS_seed$s
 done
 ```
@@ -239,18 +275,19 @@ done
 **Session `LOO_noLLM`** — both heuristics, no LLM:
 ```bash
 for s in 0 1 2; do
-  $PY train.py --distill --distill-teachers best_preview preview_safe \
-      --competence-mode shadow --seed $s --max-agent-steps $STEPS \
+  python train.py --distill --distill-teachers best_preview preview_safe \
+      --competence-mode shadow --seed $s \
       --num-agents 4 --num-weather-cells 2 \
       --log-dir Evaluation_distillation_approach/LOO_noLLM_seed$s
 done
 ```
 
-**CPU reality check:** MAPPO training is slow on CPU. `STEPS=60000` gives an early
-read; `STEPS=250000` covers the whole teaching window (see Section 10) and is what you
-want for firm conclusions, but it takes many hours per seed. Run the pilot first, then
-relaunch longer — ideally on a GPU when one frees up (just set
-`export CUDA_VISIBLE_DEVICES="<free id>"`, no other change).
+**Reality check:** each run trains to the full `MAPPO_MAX_AGENT_STEPS = 5,000,000`
+(no `--max-agent-steps` override). On a GPU the `shadow` runs still take days because of
+the per-step look-ahead (see Section 10); the teacher influence fully decays by
+`DISTILL_DECAY_END_STEP = 3,000,000`, so the last 2M steps are pure RL fine-tuning. If a
+run is interrupted, just re-launch the same command in its session — `train.py`
+auto-resumes from `weights/last_checkpoint.pt` (see "Resuming an interrupted run" below).
 
 ### Resuming an interrupted run, and watching TensorBoard
 
@@ -293,7 +330,7 @@ rates. Replace `<TAG>` with a finished run name.
 ```bash
 for TAG in T0_baseline S_BP S_PS LOO_noLLM; do
   for s in 0 1 2; do
-    $PY evaluate_rl.py \
+    python evaluate_rl.py \
         --model-path Evaluation_distillation_approach/${TAG}_seed$s/weights/best_model.pt \
         --n-episodes 100 --num-agents 4 --num-weather-cells 2 \
         --metrics-path Evaluation_distillation_approach/${TAG}_seed$s/eval.json
@@ -314,56 +351,76 @@ because they share one Ollama server).
 
 Session `gen_real`:
 ```bash
-$PY new_approach/generate_parallel.py --guidance-source real --keep success \
+python new_approach/generate_parallel.py --guidance-source real --keep success \
     --total-episodes 250 --workers 2 --nice 19 --ollama-model gpt-oss:20b \
     --seed 42 --num-agents 4 --num-weather-cells 2
 ```
 
 Session `teach_llm`:
 ```bash
-$PY new_approach/train_teachers.py --dataset-dir distill_data/real \
+python new_approach/train_teachers.py --dataset-dir distill_data/real \
     --out-path teachers/teacher_llm.pt --name llm
 ```
 
-**E2 — the five remaining controllers.** Same pattern as Phase C (gentle profile
-assumed). Only the `--distill-teachers` / `--competence-mode` change:
+**E2 — the five remaining controllers.** Same pattern as Phase C. Only the
+`--distill-teachers` / `--competence-mode` change.
+
+**Steps:** no `--max-agent-steps` here — each run uses `MAPPO_MAX_AGENT_STEPS`
+(5,000,000) from `configs.py`, as intended.
+
+**GPU (use GPU 1):** the GPU is chosen by `MAPPO_CUDA_VISIBLE_DEVICES` in `configs.py`,
+which **overrides** any shell `export CUDA_VISIBLE_DEVICES`. It is currently `"0,1"`
+(→ physical GPU 0). To run Phase E on **GPU 1**, do **one** of these once, before
+launching:
+- **Simplest (all these runs → GPU 1):** set `MAPPO_CUDA_VISIBLE_DEVICES = "1"` in
+  `configs.py`.
+- **Per-session control:** set `MAPPO_CUDA_VISIBLE_DEVICES = None` in `configs.py`, then
+  start each tmux session with `export CUDA_VISIBLE_DEVICES=1`. (With the config left at
+  `"0,1"`, the `export` is ignored — so you must change the config for the export route
+  to work.)
+
+**tmux layout:** each block below is **its own tmux session** (5 sessions:
+`S_LLM`, `LOO_noBP`, `LOO_noPS`, `TRI_equal`, `TRI_shadow`). The `for s in 0 1 2` loop
+runs the **3 seeds one after another** inside that session. You may run the 5 sessions in
+parallel (each run ≈ 1 CPU core + tiny GPU memory) or stagger them. Do **not** paste all
+five loops into a single session unless you want them to run fully sequentially (very
+long: 5 × 3 × 5M steps back-to-back).
 
 ```bash
-STEPS=60000     # or 250000 for the real run
-
 # Session S_LLM  (single LLM teacher = prior-work baseline)
 for s in 0 1 2; do
-  $PY train.py --distill --distill-teachers llm --competence-mode shadow \
-      --seed $s --max-agent-steps $STEPS --num-agents 4 --num-weather-cells 2 \
+  python train.py --distill --distill-teachers llm --competence-mode shadow \
+      --seed $s --num-agents 4 --num-weather-cells 2 \
       --log-dir Evaluation_distillation_approach/S_LLM_seed$s
 done
 
 # Session LOO_noBP  (llm + preview_safe — drop best_preview)
 for s in 0 1 2; do
-  $PY train.py --distill --distill-teachers llm preview_safe --competence-mode shadow \
-      --seed $s --max-agent-steps $STEPS --num-agents 4 --num-weather-cells 2 \
+  python train.py --distill --distill-teachers llm preview_safe --competence-mode shadow \
+      --seed $s --num-agents 4 --num-weather-cells 2 \
       --log-dir Evaluation_distillation_approach/LOO_noBP_seed$s
 done
 
+
 # Session LOO_noPS  (llm + best_preview — drop preview_safe)
 for s in 0 1 2; do
-  $PY train.py --distill --distill-teachers llm best_preview --competence-mode shadow \
-      --seed $s --max-agent-steps $STEPS --num-agents 4 --num-weather-cells 2 \
+  python train.py --distill --distill-teachers llm best_preview --competence-mode shadow \
+      --seed $s --num-agents 4 --num-weather-cells 2 \
       --log-dir Evaluation_distillation_approach/LOO_noPS_seed$s
 done
 
 # Session TRI_equal  (all three, equal trust)
 for s in 0 1 2; do
-  $PY train.py --distill --distill-teachers llm best_preview preview_safe \
-      --competence-mode equal --seed $s --max-agent-steps $STEPS \
+  python train.py --distill --distill-teachers llm best_preview preview_safe \
+      --competence-mode equal --seed $s \
       --num-agents 4 --num-weather-cells 2 \
       --log-dir Evaluation_distillation_approach/TRI_equal_seed$s
 done
 
 # Session TRI_shadow  (all three, smart trust) -- the proposed method
 for s in 0 1 2; do
-  $PY train.py --distill --distill-teachers llm best_preview preview_safe \
-      --competence-mode shadow --seed $s --max-agent-steps $STEPS \
+  python train.py --distill --distill-teachers llm best_preview preview_safe \
+      --competence-mode shadow --seed $s \
       --num-agents 4 --num-weather-cells 2 \
       --log-dir Evaluation_distillation_approach/TRI_shadow_seed$s
 done
@@ -373,7 +430,7 @@ done
 ```bash
 for TAG in S_LLM LOO_noBP LOO_noPS TRI_equal TRI_shadow; do
   for s in 0 1 2; do
-    $PY evaluate_rl.py \
+    python evaluate_rl.py \
         --model-path Evaluation_distillation_approach/${TAG}_seed$s/weights/best_model.pt \
         --n-episodes 100 --num-agents 4 --num-weather-cells 2 \
         --metrics-path Evaluation_distillation_approach/${TAG}_seed$s/eval.json
@@ -385,36 +442,70 @@ done
 
 ## 9. How to read the final results
 
-Line up the average success rates (over 3 seeds) and check, in order:
+### The naming code (run folders in `Evaluation_distillation_approach/`)
 
-1. Do the teacher runs beat **T0**? → teaching helps.
-2. Does **TRI-shadow** beat **S-LLM, S-BP, S-PS**? → no single teacher is enough (main point).
-3. Does **TRI-shadow** beat **TRI-equal**? → the smart trust rule is what matters.
-4. Does **TRI-shadow** beat each **LOO** run? → every teacher contributes.
+- **T0** = baseline, zero teachers
+- **S_** = **S**ingle teacher
+- **LOO_** = **L**eave **O**ne **O**ut (all three teachers *minus* one)
+- **TRI_** = all **thr**ee teachers
+- **seedN** = which random seed (same experiment, different dice — see the Phase C note)
 
-If TRI-shadow ≈ LOO-noPS, that honestly says preview_safe was not needed and two
-teachers suffice — a perfectly good result to report.
+### Folder by folder (alphabetical, as they appear in VS Code)
+
+| Folder | Teachers used | What it answers |
+|---|---|---|
+| **LOO_noBP_seed\*** | llm + preview_safe | Drop **best_preview** — does best_preview actually contribute? |
+| **LOO_noLLM_seed\*** | best_preview + preview_safe | Drop the **LLM** — how much does the expensive LLM really add over the two cheap heuristics? |
+| **LOO_noPS_seed\*** | llm + best_preview | Drop **preview_safe** — does preview_safe actually contribute? |
+| **S_BP_seed\*** | best_preview only | How good is one cheap heuristic teacher alone? |
+| **S_LLM_seed\*** | llm only | **The prior-work baseline** — what published papers do (distill from one LLM teacher) |
+| **S_PS_seed\*** | preview_safe only | How good is the other cheap heuristic alone? |
+| **T0_baseline_seed\*** | none (pure MAPPO) | **The floor** — what you get with no teaching at all |
+| **TRI_equal_seed\*** | all three, **equal** trust | Ablation: is *smart* trust needed, or is plain averaging enough? |
+| **TRI_shadow_seed\*** | all three, **shadow** trust | **The proposed method** — trust each teacher where it's actually better |
+
+### How they combine (line up average success rates over the seeds, then check in order)
+
+1. **Any teacher beats no teacher?** → S_\* vs **T0** — teaching helps at all.
+2. **Proposed beats prior work?** → **TRI_shadow** vs **S_LLM** ← *the headline claim*
+   (multiple complementary teachers beat one LLM teacher).
+3. **Is the smart weighting doing the work?** → **TRI_shadow** vs **TRI_equal** — the
+   competence rule matters, not just having more teachers.
+4. **Does each teacher earn its place?** → each **LOO_** vs **TRI_shadow** — if dropping
+   a teacher hurts, that teacher contributes.
+5. **Is the LLM worth its cost?** → **LOO_noLLM** vs **TRI_shadow**.
+
+The two most important comparisons are **#2** (TRI_shadow vs S_LLM) and **#3**
+(TRI_shadow vs TRI_equal).
+
+If TRI_shadow ≈ LOO_noPS, that honestly says preview_safe was not needed and two
+teachers suffice — a perfectly good result to report. Remember: no comparison is
+trustworthy until each experiment has **all its seeds** run (a gap smaller than the
+seed-to-seed spread is just noise).
 
 ---
 
-## 10. Hyperparameters — the knobs and your choices
+## 10. Hyperparameters — the knobs, organized by phase
 
 Everything below has a sensible default already set. This section is so that, later,
 you know **what each knob does and when to change it**. Values shown are the current
 defaults. Knobs marked **[CLI]** are set on the command line; **[configs.py]** are
-edited in `configs.py`.
+edited in `configs.py`. The knobs are grouped by the phase (A–E) where you actually
+touch them, plus a cross-cutting block at the top and a troubleshooting block at the end.
 
-### The scenario (keep identical across ALL runs for a fair comparison)
+### Across all phases — the scenario (keep identical everywhere for a fair comparison)
 - `--num-agents 4`, `--num-weather-cells 2` **[CLI]** — how many aircraft and weather
-  cells per game. This is the difficulty. **Do not vary it between runs** or the
-  comparison is unfair. (Harder settings like 8 aircraft exist, but pick one and stick
-  to it.)
+  cells per game. This is the difficulty. **Do not vary it between runs** (generation,
+  training, or eval) or the comparison is unfair. (Harder settings like 8 aircraft
+  exist, but pick one and stick to it.)
 - `MAX_STEP = 60` **[configs.py]** — max steps per game. Leave as-is.
 - 13 possible turns, from −30° to +30° **[configs.py `ACTION_BINS`]**. Leave as-is.
 
-### Data generation (Phase A)
-- `--total-episodes 6000` **[CLI]** — number of successful games to collect. Choices:
-  3000 (faster) … 6000 (generous). Affects time, not quality much, and not memory.
+### Phase A — Data generation (`generate_parallel.py`)
+- `--total-episodes 6000` **[CLI]** — number of **kept successful** games to collect
+  (it keeps playing until it reaches this many). For a fair multi-teacher claim, use the
+  **same target for every source**; the LLM is the bottleneck, so a common value like
+  1000 is reasonable. Affects time, not quality much, and not memory.
 - `--keep success` **[CLI]** — which games to keep. Options:
   - `success` (default): only games where all aircraft landed — cleanest teacher.
   - `success_or_truncated`: also keep "ran out of time" games (more hard-situation
@@ -422,21 +513,37 @@ edited in `configs.py`.
     in traffic/weather moments.
   - `all`: keep everything (not recommended — teaches bad moves too).
 - `--workers 12`, `--nice 19` **[CLI]** — parallelism and politeness (Section 2).
-- `--seed 42` **[CLI]** — base random seed for the games.
+  **Heuristics scale with cores** (use 12). **The LLM does not** — all workers share one
+  Ollama GPU, so use `--workers 2` there (see Phase E).
+- `--seed 42` **[CLI]** — base random seed. When *adding* a batch on top of existing
+  data, use a **new far-away seed** (e.g. `100000000`) and a nested `--out-dir
+  distill_data/<source>/batch2` so you neither duplicate games nor overwrite `part_XX`.
 
-### Teacher training (Phase B) — mostly leave alone
+### Phase B — Teacher training (`train_teachers.py`) — mostly leave alone
 - Architecture = the MAPPO actor's: `TEACHER_HIDDEN_DIMS = (256, 256, 128)`,
   `TEACHER_ORTHOGONAL_INIT = True` **[configs.py]**. Kept identical on purpose (no
   "teacher too small" objection). Shrink only for a speed test.
 - `TEACHER_EPOCHS = 30`, `TEACHER_LR = 3e-4`, `TEACHER_BATCH_SIZE = 256`
   **[configs.py, also CLI flags on train_teachers.py]** — standard training settings.
+  **Don't crank `--epochs` high** — early stopping should end the run near the val peak;
+  extra epochs only overfit and the saved checkpoint is the **best-val** one anyway.
 - `TEACHER_VAL_FRACTION = 0.1` — 10% of examples held out to measure `best_val_acc`.
-- `TEACHER_LABEL_SMOOTHING = 0.05`, `TEACHER_WEIGHT_DECAY = 0.0`,
-  `TEACHER_EARLY_STOP_PATIENCE = 5` — anti-overfitting / stopping. If `best_val_acc`
-  is much higher than a re-check on new data (overfitting), raise label smoothing or
-  weight decay. If `best_val_acc` is low (underfitting), raise epochs.
+- `TEACHER_LABEL_SMOOTHING = 0.15`, `TEACHER_WEIGHT_DECAY = 3e-4`,
+  `TEACHER_EARLY_STOP_PATIENCE = 5` **[configs.py]** — anti-overfitting / stopping.
+  Signature of overfitting: `train_loss` keeps falling while `val_acc` peaks then
+  declines → raise label smoothing / weight decay, **or add data (Phase A)**, which is
+  usually the stronger lever. If `val_acc` is low *and* flat (underfitting), raise epochs.
+- **Reading teacher quality (the right way):** the 13 turns are an *ordered* number
+  line, so plain `val_acc` (exact top-1) is harsh. Also watch `teacher/val_within1_acc`
+  (within one 5° bin) and `teacher/val_deg_err` (mean degree error) — a good teacher can
+  be ~5–10° off even at ~50% exact-match. Compare all of them to `majority_val_acc`
+  (the lazy baseline the teacher must clearly beat). A noisier guide like `preview_safe`
+  has a **lower learnable ceiling** than the deterministic `best_preview` — expected, not
+  a bug.
 
-### Which teachers + how strongly (the experiment dials)
+### Phase C — Controller (distillation) training (`train.py`)
+
+**Which teachers + how strongly (the experiment dials):**
 - `--distill / --no-distill` **[CLI]** — turn teaching on/off (on = a teacher run,
   off = T0 baseline). Overrides `DISTILL_ENABLED`.
 - `--distill-teachers ...` **[CLI]** — which teachers to use, any subset of
@@ -454,10 +561,9 @@ edited in `configs.py`.
   `DISTILL_DECAY_END_STEP = 250000`, down to `DISTILL_MIN_WEIGHT = 0.0`
   **[configs.py]**. Meaning: the teacher pull starts at 0.25 and **fades to zero by
   step 250,000**, so late training is pure RL and the student can *surpass* its
-  teachers. This is why `STEPS = 250000` is the "covers the whole teaching window"
-  number.
+  teachers. This is why `STEPS = 250000` is the "covers the whole teaching window" number.
 
-### Competence mode — how much to trust each teacher moment-to-moment
+**Competence mode — how much to trust each teacher moment-to-moment:**
 - `--competence-mode shadow` **[CLI]** — options:
   - `shadow` (default, proposed): at each decision, quickly simulate a few steps ahead
     for MAPPO's move and each teacher's move; trust a teacher in proportion to how much
@@ -474,7 +580,7 @@ edited in `configs.py`.
   team" (35%).
 - `LLM_SHADOW_GAMMA = 0.99` **[configs.py]** — discount inside the look-ahead. Leave.
 
-### MAPPO training length
+**Training length + core RL:**
 - `--max-agent-steps` **[CLI, our `STEPS`]** — how long to train. `60000` = quick CPU
   pilot; `250000` = covers the full teaching window; the code default is 5,000,000 for
   a full-scale run. Longer = better but slower.
@@ -483,12 +589,30 @@ edited in `configs.py`.
   `MAPPO_HIDDEN_DIMS = (256,256,128)`) **[configs.py]** — **keep identical across all
   runs** so any difference comes from the teachers, not the RL settings.
 
-### If the pilot looks disappointing, sweep in this order
-1. `--keep success_or_truncated` when regenerating data (more hard cases).
-2. `LLM_SHADOW_HORIZON` 5 → 10 (longer-sighted trust) and/or
-   `LLM_SHADOW_RETURN_MARGIN` (stricter/looser).
-3. `DISTILL_LOSS_WEIGHT` (0.1 / 0.25 / 0.5) — how hard teachers push.
-4. Longer `STEPS`.
+### Phase D — Evaluation (`evaluate_rl.py`)
+- `--n-episodes 100` **[CLI]** — fresh games to score each controller on. More = steadier
+  numbers; 100 is a reasonable default.
+- `--num-agents 4`, `--num-weather-cells 2` **[CLI]** — **must match** the training
+  scenario (see cross-cutting block) or the comparison is meaningless.
+- Evaluate **every seed** (0/1/2) and average — report the spread, not one lucky run.
+
+### Phase E — Ollama LLM generation (later, `--guidance-source real`)
+- `--workers 2` **[CLI]** — **not 12.** All LLM workers share one Ollama GPU, so 2–4 is
+  the ceiling; more just queue and can OOM. Match `OLLAMA_NUM_PARALLEL` to it.
+- `--ollama-model gpt-oss:20b` **[CLI]** — the served model tag. Ollama must be running.
+- `--total-episodes` **[CLI]** — keep this **modest** (the LLM is slow) and, for a fair
+  claim, **equal to** the heuristics' target. New `--seed` + nested `--out-dir` when
+  topping up, same as Phase A.
+- Everything downstream (teacher training, the five E2 controller runs) is identical to
+  Phases B and C — only `--distill-teachers` / `--competence-mode` change per experiment.
+
+### If the pilot looks disappointing, sweep in this order (cross-cutting)
+1. `--keep success_or_truncated` when regenerating data (more hard cases) [Phase A].
+2. Add more data and retrain the teachers [Phases A→B] — usually the strongest lever.
+3. `LLM_SHADOW_HORIZON` 5 → 10 (longer-sighted trust) and/or
+   `LLM_SHADOW_RETURN_MARGIN` (stricter/looser) [Phase C].
+4. `DISTILL_LOSS_WEIGHT` (0.1 / 0.25 / 0.5) — how hard teachers push [Phase C].
+5. Longer `STEPS` [Phase C].
 
 ---
 
