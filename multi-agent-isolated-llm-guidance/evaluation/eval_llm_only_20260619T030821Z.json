@@ -1,0 +1,16 @@
+{
+  "mode": "LLM_ONLY",
+  "num_agents": 4,
+  "num_weather_cells": 2,
+  "seed": 42,
+  "route_ids": null,
+  "steps": 35,
+  "total_reward": 170.7669828924708,
+  "success": true,
+  "truncated": false,
+  "collision": false,
+  "failure_reason": "success",
+  "active_calls_logged": 25,
+  "used_vision": false,
+  "memory_visual_audit": false
+}

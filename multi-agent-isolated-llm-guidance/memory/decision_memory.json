@@ -1,0 +1,4336 @@
+{
+  "schema_version": 1,
+  "episodes": [
+    {
+      "episode_id": "run_20260619T030713Z__ep000001__seed_42",
+      "seed": 42,
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "cases": [
+        {
+          "step": 5,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "EXECUTE_TURN",
+          "reason": "SECTOR_ENTRY",
+          "type": "traffic+boundary",
+          "place": {
+            "route_frac": 0.1608,
+            "xtrack": 0.0,
+            "heading_err": 0.017
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 31.78,
+              "bearing": 31.532,
+              "loss": 8,
+              "min_sep": 4.274
+            },
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 42.207,
+              "bearing": 0.012,
+              "loss": null,
+              "min_sep": 10.207
+            }
+          ],
+          "weather": {
+            "clear_now": 19.639,
+            "clear_pred": 11.2,
+            "bearing": -87.83,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 0.479,
+            "bearing": 159.281,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              -30,
+              -25,
+              -20
+            ],
+            "unsafe": [
+              -15,
+              30,
+              -10,
+              -5,
+              0,
+              25,
+              5,
+              20,
+              10,
+              15
+            ],
+            "best_safe": -30,
+            "best_progress": -20
+          },
+          "result": {
+            "action": -30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_9f4ab477cabe0b31"
+        },
+        {
+          "step": 5,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "EXECUTE_TURN",
+          "reason": "SECTOR_ENTRY",
+          "type": "traffic+boundary",
+          "place": {
+            "route_frac": 0.1452,
+            "xtrack": 0.0,
+            "heading_err": 0.007
+          },
+          "traffic": [
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 31.78,
+              "bearing": -19.762,
+              "loss": 8,
+              "min_sep": 4.274
+            },
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 22.462,
+              "bearing": 81.012,
+              "loss": null,
+              "min_sep": 10.018
+            }
+          ],
+          "weather": {
+            "clear_now": 20.244,
+            "clear_pred": 11.781,
+            "bearing": 43.761,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 0.967,
+            "bearing": -143.974,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              -30,
+              -25,
+              -20,
+              -15
+            ],
+            "unsafe": [
+              -10,
+              -5,
+              15,
+              20,
+              10,
+              0,
+              5,
+              25,
+              30
+            ],
+            "best_safe": -30,
+            "best_progress": -15
+          },
+          "result": {
+            "action": -30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_7d26950555de620a"
+        },
+        {
+          "step": 5,
+          "agent": "A1",
+          "route": "PATH6|OMBAP|WP061|0",
+          "call": "EXECUTE_TURN",
+          "reason": "SECTOR_ENTRY",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.1984,
+            "xtrack": -0.0,
+            "heading_err": -0.409
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 13.817,
+              "bearing": -159.826,
+              "loss": null,
+              "min_sep": 14.409
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 34.777,
+              "bearing": -46.467,
+              "loss": null,
+              "min_sep": 18.474
+            }
+          ],
+          "weather": {
+            "clear_now": 5.549,
+            "clear_pred": 5.74,
+            "bearing": -82.231,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 0.949,
+            "bearing": 122.21,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              25,
+              20,
+              15,
+              10,
+              5,
+              0,
+              -5,
+              -10,
+              -15,
+              -20,
+              -25,
+              -30
+            ],
+            "unsafe": [
+              30
+            ],
+            "best_safe": 25,
+            "best_progress": 0
+          },
+          "result": {
+            "action": 25,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_3f80cca0e28452c6"
+        },
+        {
+          "step": 6,
+          "agent": "A1",
+          "route": "PATH6|OMBAP|WP061|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.2341,
+            "xtrack": 0.848,
+            "heading_err": -26.683
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 14.598,
+              "bearing": -178.216,
+              "loss": null,
+              "min_sep": 15.553
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 32.222,
+              "bearing": -74.069,
+              "loss": null,
+              "min_sep": 17.119
+            }
+          ],
+          "weather": {
+            "clear_now": 6.539,
+            "clear_pred": 7.926,
+            "bearing": -121.715,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 1.2,
+            "bearing": 97.21,
+            "exit": 8,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              -25,
+              -30,
+              -20,
+              -15,
+              -10
+            ],
+            "unsafe": [
+              -5,
+              0
+            ],
+            "best_safe": -25,
+            "best_progress": -25
+          },
+          "result": {
+            "action": -25,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_9622a428243a40ee"
+        },
+        {
+          "step": 6,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.1703,
+            "xtrack": -1.0,
+            "heading_err": 31.009
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 21.837,
+              "bearing": 112.028,
+              "loss": null,
+              "min_sep": 15.156
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 28.936,
+              "bearing": 14.426,
+              "loss": null,
+              "min_sep": 18.635
+            }
+          ],
+          "weather": {
+            "clear_now": 19.477,
+            "clear_pred": 18.329,
+            "bearing": 79.011,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 1.779,
+            "bearing": -113.974,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              30,
+              25,
+              20,
+              15,
+              10,
+              5,
+              0
+            ],
+            "unsafe": [],
+            "best_safe": 30,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_4912376331268bcc"
+        },
+        {
+          "step": 7,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "EXECUTE_TURN",
+          "reason": "SECTOR_ENTRY",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.2251,
+            "xtrack": -0.0,
+            "heading_err": -0.026
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 20.195,
+              "bearing": -45.226,
+              "loss": null,
+              "min_sep": 6.623
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 34.801,
+              "bearing": 3.268,
+              "loss": null,
+              "min_sep": 11.055
+            }
+          ],
+          "weather": {
+            "clear_now": 8.998,
+            "clear_pred": 1.749,
+            "bearing": 25.69,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 1.571,
+            "bearing": 151.162,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              -30,
+              -25,
+              -20,
+              -15,
+              -10
+            ],
+            "unsafe": [
+              -5,
+              10,
+              0,
+              5,
+              25,
+              20,
+              15,
+              30
+            ],
+            "best_safe": -30,
+            "best_progress": -10
+          },
+          "result": {
+            "action": -30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_15bcd67f56e298ef"
+        },
+        {
+          "step": 7,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "SAFE_STREAK",
+          "type": "merge_back",
+          "place": {
+            "route_frac": 0.2164,
+            "xtrack": -2.0,
+            "heading_err": 32.368
+          },
+          "traffic": [
+            {
+              "route": "PATH6|OMBAP|WP061|0",
+              "dist": 28.965,
+              "bearing": 7.613,
+              "loss": null,
+              "min_sep": 10.839
+            },
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 34.801,
+              "bearing": 33.305,
+              "loss": null,
+              "min_sep": 11.055
+            }
+          ],
+          "weather": {
+            "clear_now": 16.797,
+            "clear_pred": 10.341,
+            "bearing": -68.388,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 4.426,
+            "bearing": -170.719,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              15,
+              10,
+              5,
+              0
+            ],
+            "unsafe": [
+              20,
+              30,
+              25
+            ],
+            "best_safe": 15,
+            "best_progress": 15
+          },
+          "result": {
+            "action": 15,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_c58226b6c4c50fad"
+        },
+        {
+          "step": 9,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "MERGE_BACK",
+          "reason": "SAFE_STREAK",
+          "type": "merge_back",
+          "place": {
+            "route_frac": 0.2807,
+            "xtrack": -2.0,
+            "heading_err": 32.531
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 16.151,
+              "bearing": -4.796,
+              "loss": null,
+              "min_sep": 11.387
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 27.873,
+              "bearing": 40.379,
+              "loss": null,
+              "min_sep": 15.144
+            }
+          ],
+          "weather": {
+            "clear_now": 7.092,
+            "clear_pred": 6.529,
+            "bearing": 76.046,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 5.571,
+            "bearing": -178.838,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              30,
+              25,
+              20,
+              15,
+              10,
+              5,
+              0
+            ],
+            "unsafe": [],
+            "best_safe": 30,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_ec8e0051b0c438c0"
+        },
+        {
+          "step": 11,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.3406,
+            "xtrack": -4.076,
+            "heading_err": 20.689
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 20.471,
+              "bearing": 32.255,
+              "loss": null,
+              "min_sep": 8.654
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 14.437,
+              "bearing": 72.392,
+              "loss": null,
+              "min_sep": 9.203
+            }
+          ],
+          "weather": {
+            "clear_now": 15.904,
+            "clear_pred": 4.289,
+            "bearing": 16.199,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 12.386,
+            "bearing": 174.281,
+            "exit": 12,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              0
+            ],
+            "unsafe": [
+              10,
+              5,
+              15,
+              20,
+              25,
+              30
+            ],
+            "best_safe": 0,
+            "best_progress": 0
+          },
+          "result": {
+            "action": 0,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_f3417508b18a0c1d"
+        },
+        {
+          "step": 11,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "EMERGENCY_MANEUVER",
+          "reason": "IMMEDIATE_HAZARD",
+          "type": "traffic+weather",
+          "place": {
+            "route_frac": 0.3155,
+            "xtrack": -1.001,
+            "heading_err": 1.223
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 13.252,
+              "bearing": 101.352,
+              "loss": null,
+              "min_sep": 7.974
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 14.437,
+              "bearing": 6.097,
+              "loss": null,
+              "min_sep": 9.203
+            }
+          ],
+          "weather": {
+            "clear_now": 13.441,
+            "clear_pred": 1.866,
+            "bearing": 78.6,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 9.867,
+            "bearing": -143.974,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              -30,
+              -25,
+              -20,
+              -15,
+              -10,
+              -5,
+              5,
+              10,
+              15
+            ],
+            "unsafe": [
+              20,
+              25,
+              30
+            ],
+            "best_safe": -30,
+            "best_progress": 5
+          },
+          "result": {
+            "action": -30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_993e005395e276f1"
+        },
+        {
+          "step": 12,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.3406,
+            "xtrack": -2.002,
+            "heading_err": 32.53
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 12.811,
+              "bearing": 133.952,
+              "loss": null,
+              "min_sep": 10.44
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 12.599,
+              "bearing": 50.268,
+              "loss": null,
+              "min_sep": 11.745
+            }
+          ],
+          "weather": {
+            "clear_now": 13.952,
+            "clear_pred": 9.605,
+            "bearing": 115.785,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 10.679,
+            "bearing": -113.974,
+            "exit": 10,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              30,
+              25,
+              20,
+              15,
+              10,
+              5
+            ],
+            "unsafe": [
+              0
+            ],
+            "best_safe": 30,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_acc65d860f5746f3"
+        },
+        {
+          "step": 13,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "EMERGENCY_MANEUVER",
+          "reason": "IMMEDIATE_HAZARD",
+          "type": "traffic+weather",
+          "place": {
+            "route_frac": 0.3697,
+            "xtrack": -2.003,
+            "heading_err": 2.646
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 11.53,
+              "bearing": 109.439,
+              "loss": null,
+              "min_sep": 8.178
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 10.939,
+              "bearing": 34.5,
+              "loss": null,
+              "min_sep": 10.149
+            }
+          ],
+          "weather": {
+            "clear_now": 13.724,
+            "clear_pred": -2.476,
+            "bearing": 93.473,
+            "entry": 11,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 12.3,
+            "bearing": -145.189,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              -20,
+              -15,
+              -10,
+              10,
+              15,
+              20
+            ],
+            "unsafe": [
+              -25,
+              -30,
+              -5,
+              5,
+              25,
+              30
+            ],
+            "best_safe": -20,
+            "best_progress": 10
+          },
+          "result": {
+            "action": -20,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_288439c00025c6ac"
+        },
+        {
+          "step": 14,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.4339,
+            "xtrack": -5.63,
+            "heading_err": 24.097
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 10.873,
+              "bearing": 59.503,
+              "loss": null,
+              "min_sep": 8.654
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 10.769,
+              "bearing": 120.285,
+              "loss": null,
+              "min_sep": 11.804
+            }
+          ],
+          "weather": {
+            "clear_now": 10.173,
+            "clear_pred": 4.289,
+            "bearing": 26.964,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 17.454,
+            "bearing": -13.8,
+            "exit": 9,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              5,
+              0,
+              20,
+              15,
+              10,
+              25,
+              30
+            ],
+            "best_safe": 5,
+            "best_progress": 20
+          },
+          "result": {
+            "action": 5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_7faa8a23c28e3de0"
+        },
+        {
+          "step": 14,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.3969,
+            "xtrack": -2.688,
+            "heading_err": 23.707
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 10.949,
+              "bearing": 134.067,
+              "loss": null,
+              "min_sep": 9.454
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 10.769,
+              "bearing": 73.99,
+              "loss": null,
+              "min_sep": 11.804
+            }
+          ],
+          "weather": {
+            "clear_now": 14.446,
+            "clear_pred": 4.239,
+            "bearing": 120.305,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 12.026,
+            "bearing": -52.014,
+            "exit": 10,
+            "closing": true
+          },
+          "preview": {
+            "safe": [
+              5
+            ],
+            "unsafe": [
+              0,
+              25,
+              30,
+              15,
+              10,
+              20
+            ],
+            "best_safe": 5,
+            "best_progress": 5
+          },
+          "result": {
+            "action": 5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_903a3e12199b2f8e"
+        },
+        {
+          "step": 15,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "EMERGENCY_MANEUVER",
+          "reason": "IMMEDIATE_HAZARD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.425,
+            "xtrack": -3.206,
+            "heading_err": 19.632
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 10.327,
+              "bearing": 134.881,
+              "loss": null,
+              "min_sep": 9.207
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 11.509,
+              "bearing": 87.614,
+              "loss": null,
+              "min_sep": 13.266
+            }
+          ],
+          "weather": {
+            "clear_now": 15.249,
+            "clear_pred": 2.327,
+            "bearing": 121.762,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 10.937,
+            "bearing": -57.014,
+            "exit": 11,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              -10,
+              -5,
+              -15,
+              -30,
+              -25,
+              -20,
+              5,
+              30,
+              10,
+              25,
+              15,
+              20
+            ],
+            "best_safe": -10,
+            "best_progress": 20
+          },
+          "result": {
+            "action": -10,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_b6012c10fd574ccc"
+        },
+        {
+          "step": 15,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.4737,
+            "xtrack": -1.991,
+            "heading_err": 3.457
+          },
+          "traffic": [
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 8.82,
+              "bearing": 64.552,
+              "loss": null,
+              "min_sep": 8.315
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 10.327,
+              "bearing": -8.862,
+              "loss": null,
+              "min_sep": 9.207
+            }
+          ],
+          "weather": {
+            "clear_now": 5.499,
+            "clear_pred": 6.944,
+            "bearing": 140.431,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 15.778,
+            "bearing": -92.717,
+            "exit": 12,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              5,
+              0,
+              10,
+              15,
+              20,
+              25,
+              30
+            ],
+            "unsafe": [],
+            "best_safe": 5,
+            "best_progress": 5
+          },
+          "result": {
+            "action": 5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_0af6115db3d14211"
+        },
+        {
+          "step": 16,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.4513,
+            "xtrack": -4.052,
+            "heading_err": 31.122
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 10.044,
+              "bearing": 148.714,
+              "loss": null,
+              "min_sep": 9.399
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 13.599,
+              "bearing": 112.194,
+              "loss": null,
+              "min_sep": 16.318
+            }
+          ],
+          "weather": {
+            "clear_now": 16.514,
+            "clear_pred": 5.791,
+            "bearing": 136.833,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 9.574,
+            "bearing": -47.014,
+            "exit": 8,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              5,
+              0,
+              15,
+              10,
+              20,
+              25,
+              30
+            ],
+            "best_safe": 5,
+            "best_progress": 20
+          },
+          "result": {
+            "action": 5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_e36633bf9b341e77"
+        },
+        {
+          "step": 17,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.5288,
+            "xtrack": -6.671,
+            "heading_err": 22.84
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 9.284,
+              "bearing": 126.475,
+              "loss": null,
+              "min_sep": 11.729
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 16.167,
+              "bearing": 159.024,
+              "loss": null,
+              "min_sep": 19.128
+            }
+          ],
+          "weather": {
+            "clear_now": 5.213,
+            "clear_pred": 3.409,
+            "bearing": 45.402,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 11.774,
+            "bearing": -18.8,
+            "exit": 7,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              0,
+              25,
+              30,
+              20,
+              15,
+              10,
+              5
+            ],
+            "best_safe": 0,
+            "best_progress": 25
+          },
+          "result": {
+            "action": 0,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_219d69eb8ce83c58"
+        },
+        {
+          "step": 18,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+boundary",
+          "place": {
+            "route_frac": 0.5698,
+            "xtrack": -1.462,
+            "heading_err": -1.888
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 9.478,
+              "bearing": 0.123,
+              "loss": null,
+              "min_sep": 9.24
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 11.729,
+              "bearing": 128.645,
+              "loss": null,
+              "min_sep": 14.846
+            }
+          ],
+          "weather": {
+            "clear_now": 10.079,
+            "clear_pred": 7.863,
+            "bearing": 157.051,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 15.639,
+            "bearing": -25.757,
+            "exit": 9,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              0
+            ],
+            "best_safe": 0,
+            "best_progress": 0
+          },
+          "result": {
+            "action": 0,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_461d6dddd4f8d13d"
+        },
+        {
+          "step": 19,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.5332,
+            "xtrack": -6.103,
+            "heading_err": 30.752
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 9.316,
+              "bearing": 159.319,
+              "loss": null,
+              "min_sep": 9.24
+            },
+            {
+              "route": "PATH6|OMBAP|WP061|0",
+              "dist": 24.513,
+              "bearing": 67.238,
+              "loss": null,
+              "min_sep": 24.288
+            }
+          ],
+          "weather": {
+            "clear_now": 12.984,
+            "clear_pred": 4.237,
+            "bearing": 39.578,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 5.881,
+            "bearing": -52.014,
+            "exit": 5,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              5,
+              0,
+              15,
+              10,
+              20,
+              25,
+              30
+            ],
+            "best_safe": 5,
+            "best_progress": 20
+          },
+          "result": {
+            "action": 5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_e3695f754f7667b8"
+        },
+        {
+          "step": 20,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.6238,
+            "xtrack": -7.712,
+            "heading_err": 28.263
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 18.294,
+              "bearing": 161.156,
+              "loss": null,
+              "min_sep": 21.918
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 25.54,
+              "bearing": 176.179,
+              "loss": null,
+              "min_sep": 28.866
+            }
+          ],
+          "weather": {
+            "clear_now": 3.409,
+            "clear_pred": 4.057,
+            "bearing": 102.126,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 6.094,
+            "bearing": -18.8,
+            "exit": 4,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              30,
+              25,
+              20,
+              15,
+              10,
+              5,
+              0
+            ],
+            "best_safe": 30,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_962e89fc4187e47c"
+        },
+        {
+          "step": 21,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+boundary",
+          "place": {
+            "route_frac": 0.6658,
+            "xtrack": -0.938,
+            "heading_err": -2.432
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 9.188,
+              "bearing": 18.931,
+              "loss": null,
+              "min_sep": 9.312
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 21.432,
+              "bearing": 153.143,
+              "loss": null,
+              "min_sep": 24.808
+            }
+          ],
+          "weather": {
+            "clear_now": 15.432,
+            "clear_pred": 7.863,
+            "bearing": 166.192,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 10.235,
+            "bearing": -25.757,
+            "exit": 6,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              0
+            ],
+            "best_safe": 0,
+            "best_progress": 0
+          },
+          "result": {
+            "action": 0,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_4865024b1fdfe291"
+        },
+        {
+          "step": 22,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.6173,
+            "xtrack": -7.655,
+            "heading_err": 31.201
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 9.312,
+              "bearing": 174.308,
+              "loss": null,
+              "min_sep": 9.557
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 31.871,
+              "bearing": 139.449,
+              "loss": null,
+              "min_sep": 35.278
+            }
+          ],
+          "weather": {
+            "clear_now": 6.912,
+            "clear_pred": 3.158,
+            "bearing": 49.512,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 2.614,
+            "bearing": -57.014,
+            "exit": 3,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              0,
+              20,
+              15,
+              10,
+              5,
+              30,
+              25
+            ],
+            "best_safe": 0,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 0,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_a43914fbc0a034b0"
+        },
+        {
+          "step": 22,
+          "agent": "A1",
+          "route": "PATH6|OMBAP|WP061|0",
+          "call": "MERGE_BACK",
+          "reason": "SAFE_STREAK",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.869,
+            "xtrack": 1.114,
+            "heading_err": -9.751
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 23.817,
+              "bearing": -111.208,
+              "loss": null,
+              "min_sep": 999.0
+            },
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 28.74,
+              "bearing": -128.584,
+              "loss": null,
+              "min_sep": 999.0
+            }
+          ],
+          "weather": {
+            "clear_now": 8.766,
+            "clear_pred": null,
+            "bearing": -100.844,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 2.499,
+            "bearing": 57.431,
+            "exit": null,
+            "closing": true
+          },
+          "preview": {
+            "safe": [
+              -10,
+              -5,
+              -15,
+              0,
+              -20,
+              -25,
+              -30
+            ],
+            "unsafe": [],
+            "best_safe": -10,
+            "best_progress": -10
+          },
+          "result": {
+            "action": -10,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_0e1166be412890c5"
+        },
+        {
+          "step": 23,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.7144,
+            "xtrack": -5.659,
+            "heading_err": -2.295
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 28.337,
+              "bearing": 147.265,
+              "loss": null,
+              "min_sep": 31.968
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 35.278,
+              "bearing": 159.192,
+              "loss": null,
+              "min_sep": 38.79
+            }
+          ],
+          "weather": {
+            "clear_now": 4.396,
+            "clear_pred": 5.759,
+            "bearing": 124.462,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 2.142,
+            "bearing": -48.8,
+            "exit": 2,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              0
+            ],
+            "best_safe": 0,
+            "best_progress": 0
+          },
+          "result": {
+            "action": 0,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_708ca9d800d282bf"
+        },
+        {
+          "step": 24,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.7619,
+            "xtrack": -0.416,
+            "heading_err": -3.417
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 9.914,
+              "bearing": 37.929,
+              "loss": null,
+              "min_sep": 10.371
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 31.968,
+              "bearing": 165.261,
+              "loss": null,
+              "min_sep": 35.671
+            }
+          ],
+          "weather": {
+            "clear_now": 11.127,
+            "clear_pred": 7.863,
+            "bearing": 66.57,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 4.831,
+            "bearing": -25.757,
+            "exit": 3,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              -10,
+              -15,
+              -20,
+              -5,
+              0,
+              -25,
+              -30
+            ],
+            "best_safe": -10,
+            "best_progress": -10
+          },
+          "result": {
+            "action": -10,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_b3c53b153a9007cb"
+        },
+        {
+          "step": 25,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.7014,
+            "xtrack": -9.211,
+            "heading_err": 39.13
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 10.634,
+              "bearing": -166.565,
+              "loss": null,
+              "min_sep": 11.483
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 42.381,
+              "bearing": 148.087,
+              "loss": null,
+              "min_sep": 46.033
+            }
+          ],
+          "weather": {
+            "clear_now": 3.194,
+            "clear_pred": 3.158,
+            "bearing": 84.035,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": -0.652,
+            "bearing": 122.986,
+            "exit": 1,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              5,
+              0,
+              30,
+              25,
+              20,
+              15,
+              10
+            ],
+            "best_safe": 5,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_879f1fd97d1785a8"
+        },
+        {
+          "step": 26,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.805,
+            "xtrack": -3.611,
+            "heading_err": -3.383
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 39.497,
+              "bearing": 153.655,
+              "loss": null,
+              "min_sep": 43.299
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 45.939,
+              "bearing": 166.552,
+              "loss": null,
+              "min_sep": 49.554
+            }
+          ],
+          "weather": {
+            "clear_now": 8.993,
+            "clear_pred": 10.731,
+            "bearing": 146.698,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": -1.81,
+            "bearing": 131.2,
+            "exit": 1,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              -15,
+              -20,
+              -5,
+              0,
+              -10,
+              -25,
+              -30
+            ],
+            "best_safe": -15,
+            "best_progress": -15
+          },
+          "result": {
+            "action": -15,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_bcf776d9e4a902fd"
+        },
+        {
+          "step": 27,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.858,
+            "xtrack": -0.935,
+            "heading_err": 11.024
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 12.568,
+              "bearing": 66.993,
+              "loss": null,
+              "min_sep": 13.703
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 43.46,
+              "bearing": 179.2,
+              "loss": null,
+              "min_sep": 47.426
+            }
+          ],
+          "weather": {
+            "clear_now": 9.249,
+            "clear_pred": 9.214,
+            "bearing": 98.441,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": -0.943,
+            "bearing": 164.243,
+            "exit": 1,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              0,
+              25,
+              30,
+              10,
+              15,
+              5,
+              20
+            ],
+            "best_safe": 0,
+            "best_progress": 0
+          },
+          "result": {
+            "action": 0,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_736eb55d5857c5a5"
+        },
+        {
+          "step": 28,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.7871,
+            "xtrack": -10.257,
+            "heading_err": 44.979
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 13.703,
+              "bearing": -154.523,
+              "loss": null,
+              "min_sep": 14.918
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 53.269,
+              "bearing": 147.593,
+              "loss": null,
+              "min_sep": 56.961
+            }
+          ],
+          "weather": {
+            "clear_now": 4.301,
+            "clear_pred": 5.514,
+            "bearing": 128.041,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": -3.468,
+            "bearing": 117.986,
+            "exit": 1,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              30,
+              25,
+              20,
+              15,
+              10,
+              5,
+              0
+            ],
+            "best_safe": 30,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_82f92b851aa075bb"
+        },
+        {
+          "step": 29,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.9011,
+            "xtrack": -3.092,
+            "heading_err": 21.725
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 56.215,
+              "bearing": -174.443,
+              "loss": null,
+              "min_sep": 59.203
+            },
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 51.395,
+              "bearing": 170.133,
+              "loss": null,
+              "min_sep": 999.0
+            }
+          ],
+          "weather": {
+            "clear_now": 14.768,
+            "clear_pred": 16.701,
+            "bearing": 166.009,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": -6.796,
+            "bearing": 146.2,
+            "exit": 1,
+            "closing": true
+          },
+          "preview": {
+            "safe": [
+              20,
+              25,
+              15,
+              30,
+              10
+            ],
+            "unsafe": [
+              5,
+              0
+            ],
+            "best_safe": 20,
+            "best_progress": 20
+          },
+          "result": {
+            "action": 20,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_eeab2d90cf1c0e86"
+        },
+        {
+          "step": 31,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.8691,
+            "xtrack": -8.205,
+            "heading_err": 22.289
+          },
+          "traffic": [],
+          "weather": {
+            "clear_now": 6.666,
+            "clear_pred": 7.982,
+            "bearing": 132.736,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": -3.257,
+            "bearing": 87.986,
+            "exit": 1,
+            "closing": false
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              5,
+              20,
+              25,
+              15,
+              30,
+              10,
+              0
+            ],
+            "best_safe": 5,
+            "best_progress": 5
+          },
+          "result": {
+            "action": 5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_acc6c905cd07972d"
+        },
+        {
+          "step": 34,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.9481,
+            "xtrack": -5.667,
+            "heading_err": 32.72
+          },
+          "traffic": [],
+          "weather": {
+            "clear_now": 10.709,
+            "clear_pred": 12.308,
+            "bearing": 145.601,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": -4.875,
+            "bearing": 140.7,
+            "exit": 1,
+            "closing": true
+          },
+          "preview": {
+            "safe": [
+              30,
+              25,
+              20,
+              15,
+              10
+            ],
+            "unsafe": [
+              5,
+              0
+            ],
+            "best_safe": 30,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_aa159ae524d9d717"
+        }
+      ]
+    },
+    {
+      "episode_id": "run_20260619T033913Z__ep000001__seed_42",
+      "seed": 42,
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "cases": [
+        {
+          "step": 5,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "EXECUTE_TURN",
+          "reason": "SECTOR_ENTRY",
+          "type": "traffic+boundary",
+          "place": {
+            "route_frac": 0.1608,
+            "xtrack": 0.0,
+            "heading_err": 0.017
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 31.78,
+              "bearing": 31.532,
+              "loss": 8,
+              "min_sep": 4.274
+            },
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 42.207,
+              "bearing": 0.012,
+              "loss": null,
+              "min_sep": 10.207
+            }
+          ],
+          "weather": {
+            "clear_now": 19.639,
+            "clear_pred": 11.2,
+            "bearing": -87.83,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 0.479,
+            "bearing": 159.281,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              -30,
+              -25,
+              -20
+            ],
+            "unsafe": [
+              -15,
+              30,
+              -10,
+              -5,
+              0,
+              25,
+              5,
+              20,
+              10,
+              15
+            ],
+            "best_safe": -30,
+            "best_progress": -20
+          },
+          "result": {
+            "action": -30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_7ea493a529ea255b"
+        },
+        {
+          "step": 5,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "EXECUTE_TURN",
+          "reason": "SECTOR_ENTRY",
+          "type": "traffic+boundary",
+          "place": {
+            "route_frac": 0.1452,
+            "xtrack": 0.0,
+            "heading_err": 0.007
+          },
+          "traffic": [
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 31.78,
+              "bearing": -19.762,
+              "loss": 8,
+              "min_sep": 4.274
+            },
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 22.462,
+              "bearing": 81.012,
+              "loss": null,
+              "min_sep": 10.018
+            }
+          ],
+          "weather": {
+            "clear_now": 20.244,
+            "clear_pred": 11.781,
+            "bearing": 43.761,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 0.967,
+            "bearing": -143.974,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              -30,
+              -25,
+              -20,
+              -15
+            ],
+            "unsafe": [
+              -10,
+              -5,
+              15,
+              20,
+              10,
+              0,
+              5,
+              25,
+              30
+            ],
+            "best_safe": -30,
+            "best_progress": -15
+          },
+          "result": {
+            "action": -30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_568d0b6460c4f1f6"
+        },
+        {
+          "step": 5,
+          "agent": "A1",
+          "route": "PATH6|OMBAP|WP061|0",
+          "call": "EXECUTE_TURN",
+          "reason": "SECTOR_ENTRY",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.1984,
+            "xtrack": -0.0,
+            "heading_err": -0.409
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 13.817,
+              "bearing": -159.826,
+              "loss": null,
+              "min_sep": 14.409
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 34.777,
+              "bearing": -46.467,
+              "loss": null,
+              "min_sep": 18.474
+            }
+          ],
+          "weather": {
+            "clear_now": 5.549,
+            "clear_pred": 5.74,
+            "bearing": -82.231,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 0.949,
+            "bearing": 122.21,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              25,
+              20,
+              15,
+              10,
+              5,
+              0,
+              -5,
+              -10,
+              -15,
+              -20,
+              -25,
+              -30
+            ],
+            "unsafe": [
+              30
+            ],
+            "best_safe": 25,
+            "best_progress": 0
+          },
+          "result": {
+            "action": 5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_fc1b06b626cafd4b"
+        },
+        {
+          "step": 6,
+          "agent": "A1",
+          "route": "PATH6|OMBAP|WP061|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.2379,
+            "xtrack": 0.179,
+            "heading_err": -5.69
+          },
+          "traffic": [
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 31.599,
+              "bearing": -53.518,
+              "loss": null,
+              "min_sep": 11.648
+            },
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 14.472,
+              "bearing": -160.909,
+              "loss": null,
+              "min_sep": 15.189
+            }
+          ],
+          "weather": {
+            "clear_now": 5.909,
+            "clear_pred": 6.822,
+            "bearing": -103.714,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 1.863,
+            "bearing": 117.21,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              -5,
+              -10,
+              0,
+              -15
+            ],
+            "unsafe": [
+              -20,
+              -25,
+              -30
+            ],
+            "best_safe": -5,
+            "best_progress": -5
+          },
+          "result": {
+            "action": -5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_f52ce8dea0f7afc1"
+        },
+        {
+          "step": 6,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.1703,
+            "xtrack": -1.0,
+            "heading_err": 31.009
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 21.837,
+              "bearing": 112.028,
+              "loss": null,
+              "min_sep": 15.156
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 28.936,
+              "bearing": 14.426,
+              "loss": null,
+              "min_sep": 18.635
+            }
+          ],
+          "weather": {
+            "clear_now": 19.477,
+            "clear_pred": 18.329,
+            "bearing": 79.011,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 1.779,
+            "bearing": -113.974,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              30,
+              25,
+              20,
+              15,
+              10,
+              5,
+              0
+            ],
+            "unsafe": [],
+            "best_safe": 30,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_034bf8f3b13532f7"
+        },
+        {
+          "step": 7,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "EXECUTE_TURN",
+          "reason": "SECTOR_ENTRY",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.2251,
+            "xtrack": -0.0,
+            "heading_err": -0.026
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 20.195,
+              "bearing": -45.226,
+              "loss": null,
+              "min_sep": 6.623
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 34.801,
+              "bearing": 3.268,
+              "loss": null,
+              "min_sep": 11.055
+            }
+          ],
+          "weather": {
+            "clear_now": 8.998,
+            "clear_pred": 1.749,
+            "bearing": 25.69,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 1.571,
+            "bearing": 151.162,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              -30,
+              -25,
+              -20,
+              -15,
+              -10
+            ],
+            "unsafe": [
+              -5,
+              10,
+              0,
+              5,
+              25,
+              20,
+              15,
+              30
+            ],
+            "best_safe": -30,
+            "best_progress": -10
+          },
+          "result": {
+            "action": -30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_5e3d78b002756666"
+        },
+        {
+          "step": 7,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "SAFE_STREAK",
+          "type": "merge_back",
+          "place": {
+            "route_frac": 0.2164,
+            "xtrack": -2.0,
+            "heading_err": 32.368
+          },
+          "traffic": [
+            {
+              "route": "PATH6|OMBAP|WP061|0",
+              "dist": 28.33,
+              "bearing": 8.176,
+              "loss": null,
+              "min_sep": 10.403
+            },
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 34.801,
+              "bearing": 33.305,
+              "loss": null,
+              "min_sep": 11.055
+            }
+          ],
+          "weather": {
+            "clear_now": 16.797,
+            "clear_pred": 10.341,
+            "bearing": -68.388,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 4.426,
+            "bearing": -170.719,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              15,
+              10,
+              5,
+              0
+            ],
+            "unsafe": [
+              20,
+              30,
+              25
+            ],
+            "best_safe": 15,
+            "best_progress": 15
+          },
+          "result": {
+            "action": 15,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_03580c4bbb4f6830"
+        },
+        {
+          "step": 9,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "MERGE_BACK",
+          "reason": "SAFE_STREAK",
+          "type": "merge_back",
+          "place": {
+            "route_frac": 0.2807,
+            "xtrack": -2.0,
+            "heading_err": 32.531
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 16.151,
+              "bearing": -4.796,
+              "loss": null,
+              "min_sep": 11.387
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 27.873,
+              "bearing": 40.379,
+              "loss": null,
+              "min_sep": 15.144
+            }
+          ],
+          "weather": {
+            "clear_now": 7.092,
+            "clear_pred": 6.529,
+            "bearing": 76.046,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 5.571,
+            "bearing": -178.838,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              30,
+              25,
+              20,
+              15,
+              10,
+              5,
+              0
+            ],
+            "unsafe": [],
+            "best_safe": 30,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_26a86c6c5c2849a4"
+        },
+        {
+          "step": 11,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.3406,
+            "xtrack": -4.076,
+            "heading_err": 20.689
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 20.471,
+              "bearing": 32.255,
+              "loss": null,
+              "min_sep": 8.654
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 14.437,
+              "bearing": 72.392,
+              "loss": null,
+              "min_sep": 9.203
+            }
+          ],
+          "weather": {
+            "clear_now": 15.904,
+            "clear_pred": 4.289,
+            "bearing": 16.199,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 12.386,
+            "bearing": 174.281,
+            "exit": 12,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              0
+            ],
+            "unsafe": [
+              10,
+              5,
+              15,
+              20,
+              25,
+              30
+            ],
+            "best_safe": 0,
+            "best_progress": 0
+          },
+          "result": {
+            "action": 0,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_b082723d2b03755c"
+        },
+        {
+          "step": 11,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "EMERGENCY_MANEUVER",
+          "reason": "IMMEDIATE_HAZARD",
+          "type": "traffic+weather",
+          "place": {
+            "route_frac": 0.3155,
+            "xtrack": -1.001,
+            "heading_err": 1.223
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 13.252,
+              "bearing": 101.352,
+              "loss": null,
+              "min_sep": 7.974
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 14.437,
+              "bearing": 6.097,
+              "loss": null,
+              "min_sep": 9.203
+            }
+          ],
+          "weather": {
+            "clear_now": 13.441,
+            "clear_pred": 1.866,
+            "bearing": 78.6,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 9.867,
+            "bearing": -143.974,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              -30,
+              -25,
+              -20,
+              -15,
+              -10,
+              -5,
+              5,
+              10,
+              15
+            ],
+            "unsafe": [
+              20,
+              25,
+              30
+            ],
+            "best_safe": -30,
+            "best_progress": 5
+          },
+          "result": {
+            "action": -30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_f7181ce1b255a050"
+        },
+        {
+          "step": 12,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.3406,
+            "xtrack": -2.002,
+            "heading_err": 32.53
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 12.811,
+              "bearing": 133.952,
+              "loss": null,
+              "min_sep": 10.44
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 12.599,
+              "bearing": 50.268,
+              "loss": null,
+              "min_sep": 11.745
+            }
+          ],
+          "weather": {
+            "clear_now": 13.952,
+            "clear_pred": 9.605,
+            "bearing": 115.785,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 10.679,
+            "bearing": -113.974,
+            "exit": 10,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              30,
+              25,
+              20,
+              15,
+              10,
+              5
+            ],
+            "unsafe": [
+              0
+            ],
+            "best_safe": 30,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_3d156e32b047bb15"
+        },
+        {
+          "step": 13,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "EMERGENCY_MANEUVER",
+          "reason": "IMMEDIATE_HAZARD",
+          "type": "traffic+weather",
+          "place": {
+            "route_frac": 0.3697,
+            "xtrack": -2.003,
+            "heading_err": 2.646
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 11.53,
+              "bearing": 109.439,
+              "loss": null,
+              "min_sep": 8.178
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 10.939,
+              "bearing": 34.5,
+              "loss": null,
+              "min_sep": 10.149
+            }
+          ],
+          "weather": {
+            "clear_now": 13.724,
+            "clear_pred": -2.476,
+            "bearing": 93.473,
+            "entry": 11,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 12.3,
+            "bearing": -145.189,
+            "exit": null,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              -20,
+              -15,
+              -10,
+              10,
+              15,
+              20
+            ],
+            "unsafe": [
+              -25,
+              -30,
+              -5,
+              5,
+              25,
+              30
+            ],
+            "best_safe": -20,
+            "best_progress": 10
+          },
+          "result": {
+            "action": -20,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_892f40273c529bbb"
+        },
+        {
+          "step": 14,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.4339,
+            "xtrack": -5.63,
+            "heading_err": 24.097
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 10.873,
+              "bearing": 59.503,
+              "loss": null,
+              "min_sep": 8.654
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 10.769,
+              "bearing": 120.285,
+              "loss": null,
+              "min_sep": 11.804
+            }
+          ],
+          "weather": {
+            "clear_now": 10.173,
+            "clear_pred": 4.289,
+            "bearing": 26.964,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 17.454,
+            "bearing": -13.8,
+            "exit": 9,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              5,
+              0,
+              20,
+              15,
+              10,
+              25,
+              30
+            ],
+            "best_safe": 5,
+            "best_progress": 20
+          },
+          "result": {
+            "action": 5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_f91dfcdd1a3b405a"
+        },
+        {
+          "step": 14,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.3969,
+            "xtrack": -2.688,
+            "heading_err": 23.707
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 10.949,
+              "bearing": 134.067,
+              "loss": null,
+              "min_sep": 9.454
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 10.769,
+              "bearing": 73.99,
+              "loss": null,
+              "min_sep": 11.804
+            }
+          ],
+          "weather": {
+            "clear_now": 14.446,
+            "clear_pred": 4.239,
+            "bearing": 120.305,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 12.026,
+            "bearing": -52.014,
+            "exit": 10,
+            "closing": true
+          },
+          "preview": {
+            "safe": [
+              5
+            ],
+            "unsafe": [
+              0,
+              25,
+              30,
+              15,
+              10,
+              20
+            ],
+            "best_safe": 5,
+            "best_progress": 5
+          },
+          "result": {
+            "action": 5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_067bb77b1a967a59"
+        },
+        {
+          "step": 15,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "EMERGENCY_MANEUVER",
+          "reason": "IMMEDIATE_HAZARD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.425,
+            "xtrack": -3.206,
+            "heading_err": 19.632
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 10.327,
+              "bearing": 134.881,
+              "loss": null,
+              "min_sep": 9.207
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 11.509,
+              "bearing": 87.614,
+              "loss": null,
+              "min_sep": 13.266
+            }
+          ],
+          "weather": {
+            "clear_now": 15.249,
+            "clear_pred": 2.327,
+            "bearing": 121.762,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 10.937,
+            "bearing": -57.014,
+            "exit": 11,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              -10,
+              -5,
+              -15,
+              -30,
+              -25,
+              -20,
+              5,
+              30,
+              10,
+              25,
+              15,
+              20
+            ],
+            "best_safe": -10,
+            "best_progress": 20
+          },
+          "result": {
+            "action": -15,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_74dab15bcf9c2974"
+        },
+        {
+          "step": 15,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.4737,
+            "xtrack": -1.991,
+            "heading_err": 3.457
+          },
+          "traffic": [
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 8.82,
+              "bearing": 64.552,
+              "loss": null,
+              "min_sep": 8.315
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 10.327,
+              "bearing": -8.862,
+              "loss": null,
+              "min_sep": 9.207
+            }
+          ],
+          "weather": {
+            "clear_now": 5.499,
+            "clear_pred": 6.944,
+            "bearing": 140.431,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 15.778,
+            "bearing": -92.717,
+            "exit": 12,
+            "closing": false
+          },
+          "preview": {
+            "safe": [
+              5,
+              0,
+              10,
+              15,
+              20,
+              25,
+              30
+            ],
+            "unsafe": [],
+            "best_safe": 5,
+            "best_progress": 5
+          },
+          "result": {
+            "action": 5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_47b7f93b720a7d89"
+        },
+        {
+          "step": 16,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+boundary",
+          "place": {
+            "route_frac": 0.4501,
+            "xtrack": -4.207,
+            "heading_err": 36.341
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 10.129,
+              "bearing": 152.849,
+              "loss": null,
+              "min_sep": 9.576
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 13.757,
+              "bearing": 116.891,
+              "loss": null,
+              "min_sep": 16.606
+            }
+          ],
+          "weather": {
+            "clear_now": 16.625,
+            "clear_pred": 7.501,
+            "bearing": 141.432,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 9.451,
+            "bearing": -42.014,
+            "exit": 7,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              10,
+              5,
+              0,
+              20,
+              15,
+              25,
+              30
+            ],
+            "best_safe": 10,
+            "best_progress": 25
+          },
+          "result": {
+            "action": 15,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_66bcf7e12535d98e"
+        },
+        {
+          "step": 17,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.5288,
+            "xtrack": -6.671,
+            "heading_err": 22.84
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 9.284,
+              "bearing": 126.475,
+              "loss": null,
+              "min_sep": 11.729
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 16.152,
+              "bearing": 158.93,
+              "loss": null,
+              "min_sep": 18.963
+            }
+          ],
+          "weather": {
+            "clear_now": 5.213,
+            "clear_pred": 3.409,
+            "bearing": 45.402,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 11.774,
+            "bearing": -18.8,
+            "exit": 7,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              0,
+              25,
+              30,
+              20,
+              15,
+              10,
+              5
+            ],
+            "best_safe": 0,
+            "best_progress": 25
+          },
+          "result": {
+            "action": 25,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_12636c3d7a3ff7f3"
+        },
+        {
+          "step": 17,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "EMERGENCY_MANEUVER",
+          "reason": "IMMEDIATE_HAZARD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.4782,
+            "xtrack": -4.724,
+            "heading_err": 22.491
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 9.696,
+              "bearing": 143.556,
+              "loss": null,
+              "min_sep": 9.066
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 16.152,
+              "bearing": 112.636,
+              "loss": null,
+              "min_sep": 18.963
+            }
+          ],
+          "weather": {
+            "clear_now": 17.218,
+            "clear_pred": 2.821,
+            "bearing": 131.53,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 8.362,
+            "bearing": -57.014,
+            "exit": 8,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              -10,
+              -5,
+              -20,
+              -15,
+              -30,
+              -25,
+              5,
+              10,
+              15,
+              20,
+              25,
+              30
+            ],
+            "best_safe": -10,
+            "best_progress": 10
+          },
+          "result": {
+            "action": -10,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_48f0cf524aec0da6"
+        },
+        {
+          "step": 18,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.5045,
+            "xtrack": -5.569,
+            "heading_err": 34.271
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 9.521,
+              "bearing": 157.831,
+              "loss": null,
+              "min_sep": 9.334
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 18.879,
+              "bearing": 132.163,
+              "loss": null,
+              "min_sep": 21.991
+            }
+          ],
+          "weather": {
+            "clear_now": 15.194,
+            "clear_pred": 5.614,
+            "bearing": 41.542,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 6.999,
+            "bearing": -47.014,
+            "exit": 6,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              10,
+              5,
+              0,
+              20,
+              15,
+              25,
+              30
+            ],
+            "best_safe": 10,
+            "best_progress": 25
+          },
+          "result": {
+            "action": 10,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_b3f84fe350a55266"
+        },
+        {
+          "step": 18,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "EMERGENCY_MANEUVER",
+          "reason": "IMMEDIATE_HAZARD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.5599,
+            "xtrack": -6.153,
+            "heading_err": -2.313
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 11.092,
+              "bearing": 121.629,
+              "loss": null,
+              "min_sep": 13.843
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 18.879,
+              "bearing": 143.457,
+              "loss": null,
+              "min_sep": 21.991
+            }
+          ],
+          "weather": {
+            "clear_now": 3.463,
+            "clear_pred": 0.77,
+            "bearing": 29.698,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 10.331,
+            "bearing": -43.8,
+            "exit": 8,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              5,
+              -10,
+              -5,
+              -30,
+              -25,
+              -20,
+              -15,
+              15,
+              10,
+              20,
+              25,
+              30
+            ],
+            "best_safe": 5,
+            "best_progress": -5
+          },
+          "result": {
+            "action": -5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_b720f1087e76b3e5"
+        },
+        {
+          "step": 18,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+boundary",
+          "place": {
+            "route_frac": 0.5698,
+            "xtrack": -1.462,
+            "heading_err": -1.888
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 9.521,
+              "bearing": -0.912,
+              "loss": null,
+              "min_sep": 9.334
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 11.092,
+              "bearing": 131.591,
+              "loss": null,
+              "min_sep": 13.843
+            }
+          ],
+          "weather": {
+            "clear_now": 10.079,
+            "clear_pred": 7.863,
+            "bearing": 157.051,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 15.639,
+            "bearing": -25.757,
+            "exit": 9,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              0
+            ],
+            "best_safe": 0,
+            "best_progress": 0
+          },
+          "result": {
+            "action": 0,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_400dfe26101a53a9"
+        },
+        {
+          "step": 19,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "EMERGENCY_MANEUVER",
+          "reason": "IMMEDIATE_HAZARD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.5916,
+            "xtrack": -5.805,
+            "heading_err": 2.893
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 13.962,
+              "bearing": 139.461,
+              "loss": null,
+              "min_sep": 17.285
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 21.821,
+              "bearing": 155.669,
+              "loss": null,
+              "min_sep": 25.024
+            }
+          ],
+          "weather": {
+            "clear_now": 2.053,
+            "clear_pred": 1.169,
+            "bearing": 53.291,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 8.772,
+            "bearing": -38.8,
+            "exit": 6,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              15,
+              5,
+              10,
+              -10,
+              -5,
+              -30,
+              -25,
+              -20,
+              -15,
+              30,
+              25,
+              20
+            ],
+            "best_safe": 15,
+            "best_progress": 5
+          },
+          "result": {
+            "action": -30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_afec34f96b983abf"
+        },
+        {
+          "step": 20,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.6218,
+            "xtrack": -6.489,
+            "heading_err": 35.443
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 17.621,
+              "bearing": 174.44,
+              "loss": null,
+              "min_sep": 21.368
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 25.116,
+              "bearing": -171.253,
+              "loss": null,
+              "min_sep": 28.467
+            }
+          ],
+          "weather": {
+            "clear_now": 2.204,
+            "clear_pred": 3.145,
+            "bearing": 111.073,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 6.796,
+            "bearing": -8.8,
+            "exit": 4,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              5,
+              0,
+              30,
+              25,
+              20,
+              15,
+              10
+            ],
+            "best_safe": 5,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 20,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_94e747a2ce3d0940"
+        },
+        {
+          "step": 21,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.5887,
+            "xtrack": -7.121,
+            "heading_err": 29.114
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 9.142,
+              "bearing": 167.645,
+              "loss": null,
+              "min_sep": 9.267
+            },
+            {
+              "route": "PATH6|OMBAP|WP061|0",
+              "dist": 23.507,
+              "bearing": 60.645,
+              "loss": null,
+              "min_sep": 23.278
+            }
+          ],
+          "weather": {
+            "clear_now": 8.853,
+            "clear_pred": 3.138,
+            "bearing": 42.985,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 3.732,
+            "bearing": -57.014,
+            "exit": 4,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              0,
+              15,
+              10,
+              5,
+              20,
+              30,
+              25
+            ],
+            "best_safe": 0,
+            "best_progress": 20
+          },
+          "result": {
+            "action": 15,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_eb860dfd4e8769b9"
+        },
+        {
+          "step": 21,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "traffic+boundary",
+          "place": {
+            "route_frac": 0.6658,
+            "xtrack": -0.938,
+            "heading_err": -2.432
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 9.142,
+              "bearing": 18.903,
+              "loss": null,
+              "min_sep": 9.267
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 21.23,
+              "bearing": 154.485,
+              "loss": null,
+              "min_sep": 24.958
+            }
+          ],
+          "weather": {
+            "clear_now": 15.432,
+            "clear_pred": 7.863,
+            "bearing": 166.192,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 10.235,
+            "bearing": -25.757,
+            "exit": 6,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              0
+            ],
+            "best_safe": 0,
+            "best_progress": 0
+          },
+          "result": {
+            "action": 0,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_179db14dcf346320"
+        },
+        {
+          "step": 22,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "EMERGENCY_MANEUVER",
+          "reason": "IMMEDIATE_HAZARD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.6177,
+            "xtrack": -7.12,
+            "heading_err": 15.138
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 9.162,
+              "bearing": 162.493,
+              "loss": null,
+              "min_sep": 9.446
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 31.569,
+              "bearing": 124.788,
+              "loss": null,
+              "min_sep": 34.751
+            }
+          ],
+          "weather": {
+            "clear_now": 6.601,
+            "clear_pred": 0.604,
+            "bearing": 32.284,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 3.115,
+            "bearing": -72.014,
+            "exit": 6,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              -20,
+              -25,
+              -30,
+              -10,
+              -5,
+              -15,
+              10,
+              5,
+              15,
+              20,
+              25,
+              30
+            ],
+            "best_safe": -20,
+            "best_progress": 10
+          },
+          "result": {
+            "action": -15,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_1a59f37f444cffbc"
+        },
+        {
+          "step": 23,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.7181,
+            "xtrack": -6.489,
+            "heading_err": 20.345
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 28.758,
+              "bearing": 165.756,
+              "loss": null,
+              "min_sep": 32.604
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 35.121,
+              "bearing": 178.413,
+              "loss": null,
+              "min_sep": 38.72
+            }
+          ],
+          "weather": {
+            "clear_now": 5.08,
+            "clear_pred": 6.769,
+            "bearing": 140.588,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": 1.538,
+            "bearing": -28.8,
+            "exit": 1,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              30,
+              20,
+              25,
+              15,
+              10,
+              5,
+              0
+            ],
+            "best_safe": 30,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_002875e70b957a98"
+        },
+        {
+          "step": 23,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "EMERGENCY_MANEUVER",
+          "reason": "IMMEDIATE_HAZARD",
+          "type": "traffic+weather+boundary",
+          "place": {
+            "route_frac": 0.6457,
+            "xtrack": -7.638,
+            "heading_err": 32.389
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 9.465,
+              "bearing": -176.141,
+              "loss": null,
+              "min_sep": 9.876
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 35.121,
+              "bearing": 142.118,
+              "loss": null,
+              "min_sep": 38.72
+            }
+          ],
+          "weather": {
+            "clear_now": 4.839,
+            "clear_pred": 2.627,
+            "bearing": 55.768,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 2.026,
+            "bearing": -57.014,
+            "exit": 2,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              -5,
+              -10,
+              -15,
+              -20,
+              -25,
+              -30,
+              25,
+              20,
+              15,
+              10,
+              5,
+              30
+            ],
+            "best_safe": -5,
+            "best_progress": 30
+          },
+          "result": {
+            "action": -5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_39c51cff021953c6"
+        },
+        {
+          "step": 24,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.6729,
+            "xtrack": -8.324,
+            "heading_err": 40.288
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 9.841,
+              "bearing": -166.23,
+              "loss": null,
+              "min_sep": 10.284
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 38.563,
+              "bearing": 150.29,
+              "loss": null,
+              "min_sep": 42.104
+            }
+          ],
+          "weather": {
+            "clear_now": 3.617,
+            "clear_pred": 3.016,
+            "bearing": 72.814,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 0.795,
+            "bearing": -52.014,
+            "exit": 1,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              0,
+              30,
+              25,
+              20,
+              15,
+              10,
+              5
+            ],
+            "best_safe": 0,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 0,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_2654c0b6521e39ab"
+        },
+        {
+          "step": 24,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.7619,
+            "xtrack": -0.416,
+            "heading_err": -3.417
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 9.841,
+              "bearing": 40.028,
+              "loss": null,
+              "min_sep": 10.284
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 32.144,
+              "bearing": 164.385,
+              "loss": null,
+              "min_sep": 35.637
+            }
+          ],
+          "weather": {
+            "clear_now": 11.127,
+            "clear_pred": 7.863,
+            "bearing": 66.57,
+            "entry": null,
+            "closing": true
+          },
+          "boundary": {
+            "dist": 4.831,
+            "bearing": -25.757,
+            "exit": 3,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              -10,
+              -15,
+              -20,
+              -5,
+              0,
+              -25,
+              -30
+            ],
+            "best_safe": -10,
+            "best_progress": -10
+          },
+          "result": {
+            "action": -10,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_6c51f7023ce1c173"
+        },
+        {
+          "step": 26,
+          "agent": "A3",
+          "route": "PATH1|DAMOG|BOBOB|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.8017,
+            "xtrack": -3.492,
+            "heading_err": -14.157
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 39.277,
+              "bearing": 143.794,
+              "loss": null,
+              "min_sep": 42.908
+            },
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 45.721,
+              "bearing": 156.46,
+              "loss": null,
+              "min_sep": 49.397
+            }
+          ],
+          "weather": {
+            "clear_now": 8.767,
+            "clear_pred": 10.334,
+            "bearing": 137.027,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": -1.57,
+            "bearing": 121.2,
+            "exit": 1,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              -5,
+              -25,
+              0,
+              -30,
+              -15,
+              -10,
+              -20
+            ],
+            "best_safe": -5,
+            "best_progress": -5
+          },
+          "result": {
+            "action": -15,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_aaca2ff82e71eef2"
+        },
+        {
+          "step": 27,
+          "agent": "A2",
+          "route": "PATH1_REV|BOBOB|DAMOG|1",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.858,
+            "xtrack": -0.935,
+            "heading_err": 11.024
+          },
+          "traffic": [
+            {
+              "route": "PATH3|PT222|WP059|0",
+              "dist": 12.232,
+              "bearing": 65.047,
+              "loss": null,
+              "min_sep": 13.168
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 43.148,
+              "bearing": 179.774,
+              "loss": null,
+              "min_sep": 47.03
+            }
+          ],
+          "weather": {
+            "clear_now": 9.249,
+            "clear_pred": 9.214,
+            "bearing": 98.441,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": -0.943,
+            "bearing": 164.243,
+            "exit": 1,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              0,
+              25,
+              30,
+              10,
+              15,
+              5,
+              20
+            ],
+            "best_safe": 0,
+            "best_progress": 0
+          },
+          "result": {
+            "action": 0,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_6bab07d95fadd3dc"
+        },
+        {
+          "step": 27,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.7548,
+            "xtrack": -10.38,
+            "heading_err": 51.577
+          },
+          "traffic": [
+            {
+              "route": "PATH1_REV|BOBOB|DAMOG|1",
+              "dist": 12.232,
+              "bearing": -151.21,
+              "loss": null,
+              "min_sep": 13.168
+            },
+            {
+              "route": "PATH1|DAMOG|BOBOB|0",
+              "dist": 49.527,
+              "bearing": 156.481,
+              "loss": null,
+              "min_sep": 53.355
+            }
+          ],
+          "weather": {
+            "clear_now": 3.783,
+            "clear_pred": 4.846,
+            "bearing": 120.563,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": -2.898,
+            "bearing": 127.986,
+            "exit": 1,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              30,
+              25,
+              20,
+              15,
+              10,
+              5,
+              0
+            ],
+            "best_safe": 30,
+            "best_progress": 30
+          },
+          "result": {
+            "action": 30,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_132b90b9fc99f2c9"
+        },
+        {
+          "step": 30,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "weather+boundary",
+          "place": {
+            "route_frac": 0.8407,
+            "xtrack": -9.341,
+            "heading_err": 30.386
+          },
+          "traffic": [],
+          "weather": {
+            "clear_now": 5.779,
+            "clear_pred": 7.111,
+            "bearing": 131.761,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": -3.732,
+            "bearing": 97.986,
+            "exit": 1,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              15,
+              30,
+              10,
+              25,
+              20,
+              5,
+              0
+            ],
+            "best_safe": 15,
+            "best_progress": 15
+          },
+          "result": {
+            "action": 20,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_59d31c6f8bea2b48"
+        },
+        {
+          "step": 33,
+          "agent": "A4",
+          "route": "PATH3|PT222|WP059|0",
+          "call": "MERGE_BACK",
+          "reason": "BOUNDARY_LOOKAHEAD",
+          "type": "boundary",
+          "place": {
+            "route_frac": 0.9161,
+            "xtrack": -6.339,
+            "heading_err": 17.632
+          },
+          "traffic": [],
+          "weather": {
+            "clear_now": 8.79,
+            "clear_pred": 10.176,
+            "bearing": 136.247,
+            "entry": null,
+            "closing": false
+          },
+          "boundary": {
+            "dist": -3.109,
+            "bearing": 115.001,
+            "exit": 1,
+            "closing": true
+          },
+          "preview": {
+            "safe": [],
+            "unsafe": [
+              20,
+              15,
+              25,
+              10,
+              30,
+              5,
+              0
+            ],
+            "best_safe": 20,
+            "best_progress": 20
+          },
+          "result": {
+            "action": 5,
+            "corrected": null,
+            "note": null
+          },
+          "case_id": "case_80b022ccae65019a"
+        }
+      ]
+    }
+  ]
+}

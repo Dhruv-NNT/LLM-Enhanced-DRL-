@@ -1,0 +1,41 @@
+{
+  "created_at": "20260712T051317Z",
+  "guidance_source": "real",
+  "ollama_model": "gpt-oss:20b",
+  "obs_dim": 40,
+  "action_dim": 13,
+  "action_bins": [
+    -30,
+    -25,
+    -20,
+    -15,
+    -10,
+    -5,
+    0,
+    5,
+    10,
+    15,
+    20,
+    25,
+    30
+  ],
+  "max_agents": 12,
+  "num_agents": 4,
+  "num_weather_cells": 2,
+  "route_ids": null,
+  "seed_start": 101000000,
+  "target_kept": 250,
+  "keep": "success",
+  "episodes_kept": 250,
+  "episodes_played": 355,
+  "n_records": 9057,
+  "n_shards": 1,
+  "episode_step_cap": null,
+  "outcomes": {
+    "success": 250,
+    "collision": 3,
+    "weather": 69,
+    "truncated": 33
+  },
+  "wall_clock_seconds": 349290.09962773323
+}

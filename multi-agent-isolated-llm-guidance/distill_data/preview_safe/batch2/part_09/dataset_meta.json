@@ -1,0 +1,41 @@
+{
+  "created_at": "20260706T073433Z",
+  "guidance_source": "preview_safe",
+  "ollama_model": null,
+  "obs_dim": 40,
+  "action_dim": 13,
+  "action_bins": [
+    -30,
+    -25,
+    -20,
+    -15,
+    -10,
+    -5,
+    0,
+    5,
+    10,
+    15,
+    20,
+    25,
+    30
+  ],
+  "max_agents": 12,
+  "num_agents": 4,
+  "num_weather_cells": 2,
+  "route_ids": null,
+  "seed_start": 109000000,
+  "target_kept": 41,
+  "keep": "success",
+  "episodes_kept": 41,
+  "episodes_played": 67,
+  "n_records": 1577,
+  "n_shards": 1,
+  "episode_step_cap": null,
+  "outcomes": {
+    "success": 41,
+    "collision": 0,
+    "weather": 9,
+    "truncated": 17
+  },
+  "wall_clock_seconds": 5304.162166833878
+}
