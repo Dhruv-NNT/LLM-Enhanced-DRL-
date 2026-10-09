@@ -1,0 +1,1184 @@
+{
+  "model_path": "Evaluation_distillation_approach/S_LLM_seed0/weights/last_checkpoint.pt",
+  "num_episodes": 20,
+  "num_agents": 4,
+  "num_weather_cells": 2,
+  "total_aircraft": 80,
+  "aircraft_los_rate": 0.0,
+  "storm_los_rate": 0.0,
+  "goal_reach_rate": 0.9875,
+  "flight_distance_ratio_mean": 1.036424919637845,
+  "flight_distance_ratio_std": 0.0923889043014189,
+  "flight_distance_ratio_n": 79,
+  "flight_distance_ratio_launched_mean": 1.0485708821669975,
+  "mean_decision_ms": 133.2201202040114,
+  "decision_ms_p50": 118.79499464096929,
+  "decision_ms_max_episode_mean": 199.6999639048872,
+  "success_rate": 0.95,
+  "collision_rate": 0.0,
+  "weather_rate": 0.0,
+  "truncation_rate": 0.05,
+  "mean_return": 157.81251718601544,
+  "episodes": [
+    {
+      "episode_index": 0,
+      "seed": 42,
+      "steps": 36,
+      "total_reward": 170.99761422608373,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 199.6999639048872,
+      "n_decisions": 31,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 45.999999999999986,
+          "planned_distance": 50.411916821922354,
+          "distance_ratio": 0.9124826608457034
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 60.000000000000014,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 0.964523710630767
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 69.99999997690023,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 1.1252776620312233
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 71.95660443110975,
+          "planned_distance": 68.88106546338541,
+          "distance_ratio": 1.0446499912136114
+        }
+      ]
+    },
+    {
+      "episode_index": 1,
+      "seed": 43,
+      "steps": 48,
+      "total_reward": 168.9283794813606,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 166.59934521750222,
+      "n_decisions": 43,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 65.99999997690024,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 1.0609760813225058
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 69.95660443110974,
+          "planned_distance": 68.88106546338541,
+          "distance_ratio": 1.0156144357014345
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 67.98892564356011,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 0.9943759386922323
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 95.99999900405646,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 1.2536660112589733
+        }
+      ]
+    },
+    {
+      "episode_index": 2,
+      "seed": 44,
+      "steps": 45,
+      "total_reward": 173.1478007412954,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 159.40402931300923,
+      "n_decisions": 40,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 89.99962608505305,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 1.1753070147852807
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 53.94616846756757,
+          "planned_distance": 52.990411255248596,
+          "distance_ratio": 1.0180364180929866
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 49.99999999999997,
+          "planned_distance": 50.411916821922354,
+          "distance_ratio": 0.9918289791801121
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 67.99999999999997,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 1.093126872048202
+        }
+      ]
+    },
+    {
+      "episode_index": 3,
+      "seed": 45,
+      "steps": 46,
+      "total_reward": 165.94995846053982,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 180.5886351658652,
+      "n_decisions": 45,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 67.95660443110975,
+          "planned_distance": 68.88106546338541,
+          "distance_ratio": 0.986578880189258
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 81.9996260850531,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 1.0708348460965293
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 79.99999900405643,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 1.0447216738814695
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 78.00000000000003,
+          "planned_distance": 50.411916821922354,
+          "distance_ratio": 1.5472532075209764
+        }
+      ]
+    },
+    {
+      "episode_index": 4,
+      "seed": 46,
+      "steps": 42,
+      "total_reward": 173.0056887901139,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 171.92186664072545,
+      "n_decisions": 37,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 60.00000000000001,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 0.9645237106307669
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 83.99962608505311,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 1.0969528882687174
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 63.99999997690027,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 1.0288252909681475
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 66.00000000000001,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 0.9652867924072527
+        }
+      ]
+    },
+    {
+      "episode_index": 5,
+      "seed": 47,
+      "steps": 41,
+      "total_reward": 175.67328499807113,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 184.33055656999852,
+      "n_decisions": 37,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 68.0,
+          "planned_distance": 68.88106546338541,
+          "distance_ratio": 0.9872088874140056
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 59.99999999999999,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 0.9645237106307667
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 81.9996260850531,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 1.0708348460965293
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 63.946168467567574,
+          "planned_distance": 52.990411255248596,
+          "distance_ratio": 1.2067498053477332
+        }
+      ]
+    },
+    {
+      "episode_index": 6,
+      "seed": 48,
+      "steps": 38,
+      "total_reward": 178.38715536451184,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 195.7977703753607,
+      "n_decisions": 37,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 49.94616846756761,
+          "planned_distance": 52.990411255248596,
+          "distance_ratio": 0.942551063191089
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 72.0,
+          "planned_distance": 68.88106546338541,
+          "distance_ratio": 1.045279998438359
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 65.98892564356011,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 0.9651248237708003
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 52.00000000000003,
+          "planned_distance": 50.411916821922354,
+          "distance_ratio": 1.0315021383473177
+        }
+      ]
+    },
+    {
+      "episode_index": 7,
+      "seed": 49,
+      "steps": 43,
+      "total_reward": 173.25035847422197,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 165.15682284565023,
+      "n_decisions": 42,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 60.0,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 0.9645237106307668
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 72.0,
+          "planned_distance": 68.88106546338541,
+          "distance_ratio": 1.045279998438359
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 85.99962608505314,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 1.123070930440906
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 52.000000000000014,
+          "planned_distance": 50.411916821922354,
+          "distance_ratio": 1.0315021383473175
+        }
+      ]
+    },
+    {
+      "episode_index": 8,
+      "seed": 50,
+      "steps": 38,
+      "total_reward": 157.50564115009303,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 104.11282319246845,
+      "n_decisions": 34,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 75.99999900405643,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 0.9924855895370935
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 69.95660443110975,
+          "planned_distance": 68.88106546338541,
+          "distance_ratio": 1.0156144357014347
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 76.00000000000001,
+          "planned_distance": 68.88106546338541,
+          "distance_ratio": 1.1033511094627124
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 72.00000000000001,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 1.0530401371715483
+        }
+      ]
+    },
+    {
+      "episode_index": 9,
+      "seed": 51,
+      "steps": 38,
+      "total_reward": 180.34052895550394,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 86.96908753534609,
+      "n_decisions": 33,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 68.00000000000001,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 0.9945379073286845
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 51.94616846756757,
+          "planned_distance": 52.990411255248596,
+          "distance_ratio": 0.9802937406420374
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 47.99999999999999,
+          "planned_distance": 50.411916821922354,
+          "distance_ratio": 0.9521558200129081
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 65.98892564356017,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 0.9651248237708012
+        }
+      ]
+    },
+    {
+      "episode_index": 10,
+      "seed": 52,
+      "steps": 37,
+      "total_reward": 152.622932682315,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 117.7090894561843,
+      "n_decisions": 32,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 69.95660443110972,
+          "planned_distance": 68.88106546338541,
+          "distance_ratio": 1.0156144357014343
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 69.99999997690024,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 1.1252776620312235
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 55.946168467567595,
+          "planned_distance": 52.990411255248596,
+          "distance_ratio": 1.0557790955439366
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 73.99999900405639,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 0.966367547364905
+        }
+      ]
+    },
+    {
+      "episode_index": 11,
+      "seed": 53,
+      "steps": 38,
+      "total_reward": 175.30873237462401,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 84.36446266714483,
+      "n_decisions": 35,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 50.0,
+          "planned_distance": 52.990411255248596,
+          "distance_ratio": 0.943566936273732
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 65.99999999999997,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 0.965286792407252
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 75.9999990040564,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 0.9924855895370932
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 53.94616846756759,
+          "planned_distance": 52.990411255248596,
+          "distance_ratio": 1.018036418092987
+        }
+      ]
+    },
+    {
+      "episode_index": 12,
+      "seed": 54,
+      "steps": 38,
+      "total_reward": 163.92775664967397,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 132.15689909658536,
+      "n_decisions": 33,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 69.9889256435601,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 1.023627053613664
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 75.9999990040564,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 0.9924855895370932
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 59.94616846756758,
+          "planned_distance": 52.990411255248596,
+          "distance_ratio": 1.131264450445835
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 73.95660443110971,
+          "planned_distance": 68.88106546338541,
+          "distance_ratio": 1.0736855467257873
+        }
+      ]
+    },
+    {
+      "episode_index": 13,
+      "seed": 55,
+      "steps": 41,
+      "total_reward": 156.41807612205892,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 119.88089982575427,
+      "n_decisions": 36,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 81.99999999999999,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 1.3181824045287145
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 78.0,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 1.1407934819358438
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 71.98892564356011,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 1.052878168535096
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 67.95660443110975,
+          "planned_distance": 68.88106546338541,
+          "distance_ratio": 0.986578880189258
+        }
+      ]
+    },
+    {
+      "episode_index": 14,
+      "seed": 56,
+      "steps": 37,
+      "total_reward": 164.7593020818659,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 79.09947269945405,
+      "n_decisions": 36,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 51.94616846756761,
+          "planned_distance": 52.990411255248596,
+          "distance_ratio": 0.9802937406420382
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 67.99999997690031,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 1.0931268716768658
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 73.99999900405648,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 0.9663675473649062
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 50.000000000000014,
+          "planned_distance": 50.411916821922354,
+          "distance_ratio": 0.991828979180113
+        }
+      ]
+    },
+    {
+      "episode_index": 15,
+      "seed": 57,
+      "steps": 60,
+      "total_reward": -62.84033874233431,
+      "success": false,
+      "truncated": true,
+      "failure_reason": "truncated",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 3,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 92.05834842997335,
+      "n_decisions": 59,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 63.9999999769003,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 1.028825290968148
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 68.00000000000001,
+          "planned_distance": 68.88106546338541,
+          "distance_ratio": 0.9872088874140058
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 53.99999999999998,
+          "planned_distance": 52.990411255248596,
+          "distance_ratio": 1.0190522911756301
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": false,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 101.23226706029693,
+          "planned_distance": 50.411916821922354,
+          "distance_ratio": 2.008101921970057
+        }
+      ]
+    },
+    {
+      "episode_index": 16,
+      "seed": 58,
+      "steps": 33,
+      "total_reward": 173.8939940680131,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 103.9157348604931,
+      "n_decisions": 32,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 57.99999999999999,
+          "planned_distance": 52.990411255248596,
+          "distance_ratio": 1.094537646077529
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 65.99999999999997,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 0.965286792407252
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 47.99999999999998,
+          "planned_distance": 50.411916821922354,
+          "distance_ratio": 0.9521558200129078
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 50.000000000000014,
+          "planned_distance": 50.411916821922354,
+          "distance_ratio": 0.991828979180113
+        }
+      ]
+    },
+    {
+      "episode_index": 17,
+      "seed": 59,
+      "steps": 38,
+      "total_reward": 172.2019775089818,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 115.48358362845399,
+      "n_decisions": 33,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 75.99999999999999,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 1.1115423670144118
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 60.000000000000014,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 0.964523710630767
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 73.99999900405642,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 0.9663675473649055
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 65.99999997690028,
+          "planned_distance": 62.206868881182785,
+          "distance_ratio": 1.0609760813225064
+        }
+      ]
+    },
+    {
+      "episode_index": 18,
+      "seed": 60,
+      "steps": 35,
+      "total_reward": 169.04479782843768,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 101.29702872911687,
+      "n_decisions": 34,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 67.95660443110972,
+          "planned_distance": 68.88106546338541,
+          "distance_ratio": 0.9865788801892575
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 54.00000000000002,
+          "planned_distance": 50.411916821922354,
+          "distance_ratio": 1.0711752975145221
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 49.99999999999999,
+          "planned_distance": 52.990411255248596,
+          "distance_ratio": 0.9435669362737318
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 69.98892564356011,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 1.0236270536136642
+        }
+      ]
+    },
+    {
+      "episode_index": 19,
+      "seed": 61,
+      "steps": 38,
+      "total_reward": 173.72670250487766,
+      "success": true,
+      "truncated": false,
+      "failure_reason": "success",
+      "num_agents": 4,
+      "num_weather_cells": 2,
+      "n_reached": 4,
+      "n_in_los": 0,
+      "n_in_storm": 0,
+      "mean_decision_ms": 89.82508076058531,
+      "n_decisions": 33,
+      "aircraft": [
+        {
+          "agent_id": "A1",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 75.99999900405643,
+          "planned_distance": 76.57541812723315,
+          "distance_ratio": 0.9924855895370935
+        },
+        {
+          "agent_id": "A2",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 67.98892564356012,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 0.9943759386922324
+        },
+        {
+          "agent_id": "A3",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 53.94616846756762,
+          "planned_distance": 52.990411255248596,
+          "distance_ratio": 1.0180364180929877
+        },
+        {
+          "agent_id": "A4",
+          "launched": true,
+          "reached": true,
+          "in_los": false,
+          "in_storm": false,
+          "flown_distance": 74.00000000000003,
+          "planned_distance": 68.37346218672258,
+          "distance_ratio": 1.0822912520929804
+        }
+      ]
+    }
+  ]
+}
