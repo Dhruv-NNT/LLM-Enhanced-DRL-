@@ -212,6 +212,60 @@ back 28. That small difference in *lopsidedness* is what separates p = 0.036 fro
 rate is about ±4 points, which swallows a 3-point gain. **Test 2** in Part 6 scores each run on 900
 episodes instead, shrinking that to about ±2.5 points — enough to decide these three rows.
 
+### Finding 4 (the capstone) — the proposed method helps, but does not beat the single best teacher
+
+`TRI_shadow` is the proposed method: **all three teachers, with competence weighting** (trust each
+teacher where a short look-ahead shows it beats the policy). This is the run the whole study was built
+to test. Its final 5M checkpoint was evaluated on **9 Oct 2026** (`jobs_final_TRI_shadow.sh`), and the
+paired comparison below pools all **900 episodes** (the three seed blocks 42/1042/2042) for power.
+
+| `TRI_shadow` vs | rescued | lost | net | McNemar p | verdict |
+|---|---|---|---|---|---|
+| `T0_baseline` (no teacher) | 120 | 87 | **+33** | **0.026** | **real — it beats plain MAPPO** |
+| `S_LLM` (single best teacher) | 86 | 92 | **−6** | 0.71 | **tied — no gain over one LLM teacher** |
+| `TRI_equal` (equal-weight ablation) | 108 | 83 | +25 | 0.082 | trend, not yet proven |
+
+Success rate, mean over the 3 seeds, 4 aircraft: **`TRI_shadow` 85.8%**, `S_LLM` 86.4%, `TRI_equal`
+83.0%, baseline 82.1%.
+
+**Read honestly, three things are true:**
+1. **It beats no-teacher** (p = 0.026). The competence-weighted teacher mix does improve on plain RL.
+2. **It does *not* beat the single best teacher.** `TRI_shadow` and `S_LLM` are a statistical tie at
+   ~86% (net −6 of 900, p = 0.71). The headline the study hoped for — *"combining complementary
+   teachers beats the best single one"* — **is not supported on overall success rate.**
+3. **It does beat naive averaging** (`TRI_equal`, +25 net), but only as a trend (p = 0.082), and
+   `TRI_equal` is actually the weakest of the teacher runs (83.0%) — so *equal* trust in three teachers
+   hurt, and the competence weighting is what pulled `TRI_shadow` back up into the top cluster.
+
+**Why it tied `S_LLM` instead of beating it (the telling detail).** Look at the failure types
+(counts over the 900 episodes). `TRI_shadow` entered storms **40** times — *exactly matching `S_LLM`'s
+40* — but caused **75** collisions: **more than the single LLM teacher (61), and far more than the
+rule-taught runs** (`S_PS` 23, `S_BP` 36). (It is not the single worst — `TRI_equal` at 91 and
+`LOO_noBP` at 81 are higher — but it is nowhere near the rule teachers' conflict-avoidance.) So the
+competence weighting leaned **LLM-ward**: `TRI_shadow` inherited the LLM teacher's storm avoidance but
+**did not** inherit the rule teacher's conflict avoidance. It behaved like its LLM component rather
+than blending the best of both — which is exactly why it matched, rather than beat, the single LLM
+teacher.
+
+**Where it does look best: dense traffic.** On the scalability sweep (seed 42), `TRI_shadow` holds up
+best as aircraft are added, and clearly beats both the baseline and the equal ablation there:
+
+| aircraft | `T0` | `TRI_equal` | `S_LLM` | `TRI_shadow` |
+|---|---|---|---|---|
+| 4 | 81.7 | 85.3 | 87.7 | 87.0 |
+| 6 | 50.3 | 55.0 | 60.3 | **64.3** |
+| 8 | 22.3 | 21.3 | 32.0 | **33.3** |
+
+So the method's advantage shows up under *harder* conditions — at 6 and 8 aircraft it is tied-best —
+even though at the easy 4-aircraft setting it only matches the best single teacher.
+
+**The caveat that still governs everything: one training seed per method.** The top runs (`S_PS`,
+`S_LLM`, `LOO_noPS`, `TRI_shadow`) all cluster at ~86%; the 0.5–3 point gaps between them are inside
+the ±2–4 point seed/sampling noise. **Strongest honest claim:** the proposed method is in the top
+cluster, significantly beats no-teacher, beats naive averaging, and scales best — but it does **not**
+demonstrably beat the single best LLM teacher on base success. Closing that would need multiple
+training seeds, and likely a competence rule that does not collapse toward the LLM on conflicts.
+
 ### The new story in one sentence
 *Teaching MAPPO with different kinds of teachers improves safety in complementary ways — the LLM
 teacher prevents storm entries, the rule-based teacher prevents aircraft conflicts, and no single
@@ -602,20 +656,20 @@ useful result, not a failure.
 
 ---
 
-## Part 10 — Current status (9 Oct 2026)
+## Part 10 — Current status (11 Oct 2026) — **study complete**
 
-- **All training complete.** Every run folder (including the proposed **`TRI_shadow_seed0`**) has
-  reached 5M; nothing is training. `TRI_shadow_seed0` finished at **5,000,009** steps.
-- **`TRI_shadow` final evaluation launched.** Session **`final_TRI_shadow`** is running
-  `jobs_final_TRI_shadow.sh` on CPU (log: `new_approach/experiment_jobs/logs/final_TRI_shadow.log`).
-  It re-does **Setting 1 on the true final checkpoint** (`last_checkpoint.pt`): the 3 paired seed
-  blocks (42 / 1042 / 2042, 300 episodes each) + the 3 scalability blocks (4 / 6 / 8 aircraft),
-  writing to `setting1_latest/TRI_shadow_seed0/` and **replacing the earlier frozen 3.78M snapshot**.
-  ~3–4 hours on CPU. (Setting 2 at ~3M is already done and is intentionally left unchanged.)
-- **Everything else already evaluated:** the other 8 seed-0 runs have their Setting-1 and Setting-2
-  files in `new_approach/eval_results/`. The only missing piece for the headline comparison was
-  `TRI_shadow`'s **final-5M** Setting-1 numbers — which this run produces.
-- **Next, once `final_TRI_shadow` finishes:** fill the two headline comparisons into Part 3 —
-  **`TRI_shadow` vs `S_LLM`** (does combining beat the single best teacher?) and **`TRI_shadow` vs
-  `TRI_equal`** (is competence weighting, not just more teachers, what helps?) — then regenerate the
-  comparison report. Until then, no conclusion about the proposed method can be stated.
+- **All training complete.** Every run reached 5M; `TRI_shadow_seed0` finished at **5,000,009** steps.
+- **All Setting-1 evaluation complete.** `final_TRI_shadow` finished on 9 Oct at 12:14 — all six
+  output files in `setting1_latest/TRI_shadow_seed0/` are on the true final checkpoint
+  (`last_checkpoint.pt`), replacing the earlier frozen 3.78M snapshot. All 9 seed-0 runs now have
+  final Setting-1 numbers (3 seed blocks + 3 scalability blocks each).
+- **Headline verdict is in — see Finding 4 (Part 3).** The proposed competence-weighted method
+  (`TRI_shadow`) **significantly beats plain MAPPO** (p = 0.026) and **beats naive averaging**
+  (`TRI_equal`, trend, p = 0.082), but it is a **statistical tie with the single best teacher**
+  (`S_LLM`, p = 0.71). It scales best in dense traffic (tied-best at 6 and 8 aircraft). The telling
+  detail: it inherited the LLM teacher's storm avoidance (40 storm entries, same as `S_LLM`) but a high
+  collision count (75 — more than `S_LLM`'s 61 and far above the rule-taught runs), i.e. the weighting
+  leaned LLM-ward rather than blending both teachers.
+- **Governing caveat unchanged:** one training seed per method; the top four runs cluster at ~86%
+  inside ±2–4 points of noise. Firming up "combining beats the single best teacher" would need
+  multiple training seeds and a competence rule that doesn't collapse toward the LLM on conflicts.
